@@ -10,6 +10,10 @@ import java.util.*
 class RobotDomainService(
     val robotRepository: RobotRepository
 ) {
+
+    fun attackRobot(attackerId: UUID, targetId: UUID) {
+    }
+
     /**
      * Checks if the specified `playerId` matches with the [Robot's][Robot].
      *

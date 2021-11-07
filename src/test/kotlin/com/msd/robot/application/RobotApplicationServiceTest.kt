@@ -3,6 +3,7 @@ package com.msd.robot.application
 import com.msd.application.ClientException
 import com.msd.application.GameMapPlanetDto
 import com.msd.application.GameMapService
+import com.msd.command.AttackCommand
 import com.msd.command.BlockCommand
 import com.msd.command.MovementCommand
 import com.msd.command.RegenCommand
@@ -17,6 +18,7 @@ import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertAll
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.data.repository.findByIdOrNull
@@ -28,7 +30,13 @@ class RobotApplicationServiceTest {
     lateinit var robot1: Robot
     lateinit var robot2: Robot
     lateinit var robot3: Robot
+    lateinit var robot4: Robot
+    lateinit var robot5: Robot
+    lateinit var robot6: Robot
     lateinit var unknownRobotId: UUID
+
+    lateinit var player1Id: UUID
+    lateinit var player2Id: UUID
 
     lateinit var planet1: Planet
     lateinit var planet2: Planet
@@ -52,9 +60,12 @@ class RobotApplicationServiceTest {
         planet1 = Planet(UUID.randomUUID(), PlanetType.SPACE_STATION, null)
         planet2 = Planet(UUID.randomUUID(), PlanetType.STANDARD, null)
 
-        robot1 = Robot(UUID.randomUUID(), planet1)
-        robot2 = Robot(UUID.randomUUID(), planet2)
-        robot3 = Robot(UUID.randomUUID(), planet1)
+        robot1 = Robot(player1Id, planet1)
+        robot2 = Robot(player1Id, planet2)
+        robot3 = Robot(player1Id, planet1)
+        robot4 = Robot(player2Id, planet1)
+        robot5 = Robot(player2Id, planet2)
+        robot6 = Robot(player2Id, planet1)
         unknownRobotId = UUID.randomUUID()
     }
 
@@ -250,5 +261,47 @@ class RobotApplicationServiceTest {
         }
         // then
         assert(!robot1.planet.blocked)
+    }
+
+    @Test
+    fun `All AttackCommands from a batch get executed`() {
+        // given
+        val attackCommands = listOf(
+            AttackCommand(robot1.id, player1Id, robot4.id),
+            AttackCommand(robot2.id, player1Id, robot5.id),
+            AttackCommand(robot3.id, player1Id, robot6.id),
+            AttackCommand(robot4.id, player1Id, robot1.id),
+            AttackCommand(robot5.id, player1Id, robot2.id),
+            AttackCommand(robot6.id, player1Id, robot3.id),
+        )
+        // when
+        robotApplicationService.executeAttacks(attackCommands)
+        // then
+        assertAll(
+            {
+                assertEquals(9, robot1.health)
+                assertEquals(19, robot1.energy)
+            },
+            {
+                assertEquals(9, robot2.health)
+                assertEquals(19, robot2.energy)
+            },
+            {
+                assertEquals(9, robot3.health)
+                assertEquals(19, robot3.energy)
+            },
+            {
+                assertEquals(9, robot4.health)
+                assertEquals(19, robot4.energy)
+            },
+            {
+                assertEquals(9, robot5.health)
+                assertEquals(19, robot5.energy)
+            },
+            {
+                assertEquals(9, robot6.health)
+                assertEquals(19, robot6.energy)
+            },
+        )
     }
 }
