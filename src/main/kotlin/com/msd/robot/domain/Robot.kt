@@ -191,4 +191,10 @@ class Robot(
             energyRegen
         }
     }
+
+    fun regenerateHealth(amount: Int) {
+        if (amount + this.health > this.maxHealth) throw HealthFullException("Tried to regenerate $amount health but is already at full health.");
+
+        this.health += if (this.planet.type == PlanetType.SPAWN) amount * 2 else amount;
+    }
 }
