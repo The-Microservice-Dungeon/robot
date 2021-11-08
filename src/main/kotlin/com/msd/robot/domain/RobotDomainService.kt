@@ -49,16 +49,29 @@ class RobotDomainService(
         // reversed, so the most valuable resources get distributed first
         ResourceType.values().reversed().forEach { resource ->
             while (resourcesToBeDistributed[resource]!! > 0 && numAliveAndFreeInventory > 0) {
-                val resourcesPerRobot = resourcesToBeDistributed[resource]!!.div(numAliveAndFreeInventory)
+                val resourcesPerRobot = resourcesToBeDistributed[resource]!!.floorDiv(numAliveAndFreeInventory)
 
-                robotsAliveOnPlanet.forEach { robot ->
-                    val freeInventory = robot.inventory.maxStorage - robot.inventory.usedStorage
-                    resourcesToBeDistributed[resource] =
-                        if (freeInventory < resourcesPerRobot) {
-                            numAliveAndFreeInventory -= 1
-                            resourcesToBeDistributed[resource]!! - freeInventory
-                        } else
-                            resourcesToBeDistributed[resource]!! - resourcesPerRobot
+                if (resourcesPerRobot >= 1) {
+                    robotsAliveOnPlanet.forEach { robot ->
+                        val freeInventory = robot.inventory.maxStorage - robot.inventory.usedStorage
+                        resourcesToBeDistributed[resource] =
+                            if (freeInventory < resourcesPerRobot) {
+                                numAliveAndFreeInventory -= 1
+                                robot.inventory.addResource(resource, freeInventory)
+                                resourcesToBeDistributed[resource]!! - freeInventory
+                            } else {
+                                robot.inventory.addResource(resource, resourcesPerRobot)
+                                resourcesToBeDistributed[resource]!! - resourcesPerRobot
+                            }
+                    }
+                } else {
+                    // Randomize order?
+                    robotsAliveOnPlanet.forEach { robot ->
+                        if (resourcesToBeDistributed[resource]!! > 0 && robot.inventory.maxStorage - robot.inventory.usedStorage > 0) {
+                            resourcesToBeDistributed[resource] = resourcesToBeDistributed[resource]!! - 1
+                            robot.inventory.addResource(resource, 1)
+                        }
+                    }
                 }
             }
         }

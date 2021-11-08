@@ -8,6 +8,7 @@ import com.msd.command.AttackCommand
 import com.msd.command.BlockCommand
 import com.msd.command.MovementCommand
 import com.msd.command.RegenCommand
+import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
 import com.msd.planet.domain.PlanetType
 import com.msd.robot.domain.*
@@ -86,7 +87,7 @@ class RobotApplicationServiceTest {
     @Test
     fun `Robot doesn't move if players don't match`() {
         // given
-        val command = MovementCommand(robot1.id, robot2.player, planet2.planetId)
+        val command = MovementCommand(robot1.id, robot4.player, planet2.planetId)
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         // when
         assertThrows<InvalidPlayerException> { robotApplicationService.move(command) }
@@ -283,6 +284,15 @@ class RobotApplicationServiceTest {
         every { robotRepository.save(any()) } returns robot5
         every { robotRepository.findByIdOrNull(robot6.id) } returns robot6
         every { robotRepository.save(any()) } returns robot6
+        every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns
+            listOf(robot1, robot3, robot4, robot6)
+        every { robotRepository.findAllByPlanet_PlanetId(robot2.planet.planetId) } returns
+            listOf(robot2, robot5)
+        every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(robot1.planet.planetId) } returns listOf()
+        every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(robot2.planet.planetId) } returns listOf()
+        every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf(
+            robot1, robot2, robot3, robot4, robot5, robot6
+        )
 
         val attackCommands = listOf(
             AttackCommand(robot1.id, player1Id, robot4.id),
@@ -320,6 +330,75 @@ class RobotApplicationServiceTest {
                 assertEquals(9, robot6.health)
                 assertEquals(19, robot6.energy)
             },
+        )
+    }
+
+    @Test
+    fun `Resources of dead robots get distributed correctly`() {
+        // given
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+        every { robotRepository.findByIdOrNull(robot2.id) } returns robot2
+        every { robotRepository.findByIdOrNull(robot3.id) } returns robot3
+        every { robotRepository.findByIdOrNull(robot4.id) } returns robot4
+        every { robotRepository.findByIdOrNull(robot5.id) } returns robot5
+        every { robotRepository.findByIdOrNull(robot6.id) } returns robot6
+        every { robotRepository.save(any()) } returns robot1
+
+        every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns
+            listOf(robot1, robot3, robot4, robot6)
+        every { robotRepository.findAllByPlanet_PlanetId(robot2.planet.planetId) } returns
+            listOf(robot2, robot5)
+        every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(robot1.planet.planetId) } returns listOf()
+        every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(robot2.planet.planetId) } returns listOf()
+        every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf(
+            robot1, robot2, robot3, robot4, robot5, robot6
+        )
+        every {
+            robotRepository.delete(robot4)
+        } returns Unit
+
+        robot4.inventory.addResource(ResourceType.COAL, 4)
+        robot4.inventory.addResource(ResourceType.IRON, 4)
+        robot4.inventory.addResource(ResourceType.GEM, 4)
+        robot4.inventory.addResource(ResourceType.GOLD, 4)
+        robot4.inventory.addResource(ResourceType.PLATIN, 4)
+
+        val attackCommands = listOf(
+            AttackCommand(robot1.id, player1Id, robot4.id),
+            AttackCommand(robot2.id, player1Id, robot5.id),
+            AttackCommand(robot3.id, player1Id, robot4.id),
+            AttackCommand(robot4.id, player2Id, robot1.id),
+            AttackCommand(robot5.id, player2Id, robot2.id),
+            AttackCommand(robot6.id, player2Id, robot4.id),
+        )
+
+        // Let every robot attack 3 times
+        for (i in 1..3) robotApplicationService.executeAttacks(attackCommands)
+
+        // This time one robot will die, so the repo has to return the correct robot
+        every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(robot1.planet.planetId) } returns listOf(
+            robot4
+        )
+        every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns
+            listOf(robot1, robot3, robot6)
+
+        // when
+        // now Robot 4 dies
+        robotApplicationService.executeAttacks(attackCommands)
+
+        // then
+        assertAll(
+            {
+                assertEquals(false, robot4.alive)
+            },
+            {
+                assertEquals( // Robot 4 had 20 items in its inventory, the others none
+                    20,
+                    robot1.inventory.usedStorage +
+                        robot3.inventory.usedStorage +
+                        robot6.inventory.usedStorage
+                )
+            }
         )
     }
 }

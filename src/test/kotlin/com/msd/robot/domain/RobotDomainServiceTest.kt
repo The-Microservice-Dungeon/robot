@@ -6,6 +6,7 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
@@ -50,14 +51,14 @@ internal class RobotDomainServiceTest {
         robot6 = Robot(player2Id, planet2)
     }
 
-    // TODO do we batch attacks in the domain service or in the application Service?
+    @Test
     fun `Robots can't attack Robots in another System`() {
         // given
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { robotRepository.findByIdOrNull(robot6.id) } returns robot6
 
         // when
-        assertThrows<InvalidAttackException>("Robots must be on the same Planet to attack each other") {
+        assertThrows<OutOfReachException>("Robots must be on the same Planet to attack each other") {
             robotDomainService.fight(robot1, robot6)
         }
         // then
@@ -65,15 +66,20 @@ internal class RobotDomainServiceTest {
         assertEquals(20, robot1.energy)
     }
 
+    @Test
     fun `Robots can attack destroyed Robots`() {
         // given
-        for (i in 0..5) robotDomainService.fight(robot1, robot4)
-        for (i in 0..5) robotDomainService.fight(robot2, robot4)
-        assert(!robot4.alive)
-
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { robotRepository.findByIdOrNull(robot2.id) } returns robot2
         every { robotRepository.findByIdOrNull(robot4.id) } returns robot4
+        every { robotRepository.save(robot1) } returns robot1
+        every { robotRepository.save(robot2) } returns robot2
+        every { robotRepository.save(robot4) } returns robot4
+
+        for (i in 1..5) robotDomainService.fight(robot1, robot4)
+        for (i in 1..5) robotDomainService.fight(robot2, robot4)
+        assert(!robot4.alive)
+
         // when
         robotDomainService.fight(robot1, robot4)
         robotDomainService.fight(robot2, robot4)
@@ -89,20 +95,25 @@ internal class RobotDomainServiceTest {
         )
     }
 
+    @Test
     fun `Destroyed Robots can attack other Robots`() {
         // given
-        for (i in 0..10) robotDomainService.fight(robot1, robot4)
-        assert(!robot4.alive)
-
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { robotRepository.findByIdOrNull(robot4.id) } returns robot4
+        every { robotRepository.save(robot1) } returns robot1
+        every { robotRepository.save(robot4) } returns robot4
+
+        for (i in 1..10) robotDomainService.fight(robot1, robot4)
+        assert(!robot4.alive)
+
         // when
         robotDomainService.fight(robot4, robot1)
         // then
         assertEquals(9, robot1.health)
-        assertEquals(19, robot2.energy)
+        assertEquals(19, robot4.energy)
     }
 
+    @Test
     fun `Robots need enough energy to attack`() {
         // given
         robot1.move(planet2, 20)

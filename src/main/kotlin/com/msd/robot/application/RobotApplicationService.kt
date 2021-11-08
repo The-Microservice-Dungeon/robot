@@ -69,7 +69,7 @@ class RobotApplicationService(
     }
 
     fun executeAttacks(attackCommands: List<AttackCommand>) {
-        val battleFields = setOf<UUID>()
+        val battleFields = mutableSetOf<UUID>()
         attackCommands.forEach {
             try {
                 val attacker = robotDomainService.getRobot(it.robotId)
@@ -77,7 +77,7 @@ class RobotApplicationService(
                 robotDomainService.checkRobotBelongsToPlayer(attacker, it.playerUUID)
 
                 robotDomainService.fight(attacker, target)
-                battleFields.plus(attacker)
+                battleFields.add(attacker.planet.planetId)
             } catch (re: RuntimeException) {
                 exceptionHandler.handle(re)
             }
