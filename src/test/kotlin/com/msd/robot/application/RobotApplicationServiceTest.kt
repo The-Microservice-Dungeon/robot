@@ -12,17 +12,16 @@ import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
 import com.msd.planet.domain.PlanetType
 import com.msd.robot.domain.*
-import io.mockk.MockKAnnotations
-import io.mockk.every
+import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
-import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.ArgumentMatchers.any
 import org.springframework.data.repository.findByIdOrNull
 import java.util.*
 
@@ -55,6 +54,8 @@ class RobotApplicationServiceTest {
     lateinit var robotApplicationService: RobotApplicationService
     lateinit var robotDomainService: RobotDomainService
 
+    lateinit var robotIdsToRobot: Map<UUID, Robot>
+
     val player1: UUID = UUID.randomUUID()
 
     @BeforeEach
@@ -73,6 +74,15 @@ class RobotApplicationServiceTest {
         robot5 = Robot(player2Id, planet2)
         robot6 = Robot(player2Id, planet1)
         unknownRobotId = UUID.randomUUID()
+
+        robotIdsToRobot = mapOf(
+            robot1.id to robot1,
+            robot2.id to robot2,
+            robot3.id to robot3,
+            robot4.id to robot4,
+            robot5.id to robot5,
+            robot6.id to robot6,
+        )
     }
 
     @Test
@@ -272,17 +282,7 @@ class RobotApplicationServiceTest {
     @Test
     fun `All AttackCommands from a batch get executed`() {
         // given
-        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
-        every { robotRepository.save(any()) } returns robot1
-        every { robotRepository.findByIdOrNull(robot2.id) } returns robot2
-        every { robotRepository.save(any()) } returns robot2
-        every { robotRepository.findByIdOrNull(robot3.id) } returns robot3
-        every { robotRepository.save(any()) } returns robot3
-        every { robotRepository.findByIdOrNull(robot4.id) } returns robot4
-        every { robotRepository.save(any()) } returns robot4
-        every { robotRepository.findByIdOrNull(robot5.id) } returns robot5
-        every { robotRepository.save(any()) } returns robot5
-        every { robotRepository.findByIdOrNull(robot6.id) } returns robot6
+        every { robotRepository.findByIdOrNull(any()) } answers { robotIdsToRobot[firstArg()] }
         every { robotRepository.save(any()) } returns robot6
         every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns
             listOf(robot1, robot3, robot4, robot6)
@@ -336,13 +336,8 @@ class RobotApplicationServiceTest {
     @Test
     fun `Resources of dead robots get distributed correctly`() {
         // given
-        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
-        every { robotRepository.findByIdOrNull(robot2.id) } returns robot2
-        every { robotRepository.findByIdOrNull(robot3.id) } returns robot3
-        every { robotRepository.findByIdOrNull(robot4.id) } returns robot4
-        every { robotRepository.findByIdOrNull(robot5.id) } returns robot5
-        every { robotRepository.findByIdOrNull(robot6.id) } returns robot6
-        every { robotRepository.save(any()) } returns robot1
+        every { robotRepository.findByIdOrNull(any()) } answers { robotIdsToRobot[firstArg()] }
+        every { robotRepository.save(any()) } returns robot1 // we don't use
 
         every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns
             listOf(robot1, robot3, robot4, robot6)
@@ -353,15 +348,9 @@ class RobotApplicationServiceTest {
         every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf(
             robot1, robot2, robot3, robot4, robot5, robot6
         )
-        every {
-            robotRepository.delete(robot4)
-        } returns Unit
+        justRun { robotRepository.delete(robot4) }
 
-        robot4.inventory.addResource(ResourceType.COAL, 4)
-        robot4.inventory.addResource(ResourceType.IRON, 4)
-        robot4.inventory.addResource(ResourceType.GEM, 4)
-        robot4.inventory.addResource(ResourceType.GOLD, 4)
-        robot4.inventory.addResource(ResourceType.PLATIN, 4)
+        ResourceType.values().forEach { robot4.inventory.addResource(it, 4) }
 
         val attackCommands = listOf(
             AttackCommand(robot1.id, player1Id, robot4.id),
@@ -400,5 +389,39 @@ class RobotApplicationServiceTest {
                 )
             }
         )
+    }
+
+    @Test
+    fun `Invalid Command in batch leads to ExceptionHandler being called and no damage`() {
+        // given
+        val attackCommands = listOf(
+            AttackCommand(robot1.id, player1Id, robot4.id),
+            AttackCommand(robot2.id, player2Id, robot5.id), // invalid player
+            AttackCommand(robot3.id, player1Id, robot4.id),
+            AttackCommand(robot4.id, player2Id, robot1.id),
+            AttackCommand(robot5.id, player1Id, robot2.id), // invalid player
+            AttackCommand(robot6.id, player2Id, robot4.id),
+        )
+        every { robotRepository.findByIdOrNull(any()) } answers { robotIdsToRobot[firstArg()] }
+        every { robotRepository.save(any()) } returns robot1 // we don't use the return value of save calls
+
+        every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns
+            listOf(robot1, robot3, robot4, robot6)
+        every { robotRepository.findAllByPlanet_PlanetId(robot2.planet.planetId) } returns
+            listOf(robot2, robot5)
+        every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(robot1.planet.planetId) } returns listOf()
+        every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(robot2.planet.planetId) } returns listOf()
+        every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf(
+            robot1, robot2, robot3, robot4, robot5, robot6
+        )
+        justRun { exceptionHandler.handle(any(), any()) }
+
+        // when
+        robotApplicationService.executeAttacks(attackCommands)
+
+        // assert
+        verify(exactly = 2) {
+            exceptionHandler.handle(any(), any())
+        }
     }
 }

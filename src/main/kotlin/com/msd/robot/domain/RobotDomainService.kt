@@ -13,7 +13,6 @@ class RobotDomainService(
 ) {
 
     fun fight(attacker: Robot, target: Robot) {
-
         if (attacker.planet.planetId != target.planet.planetId)
             throw OutOfReachException("The attacking robot and the defending robot are not on the same planet")
 
@@ -65,8 +64,8 @@ class RobotDomainService(
                             }
                     }
                 } else {
-                    // Randomize order?
-                    robotsAliveOnPlanet.forEach { robot ->
+                    // shuffled to make sure its not always the same robots getting the last resources
+                    robotsAliveOnPlanet.shuffled().forEach { robot ->
                         if (resourcesToBeDistributed[resource]!! > 0 && robot.inventory.maxStorage - robot.inventory.usedStorage > 0) {
                             resourcesToBeDistributed[resource] = resourcesToBeDistributed[resource]!! - 1
                             robot.inventory.addResource(resource, 1)

@@ -79,12 +79,13 @@ class RobotApplicationService(
                 robotDomainService.fight(attacker, target)
                 battleFields.add(attacker.planet.planetId)
             } catch (re: RuntimeException) {
-                exceptionHandler.handle(re)
+                re.printStackTrace()
+                exceptionHandler.handle(re, it.transactionUUID)
             }
         }
 
-        battleFields.forEach {
-            robotDomainService.postFightCleanup(it)
+        battleFields.forEach { planetId ->
+            robotDomainService.postFightCleanup(planetId)
         }
     }
 }
