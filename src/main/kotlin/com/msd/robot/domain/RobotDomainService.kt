@@ -1,5 +1,6 @@
 package com.msd.robot.domain
 
+import com.msd.domain.ResourceType
 import com.msd.robot.application.InvalidPlayerException
 import com.msd.robot.application.RobotNotFoundException
 import org.springframework.data.repository.findByIdOrNull
@@ -11,18 +12,67 @@ class RobotDomainService(
     val robotRepository: RobotRepository
 ) {
 
-    fun attackRobot(attackerId: UUID, targetId: UUID) {
+    fun fight(attacker: Robot, target: Robot) {
+
+        if (attacker.planet.planetId != target.planet.planetId)
+            throw OutOfReachException("The attacking robot and the defending robot are not on the same planet")
+
+        attacker.attack(target)
+
+        saveRobot(attacker)
+        saveRobot(target)
+    }
+
+    fun postFightCleanup(planetId: UUID) {
+        val deadRobotsOnPlanet = robotRepository.findAllByAliveFalseAndPlanet_PlanetId(planetId)
+        val resourcesToBeDistributed = mutableMapOf(
+            ResourceType.COAL to 0,
+            ResourceType.IRON to 0,
+            ResourceType.GEM to 0,
+            ResourceType.GOLD to 0,
+            ResourceType.PLATIN to 0,
+        )
+
+        deadRobotsOnPlanet.forEach { robot ->
+            ResourceType.values().forEach { resourceType ->
+                resourcesToBeDistributed[resourceType] =
+                    resourcesToBeDistributed[resourceType]!!.plus(robot.inventory.takeAllOfResource(resourceType))
+            }
+            robotRepository.delete(robot)
+        }
+
+        val robotsAliveOnPlanet = robotRepository.findAllByPlanet_PlanetId(planetId)
+        var numAliveAndFreeInventory = robotsAliveOnPlanet
+            .filter { it.inventory.usedStorage <= it.inventory.maxStorage }
+            .count()
+
+        // reversed, so the most valuable resources get distributed first
+        ResourceType.values().reversed().forEach { resource ->
+            while (resourcesToBeDistributed[resource]!! > 0 && numAliveAndFreeInventory > 0) {
+                val resourcesPerRobot = resourcesToBeDistributed[resource]!!.div(numAliveAndFreeInventory)
+
+                robotsAliveOnPlanet.forEach { robot ->
+                    val freeInventory = robot.inventory.maxStorage - robot.inventory.usedStorage
+                    resourcesToBeDistributed[resource] =
+                        if (freeInventory < resourcesPerRobot) {
+                            numAliveAndFreeInventory -= 1
+                            resourcesToBeDistributed[resource]!! - freeInventory
+                        } else
+                            resourcesToBeDistributed[resource]!! - resourcesPerRobot
+                }
+            }
+        }
+        saveAll(robotsAliveOnPlanet)
     }
 
     /**
-     * Checks if the specified `playerId` matches with the [Robot's][Robot].
+     * Checks if the specified `playerId` is the owner of the specified [Robot].
      *
      * @param robot      the `Robot` whose ownership will be checked
      * @param playerId   the `playerUUID` which should be checked against the `Robot`
-     * @return `true` if the IDs match
      * @throws InvalidPlayerException if the Robot's ID doesn't match the specified ID
      */
-    fun doesRobotBelongsToPlayer(robot: Robot, playerId: UUID) {
+    fun checkRobotBelongsToPlayer(robot: Robot, playerId: UUID) {
         if (robot.player != playerId) throw InvalidPlayerException("Specified player doesn't match player specified in robot")
     }
 
@@ -46,5 +96,9 @@ class RobotDomainService(
      */
     fun saveRobot(robot: Robot): Robot {
         return robotRepository.save(robot)
+    }
+
+    fun saveAll(robots: List<Robot>): List<Robot> {
+        return robotRepository.saveAll(robots).toList()
     }
 }

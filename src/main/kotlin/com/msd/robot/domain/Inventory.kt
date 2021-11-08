@@ -69,12 +69,22 @@ class Inventory {
      *
      * @param resource  the resource which should be taken
      * @param amount    the amount which should be taken
-     * @return a boolean confirming that the specified resources have been taken
      */
-    fun takeResource(resource: ResourceType, amount: Int): Boolean {
+    fun takeResource(resource: ResourceType, amount: Int) {
         if (resourceMap[resource]!! < amount) throw NotEnoughResourcesException("Wanted to take $amount, but only ${resourceMap[resource]!!} 10 were available")
         resourceMap[resource] = resourceMap[resource]!! - amount
         usedStorage -= amount
-        return true
+    }
+
+    /**
+     * Takes all of the specified resource from the inventory
+     *
+     * @param resource The resource type to empty
+     * @return The number of resources of that type taken
+     */
+    fun takeAllOfResource(resource: ResourceType): Int {
+        val amount = getStorageUsageForResource(resource)
+        takeResource(resource, amount)
+        return amount // TODO add tests
     }
 }

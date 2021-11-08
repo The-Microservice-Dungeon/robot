@@ -1,5 +1,6 @@
 package com.msd.robot.application
 
+import com.msd.application.CustomExceptionHandler
 import com.msd.application.GameMapService
 import com.msd.command.AttackCommand
 import com.msd.command.BlockCommand
@@ -13,7 +14,8 @@ import java.util.*
 @Service
 class RobotApplicationService(
     val gameMapService: GameMapService,
-    val robotDomainService: RobotDomainService
+    val robotDomainService: RobotDomainService,
+    val exceptionHandler: CustomExceptionHandler
 ) {
 
     /**
@@ -27,7 +29,7 @@ class RobotApplicationService(
 
         val robot = robotDomainService.getRobot(robotId)
 
-        robotDomainService.doesRobotBelongsToPlayer(robot, playerId)
+        robotDomainService.checkRobotBelongsToPlayer(robot, playerId)
         val planetDto =
             gameMapService.retrieveTargetPlanetIfRobotCanReach(robot.planet.planetId, moveCommand.targetPlanetUUID)
         val cost = planetDto.movementCost
@@ -45,7 +47,7 @@ class RobotApplicationService(
      */
     fun block(blockCommand: BlockCommand) {
         val robot = robotDomainService.getRobot(blockCommand.robotId)
-        robotDomainService.doesRobotBelongsToPlayer(robot, blockCommand.playerUUID)
+        robotDomainService.checkRobotBelongsToPlayer(robot, blockCommand.playerUUID)
         robot.block()
         robotDomainService.saveRobot(robot)
     }
@@ -61,12 +63,28 @@ class RobotApplicationService(
     fun regenerateEnergy(regenCommand: RegenCommand) {
         val robot = robotDomainService.getRobot(regenCommand.robotId)
 
-        robotDomainService.doesRobotBelongsToPlayer(robot, regenCommand.playerId)
+        robotDomainService.checkRobotBelongsToPlayer(robot, regenCommand.playerId)
         robot.regenerateEnergy()
         robotDomainService.saveRobot(robot)
     }
 
     fun executeAttacks(attackCommands: List<AttackCommand>) {
-        TODO("Not yet implemented")
+        val battleFields = setOf<UUID>()
+        attackCommands.forEach {
+            try {
+                val attacker = robotDomainService.getRobot(it.robotId)
+                val target = robotDomainService.getRobot(it.targetRobotUUID)
+                robotDomainService.checkRobotBelongsToPlayer(attacker, it.playerUUID)
+
+                robotDomainService.fight(attacker, target)
+                battleFields.plus(attacker)
+            } catch (re: RuntimeException) {
+                exceptionHandler.handle(re)
+            }
+        }
+
+        battleFields.forEach {
+            robotDomainService.postFightCleanup(it)
+        }
     }
 }

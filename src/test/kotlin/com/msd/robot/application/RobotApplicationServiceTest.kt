@@ -1,6 +1,7 @@
 package com.msd.robot.application
 
 import com.msd.application.ClientException
+import com.msd.application.CustomExceptionHandler
 import com.msd.application.GameMapPlanetDto
 import com.msd.application.GameMapService
 import com.msd.command.AttackCommand
@@ -35,8 +36,8 @@ class RobotApplicationServiceTest {
     lateinit var robot6: Robot
     lateinit var unknownRobotId: UUID
 
-    lateinit var player1Id: UUID
-    lateinit var player2Id: UUID
+    val player1Id = UUID.randomUUID()
+    val player2Id = UUID.randomUUID()
 
     lateinit var planet1: Planet
     lateinit var planet2: Planet
@@ -46,6 +47,10 @@ class RobotApplicationServiceTest {
 
     @MockK
     lateinit var gameMapMockService: GameMapService
+
+    @MockK
+    lateinit var exceptionHandler: CustomExceptionHandler
+
     lateinit var robotApplicationService: RobotApplicationService
     lateinit var robotDomainService: RobotDomainService
 
@@ -55,7 +60,7 @@ class RobotApplicationServiceTest {
     fun setup() {
         MockKAnnotations.init(this)
         robotDomainService = RobotDomainService(robotRepository)
-        robotApplicationService = RobotApplicationService(gameMapMockService, robotDomainService)
+        robotApplicationService = RobotApplicationService(gameMapMockService, robotDomainService, exceptionHandler)
 
         planet1 = Planet(UUID.randomUUID(), PlanetType.SPACE_STATION, null)
         planet2 = Planet(UUID.randomUUID(), PlanetType.STANDARD, null)
@@ -266,13 +271,26 @@ class RobotApplicationServiceTest {
     @Test
     fun `All AttackCommands from a batch get executed`() {
         // given
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+        every { robotRepository.save(any()) } returns robot1
+        every { robotRepository.findByIdOrNull(robot2.id) } returns robot2
+        every { robotRepository.save(any()) } returns robot2
+        every { robotRepository.findByIdOrNull(robot3.id) } returns robot3
+        every { robotRepository.save(any()) } returns robot3
+        every { robotRepository.findByIdOrNull(robot4.id) } returns robot4
+        every { robotRepository.save(any()) } returns robot4
+        every { robotRepository.findByIdOrNull(robot5.id) } returns robot5
+        every { robotRepository.save(any()) } returns robot5
+        every { robotRepository.findByIdOrNull(robot6.id) } returns robot6
+        every { robotRepository.save(any()) } returns robot6
+
         val attackCommands = listOf(
             AttackCommand(robot1.id, player1Id, robot4.id),
             AttackCommand(robot2.id, player1Id, robot5.id),
             AttackCommand(robot3.id, player1Id, robot6.id),
-            AttackCommand(robot4.id, player1Id, robot1.id),
-            AttackCommand(robot5.id, player1Id, robot2.id),
-            AttackCommand(robot6.id, player1Id, robot3.id),
+            AttackCommand(robot4.id, player2Id, robot1.id),
+            AttackCommand(robot5.id, player2Id, robot2.id),
+            AttackCommand(robot6.id, player2Id, robot3.id),
         )
         // when
         robotApplicationService.executeAttacks(attackCommands)

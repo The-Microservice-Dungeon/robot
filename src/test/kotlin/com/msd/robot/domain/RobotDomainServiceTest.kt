@@ -58,7 +58,7 @@ internal class RobotDomainServiceTest {
 
         // when
         assertThrows<InvalidAttackException>("Robots must be on the same Planet to attack each other") {
-            robotDomainService.attackRobot(robot1.id, robot6.id)
+            robotDomainService.fight(robot1, robot6)
         }
         // then
         assertEquals(10, robot6.health)
@@ -67,16 +67,16 @@ internal class RobotDomainServiceTest {
 
     fun `Robots can attack destroyed Robots`() {
         // given
-        for (i in 0..5) robotDomainService.attackRobot(robot1.id, robot4.id)
-        for (i in 0..5) robotDomainService.attackRobot(robot2.id, robot4.id)
+        for (i in 0..5) robotDomainService.fight(robot1, robot4)
+        for (i in 0..5) robotDomainService.fight(robot2, robot4)
         assert(!robot4.alive)
 
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { robotRepository.findByIdOrNull(robot2.id) } returns robot2
         every { robotRepository.findByIdOrNull(robot4.id) } returns robot4
         // when
-        robotDomainService.attackRobot(robot1.id, robot4.id)
-        robotDomainService.attackRobot(robot2.id, robot4.id)
+        robotDomainService.fight(robot1, robot4)
+        robotDomainService.fight(robot2, robot4)
         // then
         assertEquals(-2, robot4.health)
         assertAll(
@@ -91,13 +91,13 @@ internal class RobotDomainServiceTest {
 
     fun `Destroyed Robots can attack other Robots`() {
         // given
-        for (i in 0..10) robotDomainService.attackRobot(robot1.id, robot4.id)
+        for (i in 0..10) robotDomainService.fight(robot1, robot4)
         assert(!robot4.alive)
 
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { robotRepository.findByIdOrNull(robot4.id) } returns robot4
         // when
-        robotDomainService.attackRobot(robot4.id, robot1.id)
+        robotDomainService.fight(robot4, robot1)
         // then
         assertEquals(9, robot1.health)
         assertEquals(19, robot2.energy)
@@ -111,7 +111,7 @@ internal class RobotDomainServiceTest {
         every { robotRepository.findByIdOrNull(robot6.id) } returns robot6
         // when
         assertThrows<NotEnoughEnergyException> {
-            robotDomainService.attackRobot(robot1.id, robot6.id)
+            robotDomainService.fight(robot1, robot6)
         }
         // then
         assertEquals(10, robot6.health)
