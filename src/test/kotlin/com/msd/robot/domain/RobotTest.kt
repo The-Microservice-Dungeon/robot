@@ -323,21 +323,12 @@ class RobotTest {
     }
 
     @Test
-    fun `Health regen increases current health by the correct amount`() {
+    fun `Health regenerates successfully`() {
         //given
         robot1.receiveDamage(5)
         //when
-        robot1.regenerateHealth(5)
+        robot1.repair()
         //then
         assertEquals(robot1.maxHealth, robot1.health)
-    } 
-
-    @Test
-    fun `Health can't regenerate past max Health amount`() {
-            assertThrows<HealthFullException>("Tried to regenerate 5 health but is already at full health.") {
-                robot1.regenerateHealth(5)
-            }
-
-            assertEquals(robot1.maxHealth, robot1.health)
     }
 }
