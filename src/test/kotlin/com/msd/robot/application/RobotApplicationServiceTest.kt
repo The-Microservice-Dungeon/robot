@@ -330,6 +330,62 @@ class RobotApplicationServiceTest {
     }
 
     @Test
+    fun `Only an attack on a robot on another planet doesn't get executed`() {
+        // given
+        every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns
+            listOf(robot1, robot3, robot4, robot6)
+        every { robotRepository.findAllByPlanet_PlanetId(robot2.planet.planetId) } returns
+            listOf(robot2, robot5)
+        every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(robot1.planet.planetId) } returns listOf()
+        every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(robot2.planet.planetId) } returns listOf()
+        every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf(
+            robot1, robot2, robot3, robot4, robot5, robot6
+        )
+
+        val attackCommands = listOf(
+            AttackCommand(robot1.id, player1Id, robot4.id),
+            AttackCommand(robot2.id, player1Id, robot4.id),
+            AttackCommand(robot3.id, player1Id, robot6.id),
+            AttackCommand(robot4.id, player2Id, robot1.id),
+            AttackCommand(robot5.id, player2Id, robot1.id),
+            AttackCommand(robot6.id, player2Id, robot3.id),
+        )
+        justRun { exceptionHandler.handle(any(), any()) }
+        // when
+        robotApplicationService.executeAttacks(attackCommands)
+        // then
+        assertAll(
+            {
+                assertEquals(9, robot1.health)
+                assertEquals(19, robot1.energy)
+            },
+            {
+                assertEquals(10, robot2.health)
+                assertEquals(20, robot2.energy)
+            },
+            {
+                assertEquals(9, robot3.health)
+                assertEquals(19, robot3.energy)
+            },
+            {
+                assertEquals(9, robot4.health)
+                assertEquals(19, robot4.energy)
+            },
+            {
+                assertEquals(10, robot5.health)
+                assertEquals(20, robot5.energy)
+            },
+            {
+                assertEquals(9, robot6.health)
+                assertEquals(19, robot6.energy)
+            },
+        )
+        verify(exactly = 2) {
+            exceptionHandler.handle(any(), any())
+        }
+    }
+
+    @Test
     fun `Resources of dead robots get distributed correctly`() {
         // given
         every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns
