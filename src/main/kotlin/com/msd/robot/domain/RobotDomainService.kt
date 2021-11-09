@@ -12,6 +12,13 @@ class RobotDomainService(
     val robotRepository: RobotRepository
 ) {
 
+    /**
+     * Check if an attack is valid, and if so, execute the attack.
+     *
+     * @param attacker      The robot attacking
+     * @param target        The target of the attack
+     * @throws OutOfReachException If the robots are not on the same planet
+     */
     fun fight(attacker: Robot, target: Robot) {
         if (attacker.planet.planetId != target.planet.planetId)
             throw OutOfReachException("The attacking robot and the defending robot are not on the same planet")
@@ -22,7 +29,23 @@ class RobotDomainService(
         saveRobot(target)
     }
 
+    /**
+     * Makes sure all resources of dead robots on the planet get distributed equally among all other robots on the
+     * planet and that dead robots get deleted from the repository.
+     *
+     * This method should not throw any exceptions.
+     */
     fun postFightCleanup(planetId: UUID) {
+        val resourcesToBeDistributed = deleteDeadRobots(planetId)
+        distributeResources(planetId, resourcesToBeDistributed)
+    }
+
+    /**
+     * Find all the dead robots on the given planet and delete them. Return the accumulation of all their resources.
+     *
+     * @param planetId      The ID of the planet on which all dead robots should be deleted.
+     */
+    private fun deleteDeadRobots(planetId: UUID): MutableMap<ResourceType, Int> {
         val deadRobotsOnPlanet = robotRepository.findAllByAliveFalseAndPlanet_PlanetId(planetId)
         val resourcesToBeDistributed = mutableMapOf(
             ResourceType.COAL to 0,
@@ -39,7 +62,20 @@ class RobotDomainService(
             }
             robotRepository.delete(robot)
         }
+        return resourcesToBeDistributed
+    }
 
+    /**
+     * Distribute the given resources among all the robots on the given planet.
+     *
+     * @param planetId      Id of the planet on which the resources get distributed. This is needed to determine which
+     *                      robots get them.
+     * @param resourcesToBeDistributed  The resources which need to get distributed.
+     */
+    private fun distributeResources(
+        planetId: UUID,
+        resourcesToBeDistributed: MutableMap<ResourceType, Int>
+    ) {
         val robotsAliveOnPlanet = robotRepository.findAllByPlanet_PlanetId(planetId)
         var numAliveAndFreeInventory = robotsAliveOnPlanet
             .filter { it.inventory.usedStorage <= it.inventory.maxStorage }
@@ -74,7 +110,7 @@ class RobotDomainService(
                 }
             }
         }
-        saveAll(robotsAliveOnPlanet)
+        robotRepository.saveAll(robotsAliveOnPlanet)
     }
 
     /**

@@ -68,6 +68,16 @@ class RobotApplicationService(
         robotDomainService.saveRobot(robot)
     }
 
+    /**
+     * Execute all attack commands. This has to make sure that all attacks get executed, even if a robot dies during
+     * the round. After all commands have been executed, dead robots get deleted and their resources distributed
+     * equally among all living robots on the planet.
+     *
+     * This method should never throw any exception. Exceptions occuring during the execution of a single command get
+     * handled right then and should not disturb the execution of the following commands.
+     *
+     * @param attackCommands        A list of AttackCommands that need to be executed
+     */
     fun executeAttacks(attackCommands: List<AttackCommand>) {
         val battleFields = mutableSetOf<UUID>()
         attackCommands.forEach {
@@ -79,7 +89,6 @@ class RobotApplicationService(
                 robotDomainService.fight(attacker, target)
                 battleFields.add(attacker.planet.planetId)
             } catch (re: RuntimeException) {
-                re.printStackTrace()
                 exceptionHandler.handle(re, it.transactionUUID)
             }
         }
