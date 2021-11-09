@@ -251,4 +251,29 @@ class RobotApplicationServiceTest {
         // then
         assert(!robot1.planet.blocked)
     }
+
+    @Test
+    fun `Throws exception when robot is not found`() {
+        //given
+        every { robotRepository.findByIdOrNull(robot1.id) } returns null
+
+        //then
+        assertThrows<RobotNotFoundException> {
+            robotApplicationService.repair(robot1.id)
+        }
+    }
+
+
+    @Test
+    fun `Health regenerates successfully`() {
+        //given
+        robot1.receiveDamage(5)
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+
+        //when
+        robotApplicationService.repair(robot1.id)
+
+        //then
+        assertEquals(robot1.maxHealth, robot1.health)
+    }
 }

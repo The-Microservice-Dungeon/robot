@@ -321,4 +321,14 @@ class RobotTest {
             }
         )
     }
+
+    @Test
+    fun `Health regenerates successfully`() {
+        //given
+        robot1.receiveDamage(5)
+        //when
+        robot1.repair()
+        //then
+        assertEquals(robot1.maxHealth, robot1.health)
+    }
 }
