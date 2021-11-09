@@ -66,6 +66,15 @@ class RobotApplicationService(
         robotDomainService.saveRobot(robot)
     }
 
+    /**
+     * Upgrades the [Robot's][Robot] specified Upgrade to the given level.
+     *
+     * @param robotId     the `Robot` which should be updated
+     * @param upgradeType The upgrade which should increase its level
+     * @param level       the level to which the upgrade should increase
+     * @throws RobotNotFoundException  if there is not `Robot` with the specified ID
+     * @throws UpgradeException        if there is an attempt to skip a level, downgrade or upgrade past the max level
+     */
     fun upgrade(robotId: UUID, upgradeType: UpgradeType, level: Int) {
         TODO("Not yet implemented")
     }
