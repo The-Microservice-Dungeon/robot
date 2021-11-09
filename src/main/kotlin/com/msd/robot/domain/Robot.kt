@@ -161,7 +161,16 @@ class Robot(
         otherRobot.receiveDamage(attackDamage)
     }
 
-    fun upgrade(upgradeType: UpgradeType) {
+    /**
+     * Changes the level of an Upgrade of this `Robot`. Upgrade levels can't be skipped, downgrades are not allowed and
+     * the max level for all upgrades is 5 except for `Mining` which is 4. If one of those cases appears an Exception
+     * is thrown.
+     *
+     * @param upgradeType the stat which should be updated
+     * @param level       the level to which an upgrade should be upgraded
+     * @throws UpgradeException    when an upgrade level is skipped, a downgrade is attempted or an upgrade past the max
+     */
+    fun upgrade(upgradeType: UpgradeType, level: Int) {
         when (upgradeType) {
             UpgradeType.DAMAGE -> damageLevel++
             UpgradeType.ENERGY_REGEN -> energyRegenLevel++
