@@ -36,8 +36,8 @@ class RobotApplicationServiceTest {
     lateinit var robot6: Robot
     lateinit var unknownRobotId: UUID
 
-    val player1Id = UUID.randomUUID()
-    val player2Id = UUID.randomUUID()
+    private val player1Id: UUID = UUID.randomUUID()
+    private val player2Id: UUID = UUID.randomUUID()
 
     lateinit var planet1: Planet
     lateinit var planet2: Planet

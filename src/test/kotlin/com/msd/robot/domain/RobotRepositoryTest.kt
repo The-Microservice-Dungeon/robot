@@ -15,8 +15,8 @@ import javax.persistence.EntityNotFoundException
 class RobotRepositoryTest(
     @Autowired val robotRepository: RobotRepository
 ) {
-    val player1Id = UUID.randomUUID()
-    val player2Id = UUID.randomUUID()
+    val player1Id: UUID = UUID.randomUUID()
+    val player2Id: UUID = UUID.randomUUID()
 
     lateinit var planet1: Planet
     lateinit var planet2: Planet
