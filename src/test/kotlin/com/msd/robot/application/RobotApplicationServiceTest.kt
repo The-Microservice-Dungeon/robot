@@ -14,6 +14,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.verify
+import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -250,5 +251,88 @@ class RobotApplicationServiceTest {
         }
         // then
         assert(!robot1.planet.blocked)
+    }
+
+    @Test
+    fun `Throws exception when upgrading Robot if robotId is unknown`() {
+        // given
+        every { robotRepository.findByIdOrNull(unknownRobotId) } returns null
+        // then
+        assertThrows<RobotNotFoundException> {
+            robotApplicationService.upgrade(unknownRobotId, UpgradeType.HEALTH, 1)
+        }
+    }
+
+    @Test
+    fun `Can't skip upgrade levels`() {
+        // given
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+        // when
+        assertThrows<UpgradeException>("Cannot skip upgrade levels. Tried to upgrade from level 0 to level 2") {
+            robotApplicationService.upgrade(robot1.id, UpgradeType.HEALTH, 2)
+        }
+        // then
+        assertEquals(0, robot1.healthLevel)
+    }
+
+    @Test
+    fun `Can't downgrade`() {
+        // given
+        robot1.upgrade(UpgradeType.HEALTH)
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+        // when
+        assertThrows<UpgradeException>("Cannot downgrade Robot. Tried to go from level 1 to level 0") {
+            robotApplicationService.upgrade(robot1.id, UpgradeType.HEALTH, 0)
+        }
+        // then
+        assertEquals(1, robot1.healthLevel)
+    }
+
+    @Test
+    fun `Can't upgrade past max level`() {
+        // given
+        for (i in 1..5) robot1.upgrade(UpgradeType.HEALTH)
+        for (i in 1..4) robot1.upgrade(UpgradeType.MINING) // Mining level max is level 4
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+        // when
+        assertAll(
+            {
+                assertThrows<UpgradeException>("Max Health Level has been reached. Upgrade not possible.") {
+                    robotApplicationService.upgrade(robot1.id, UpgradeType.HEALTH, 6)
+                }
+            },
+            {
+                assertThrows<UpgradeException>("Max Mining has been reached. Upgrade not possible.") {
+                    robotApplicationService.upgrade(robot1.id, UpgradeType.MINING, 5)
+                }
+            }
+        )
+
+        // then
+        assertEquals(5, robot1.healthLevel)
+        assertEquals(4, robot1.miningLevel)
+    }
+
+    @Test
+    fun `Upgrading changes a robots level`() {
+        // given
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+        // when
+        robotApplicationService.upgrade(robot1.id, UpgradeType.HEALTH, 1)
+        robotApplicationService.upgrade(robot1.id, UpgradeType.MINING, 1)
+        robotApplicationService.upgrade(robot1.id, UpgradeType.STORAGE, 1)
+
+        // then
+        assertAll(
+            {
+                assertEquals(1, robot1.healthLevel)
+            },
+            {
+                assertEquals(1, robot1.miningLevel)
+            },
+            {
+                assertEquals(1, robot1.inventory.storageLevel)
+            }
+        )
     }
 }

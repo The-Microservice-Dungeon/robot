@@ -6,6 +6,7 @@ import com.msd.command.MovementCommand
 import com.msd.command.RegenCommand
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
+import com.msd.robot.domain.UpgradeType
 import org.springframework.stereotype.Service
 import java.util.*
 
@@ -63,5 +64,9 @@ class RobotApplicationService(
         robotDomainService.doesRobotBelongsToPlayer(robot, regenCommand.playerId)
         robot.regenerateEnergy()
         robotDomainService.saveRobot(robot)
+    }
+
+    fun upgrade(robotId: UUID, upgradeType: UpgradeType, level: Int) {
+        TODO("Not yet implemented")
     }
 }
