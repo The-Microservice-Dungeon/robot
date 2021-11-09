@@ -278,7 +278,7 @@ class RobotApplicationServiceTest {
     @Test
     fun `Can't downgrade`() {
         // given
-        robot1.upgrade(UpgradeType.HEALTH)
+        robot1.upgrade(UpgradeType.HEALTH, 1)
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         // when
         assertThrows<UpgradeException>("Cannot downgrade Robot. Tried to go from level 1 to level 0") {
@@ -291,8 +291,8 @@ class RobotApplicationServiceTest {
     @Test
     fun `Can't upgrade past max level`() {
         // given
-        for (i in 1..5) robot1.upgrade(UpgradeType.HEALTH)
-        for (i in 1..4) robot1.upgrade(UpgradeType.MINING) // Mining level max is level 4
+        for (i in 1..5) robot1.upgrade(UpgradeType.HEALTH, i)
+        for (i in 1..4) robot1.upgrade(UpgradeType.MINING, i) // Mining level max is level 4
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         // when
         assertAll(

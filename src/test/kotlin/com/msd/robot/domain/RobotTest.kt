@@ -218,6 +218,18 @@ class RobotTest {
     }
 
     @Test
+    fun `Can't downgrade the level of a Robot`() {
+        // given
+        robot1.upgrade(UpgradeType.HEALTH, 1)
+        // when
+        assertThrows<UpgradeException> {
+            robot1.upgrade(UpgradeType.HEALTH, 0)
+        }
+        // then
+        assertEquals(1, robot1.healthLevel)
+    }
+
+    @Test
     fun `The upgrade level of a robot cannot go higher than 5 (except MiningLevel)`() {
         // given
         for (upgradeType in UpgradeType.values()) {
