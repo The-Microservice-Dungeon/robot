@@ -82,9 +82,9 @@ class Inventory {
      * @param resource The resource type to empty
      * @return The number of resources of that type taken
      */
-    fun takeAllOfResource(resource: ResourceType): Int {
+    fun takeAllResourcesOfType(resource: ResourceType): Int {
         val amount = getStorageUsageForResource(resource)
         takeResource(resource, amount)
-        return amount // TODO add tests
+        return amount
     }
 }

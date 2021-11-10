@@ -58,7 +58,7 @@ class RobotDomainService(
         deadRobotsOnPlanet.forEach { robot ->
             ResourceType.values().forEach { resourceType ->
                 resourcesToBeDistributed[resourceType] =
-                    resourcesToBeDistributed[resourceType]!!.plus(robot.inventory.takeAllOfResource(resourceType))
+                    resourcesToBeDistributed[resourceType]!!.plus(robot.inventory.takeAllResourcesOfType(resourceType))
             }
             robotRepository.delete(robot)
         }

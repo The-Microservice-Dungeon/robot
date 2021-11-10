@@ -112,4 +112,12 @@ class InventoryTest {
         assertEquals(50, robot1.inventory.maxStorage)
         assertEquals(25, robot1.inventory.getStorageUsageForResource(ResourceType.IRON))
     }
+
+    @Test
+    fun `takeAllResourcesOfType takes all resources of this type`() {
+        // given
+        ResourceType.values().forEach { robot1.inventory.addResource(it, 4) }
+        // then
+        assertAll(ResourceType.values().map { { assertEquals(4, robot1.inventory.takeAllResourcesOfType(it)) } })
+    }
 }
