@@ -141,11 +141,11 @@ internal class RobotDomainServiceTest {
             robot1.inventory.addResource(it, 3)
         }
         every { robotRepository.findAllByPlanet_PlanetId(planet1.planetId) } returns
-            listOf(robot1, robot2, robot4, robot5)
+            listOf(robot2, robot4, robot5)
         every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(planet1.planetId) } returns listOf(robot1)
         every { robotRepository.findByIdOrNull(robot1.id) } answers { robots.find { it.id == firstArg() } }
         justRun { robotRepository.delete(robot1) }
-        every { robotRepository.saveAll(listOf(robot1, robot2, robot4, robot5)) } answers { firstArg() }
+        every { robotRepository.saveAll(listOf(robot2, robot4, robot5)) } answers { firstArg() }
         // when
         for (i in 1..4) {
             robot2.attack(robot1)
