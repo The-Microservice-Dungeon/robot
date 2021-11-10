@@ -97,4 +97,16 @@ class RobotApplicationService(
             robotDomainService.postFightCleanup(planetId)
         }
     }
+
+    /**
+     * Repairs the specified [Robot] to full health.
+     *
+     * @param robotId             the [UUID] of the to be repaired robot.
+     */
+    fun repair(robotId: UUID) {
+        val robot = robotDomainService.getRobot(robotId)
+
+        robot.repair()
+        robotDomainService.saveRobot(robot)
+    }
 }
