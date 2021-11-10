@@ -76,6 +76,8 @@ class RobotApplicationService(
      * @throws UpgradeException        if there is an attempt to skip a level, downgrade or upgrade past the max level
      */
     fun upgrade(robotId: UUID, upgradeType: UpgradeType, level: Int) {
-        TODO("Not yet implemented")
+        val robot = robotDomainService.getRobot(robotId)
+        robot.upgrade(upgradeType, level)
+        robotDomainService.saveRobot(robot)
     }
 }

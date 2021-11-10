@@ -171,15 +171,14 @@ class Robot(
      * @throws UpgradeException    when an upgrade level is skipped, a downgrade is attempted or an upgrade past the max
      */
     fun upgrade(upgradeType: UpgradeType, level: Int) {
-        // TODO rewrite to use param `level`
         when (upgradeType) {
-            UpgradeType.DAMAGE -> damageLevel++
-            UpgradeType.ENERGY_REGEN -> energyRegenLevel++
-            UpgradeType.MAX_ENERGY -> energyLevel++
-            UpgradeType.HEALTH -> healthLevel++
-            UpgradeType.STORAGE -> inventory.storageLevel++
-            UpgradeType.MINING_SPEED -> miningSpeedLevel++
-            UpgradeType.MINING -> miningLevel++
+            UpgradeType.DAMAGE -> damageLevel = level
+            UpgradeType.ENERGY_REGEN -> energyRegenLevel = level
+            UpgradeType.MAX_ENERGY -> energyLevel = level
+            UpgradeType.HEALTH -> healthLevel = level
+            UpgradeType.STORAGE -> inventory.storageLevel = level
+            UpgradeType.MINING_SPEED -> miningSpeedLevel = level
+            UpgradeType.MINING -> miningLevel = level
         }
     }
 

@@ -317,6 +317,7 @@ class RobotApplicationServiceTest {
     fun `Upgrading changes a robots level`() {
         // given
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+        every { robotRepository.save(any()) } returns robot1
         // when
         robotApplicationService.upgrade(robot1.id, UpgradeType.HEALTH, 1)
         robotApplicationService.upgrade(robot1.id, UpgradeType.MINING, 1)
