@@ -59,8 +59,7 @@ internal class RobotDomainServiceTest {
     @Test
     fun `Robots can't attack Robots in another System`() {
         // given
-        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
-        every { robotRepository.findByIdOrNull(robot6.id) } returns robot6
+        every { robotRepository.findByIdOrNull(any()) } answers { robots.find { it.id == firstArg() } }
 
         // when
         assertThrows<OutOfReachException>("Robots must be on the same Planet to attack each other") {
@@ -74,9 +73,7 @@ internal class RobotDomainServiceTest {
     @Test
     fun `Robots can attack destroyed Robots`() {
         // given
-        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
-        every { robotRepository.findByIdOrNull(robot2.id) } returns robot2
-        every { robotRepository.findByIdOrNull(robot4.id) } returns robot4
+        every { robotRepository.findByIdOrNull(any()) } answers { robots.find { it.id == firstArg() } }
         every { robotRepository.save(robot1) } returns robot1
         every { robotRepository.save(robot2) } returns robot2
         every { robotRepository.save(robot4) } returns robot4
@@ -103,8 +100,7 @@ internal class RobotDomainServiceTest {
     @Test
     fun `Destroyed Robots can attack other Robots`() {
         // given
-        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
-        every { robotRepository.findByIdOrNull(robot4.id) } returns robot4
+        every { robotRepository.findByIdOrNull(any()) } answers { robots.find { it.id == firstArg() } }
         every { robotRepository.save(robot1) } returns robot1
         every { robotRepository.save(robot4) } returns robot4
 
@@ -122,9 +118,8 @@ internal class RobotDomainServiceTest {
     fun `Robots need enough energy to attack`() {
         // given
         robot1.move(planet2, 20)
+        every { robotRepository.findByIdOrNull(any()) } answers { robots.find { it.id == firstArg() } }
 
-        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
-        every { robotRepository.findByIdOrNull(robot6.id) } returns robot6
         // when
         assertThrows<NotEnoughEnergyException> {
             robotDomainService.fight(robot1, robot6)
@@ -143,7 +138,7 @@ internal class RobotDomainServiceTest {
         every { robotRepository.findAllByPlanet_PlanetId(planet1.planetId) } returns
             listOf(robot2, robot4, robot5)
         every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(planet1.planetId) } returns listOf(robot1)
-        every { robotRepository.findByIdOrNull(robot1.id) } answers { robots.find { it.id == firstArg() } }
+        every { robotRepository.findByIdOrNull(any()) } answers { robots.find { it.id == firstArg() } }
         justRun { robotRepository.delete(robot1) }
         every { robotRepository.saveAll(listOf(robot2, robot4, robot5)) } answers { firstArg() }
         // when
