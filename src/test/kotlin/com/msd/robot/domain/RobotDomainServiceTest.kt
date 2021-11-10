@@ -1,9 +1,11 @@
 package com.msd.robot.domain
 
+import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import io.mockk.justRun
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -29,6 +31,8 @@ internal class RobotDomainServiceTest {
     lateinit var planet1: Planet
     lateinit var planet2: Planet
 
+    lateinit var robots: List<Robot>
+
     @MockK
     lateinit var robotRepository: RobotRepository
 
@@ -49,6 +53,7 @@ internal class RobotDomainServiceTest {
         robot4 = Robot(player2Id, planet1)
         robot5 = Robot(player2Id, planet1)
         robot6 = Robot(player2Id, planet2)
+        robots = listOf(robot1, robot2, robot3, robot4, robot5, robot6)
     }
 
     @Test
@@ -127,5 +132,47 @@ internal class RobotDomainServiceTest {
         // then
         assertEquals(10, robot6.health)
         assertEquals(0, robot1.energy)
+    }
+
+    @Test
+    fun `post clean fight distributes all resources equally when possible`() {
+        // given
+        ResourceType.values().forEach {
+            robot1.inventory.addResource(it, 3)
+        }
+        every { robotRepository.findAllByPlanet_PlanetId(planet1.planetId) } returns
+            listOf(robot1, robot2, robot4, robot5)
+        every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(planet1.planetId) } returns listOf(robot1)
+        every { robotRepository.findByIdOrNull(robot1.id) } answers { robots.find { it.id == firstArg() } }
+        justRun { robotRepository.delete(robot1) }
+        every { robotRepository.saveAll(listOf(robot1, robot2, robot4, robot5)) } answers { firstArg() }
+        // when
+        for (i in 1..4) {
+            robot2.attack(robot1)
+            robot4.attack(robot1)
+            robot5.attack(robot1)
+        }
+        assert(!robot1.alive) { "except robot1 to be dead" }
+
+        robotDomainService.postFightCleanup(planet1.planetId)
+        // then
+        assertEquals(0, robot1.inventory.usedStorage)
+        assertAll(
+            "All robots have used storage of 5",
+            { assertEquals(5, robot2.inventory.usedStorage) },
+            { assertEquals(5, robot4.inventory.usedStorage) },
+            { assertEquals(5, robot5.inventory.usedStorage) }
+
+        )
+        assertAll(
+            "all robots have one of each resource",
+            ResourceType.values().map {
+                {
+                    assertEquals(1, robot2.inventory.getStorageUsageForResource(it))
+                    assertEquals(1, robot4.inventory.getStorageUsageForResource(it))
+                    assertEquals(1, robot5.inventory.getStorageUsageForResource(it))
+                }
+            }
+        )
     }
 }
