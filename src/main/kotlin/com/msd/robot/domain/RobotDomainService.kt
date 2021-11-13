@@ -129,7 +129,7 @@ class RobotDomainService(
      * Gets the specified [Robot].
      *
      * @param robotId the `UUID` of the robot which should be returned
-     * @return the specified Robot
+     * @return the specified `Robot`
      * @throws RobotNotFoundException  if there is no `Robot` with the specified ID
      */
     fun getRobot(robotId: UUID): Robot {
@@ -141,12 +141,18 @@ class RobotDomainService(
      * Saves the specified Robot.
      *
      * @param robot   the `Robot` which should be saved
-     * @return the saved Robot
+     * @return the saved `Robot`
      */
     fun saveRobot(robot: Robot): Robot {
         return robotRepository.save(robot)
     }
 
+    /**
+     * Save all specified [Robots] [Robot].
+     *
+     * @param robots  a `List` of all Robots which have to be saved
+     * @return a `List` of all saved Robots
+     */
     fun saveAll(robots: List<Robot>): List<Robot> {
         return robotRepository.saveAll(robots).toList()
     }
