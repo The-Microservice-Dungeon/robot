@@ -93,7 +93,7 @@ class Inventory {
      *
      * @return `true` if the inventory is full, otherwise `false`
      */
-    fun isFull() {
-        TODO()
+    fun isFull(): Boolean {
+        return maxStorage - usedStorage == 0
     }
 }
