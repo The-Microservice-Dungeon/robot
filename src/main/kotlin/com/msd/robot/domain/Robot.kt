@@ -184,7 +184,7 @@ class Robot(
     }
 
     /**
-     * Regenerates this [Robot's] [Robot] `energy`. Energy Regeneration is doubled when the Robot is in the [Player's][Player] spawn
+     * Regenerates this [Robot's] [Robot] `energy`.
      */
     fun regenerateEnergy() {
         energy += energyRegen
