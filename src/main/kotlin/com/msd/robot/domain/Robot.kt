@@ -2,6 +2,7 @@ package com.msd.robot.domain
 
 import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
+import com.msd.planet.domain.PlanetType
 import java.lang.IllegalArgumentException
 import java.util.*
 import javax.persistence.*
@@ -58,11 +59,6 @@ class Robot(
                 value
         }
 
-    /**
-     * Sets the robot's healthLevel to the given value.
-     *
-     * @throws UpgradeException    when an upgrade level is skipped, a downgrade is attempted or an upgrade past the max
-     */
     var healthLevel: Int = 0
         private set(value) {
             if (value > 5) throw UpgradeException("Max Health Level has been reached. Upgrade not possible.")
@@ -75,11 +71,6 @@ class Robot(
             field = value
         }
 
-    /**
-     * Sets the robot's damageLevel to the given value.
-     *
-     * @throws UpgradeException when an upgrade level is skipped, a downgrade is attempted or an upgrade past the max
-     */
     var damageLevel: Int = 0
         private set(value) {
             if (value > 5) throw UpgradeException("Max Damage Level has been reached. Upgrade not possible.")
@@ -93,11 +84,6 @@ class Robot(
             field = value
         }
 
-    /**
-     * Sets the robot's miningSpeedLevel to the given value.
-     *
-     * @throws UpgradeException when an upgrade level is skipped, a downgrade is attempted or an upgrade past the max
-     */
     var miningSpeedLevel: Int = 0
         private set(value) {
             if (value > 5) throw UpgradeException("Max MiningSpeed Level has been reached. Upgrade not possible.")
@@ -110,11 +96,6 @@ class Robot(
             field = value
         }
 
-    /**
-     * Sets the robot's miningLevel to the given value.
-     *
-     * @throws UpgradeException when an upgrade level is skipped, a downgrade is attempted or an upgrade past the max
-     */
     var miningLevel: Int = 0
         private set(value) {
             if (value > 4) throw UpgradeException("Max Mining Level has been reached. Upgrade not possible.")
@@ -127,11 +108,6 @@ class Robot(
             field = value
         }
 
-    /**
-     * Sets the robot's energyLevel to the given value.
-     *
-     * @throws UpgradeException when an upgrade level is skipped, a downgrade is attempted or an upgrade past the max
-     */
     var energyLevel: Int = 0
         private set(value) {
             if (value > 5) throw UpgradeException("Max Energy Level has been reached. Upgrade not possible.")
@@ -144,11 +120,6 @@ class Robot(
             field = value
         }
 
-    /**
-     * Sets the robot's energyRegenLevel to the given value.
-     *
-     * @throws UpgradeException when an upgrade level is skipped, a downgrade is attempted or an upgrade past the max
-     */
     var energyRegenLevel: Int = 0
         private set(value) {
             if (value > 5) throw UpgradeException("Max Energy Regen Level has been reached. Upgrade not possible.")
@@ -161,14 +132,6 @@ class Robot(
             field = value
         }
 
-    /**
-     * Moves this `Robot` to a given `Planet`, unless the `Planet` is currently blocked.
-     *
-     * @param planet The `Planet` to move to.
-     * @param cost The cost of moving to the `Planet`, which is the movement difficulty of the target.
-     * @throws PlanetBlockedException if the targeted `Planet` is currently blocked.
-     * @throws NotEnoughEnergyException if the `Robot` does not have enough energy to move to the `Planet`.
-     */
     fun move(planet: Planet, cost: Int) {
         this.reduceEnergy(cost)
         if (this.planet.blocked)
@@ -176,34 +139,16 @@ class Robot(
         this.planet = planet
     }
 
-    /**
-     * Blocks the current planet.
-     *
-     * @throws NotEnoughEnergyException if the robot has not enough energy to block
-     */
     fun block() {
         this.reduceEnergy(round(2 + 0.1 * maxEnergy).toInt())
         this.planet.blocked = true // TODO make sure this gets reset every round
     }
 
-    /**
-     * This `Robot` receives a given amount of [damage].
-     * If the damage reduces the health to (or below) 0, the robot is destroyed.
-     *
-     * @param damage the amount of damage to be received
-     */
     fun receiveDamage(damage: Int) {
         this.health -= damage
         if (health <= 0) alive = false
     }
 
-    /**
-     * Reduces the energy of the `Robot` by the given amount.
-     *
-     * @param amount the amount of energy to be subtracted
-     * @throws NotEnoughEnergyException if the `Robots` current energy is less than the amount to be subtracted
-     * @throws IllegalArgumentException if the amount to be subtracted is negative
-     */
     private fun reduceEnergy(amount: Int) {
         if (amount > energy) throw NotEnoughEnergyException("Tried to reduce energy by $amount but only has $energy energy")
         if (amount < 0) throw IllegalArgumentException("Used energy amount cannot be less than zero")
@@ -211,12 +156,6 @@ class Robot(
         energy -= amount
     }
 
-    /**
-     * This `Robot` attacks another `Robot`.
-     *
-     * @param otherRobot the [Robot] to attack
-     * @throws NotEnoughEnergyException if the robot has not enough energy to attack
-     */
     fun attack(otherRobot: Robot) {
         reduceEnergy(damageLevel + 1)
         otherRobot.receiveDamage(attackDamage)
@@ -243,19 +182,10 @@ class Robot(
         }
     }
 
-    /**
-     * Checks if this robot has a high enough level to mine the given resource.
-     *
-     * @param resourceType the type of resource which should be mined
-     * @return if this robot can mine the given [resourceType]
-     */
     fun canMine(resourceType: ResourceType): Boolean {
         return this.miningLevel >= resourceType.requiredMiningLevel
     }
 
-    /**
-     * @return the sum of all upgrades of this this [Robot]
-     */
     fun totalUpgrades(): Int {
         return damageLevel + energyLevel + energyRegenLevel + healthLevel + inventory.storageLevel + miningSpeedLevel + miningLevel
     }
