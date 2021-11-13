@@ -564,7 +564,7 @@ class RobotApplicationServiceTest {
                 assertEquals(false, robot4.alive)
             },
             {
-                assertEquals( // Robot 4 had 20 items in its inventory, the others none
+                assertEquals(
                     60,
                     robot1.inventory.usedStorage +
                         robot3.inventory.usedStorage +

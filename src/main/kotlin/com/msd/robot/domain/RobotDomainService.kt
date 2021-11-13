@@ -37,13 +37,14 @@ class RobotDomainService(
      */
     fun postFightCleanup(planetId: UUID) {
         val resourcesToBeDistributed = deleteDeadRobots(planetId)
-        distributeResources(planetId, resourcesToBeDistributed)
+        distributeDroppedResources(planetId, resourcesToBeDistributed)
     }
 
     /**
      * Find all the dead robots on the given planet and delete them. Return the accumulation of all their resources.
      *
      * @param planetId      The ID of the planet on which all dead robots should be deleted.
+     * @return A MutableMap giving the amount of every resource that was dropped by the dead robots
      */
     private fun deleteDeadRobots(planetId: UUID): MutableMap<ResourceType, Int> {
         val deadRobotsOnPlanet = robotRepository.findAllByAliveFalseAndPlanet_PlanetId(planetId)
@@ -72,7 +73,7 @@ class RobotDomainService(
      *                      robots get them.
      * @param resourcesToBeDistributed  The resources which need to get distributed.
      */
-    private fun distributeResources(
+    private fun distributeDroppedResources(
         planetId: UUID,
         resourcesToBeDistributed: MutableMap<ResourceType, Int>
     ) {
@@ -89,14 +90,14 @@ class RobotDomainService(
                 if (resourcesPerRobot >= 1) {
                     robotsAliveOnPlanet.forEach { robot ->
                         val freeInventory = robot.inventory.maxStorage - robot.inventory.usedStorage
-                        resourcesToBeDistributed[resource] =
+                        resourcesToBeDistributed[resource] = resourcesToBeDistributed[resource]!! -
                             if (freeInventory < resourcesPerRobot) {
                                 numAliveAndFreeInventory -= 1
                                 robot.inventory.addResource(resource, freeInventory)
-                                resourcesToBeDistributed[resource]!! - freeInventory
+                                freeInventory
                             } else {
                                 robot.inventory.addResource(resource, resourcesPerRobot)
-                                resourcesToBeDistributed[resource]!! - resourcesPerRobot
+                                resourcesPerRobot
                             }
                     }
                 } else {
