@@ -2,7 +2,6 @@ package com.msd.robot.domain
 
 import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
-import com.msd.planet.domain.PlanetType
 import java.lang.IllegalArgumentException
 import java.util.*
 import javax.persistence.*
@@ -50,7 +49,7 @@ class Robot(
 
     var health: Int = maxHealth
         private set(value) {
-            if (value > this.maxHealth) throw HealthFullException("Tried to repair robot but it is already at full health.");
+            if (value > this.maxHealth) throw HealthFullException("Tried to repair robot but it is already at full health.")
             field = value
         }
 
@@ -188,11 +187,7 @@ class Robot(
      * Regenerates this [Robot's] [Robot] `energy`. Energy Regeneration is doubled when the Robot is in the [Player's][Player] spawn
      */
     fun regenerateEnergy() {
-        energy += if (planet.type == PlanetType.SPAWN) {
-            energyRegen * 2
-        } else {
-            energyRegen
-        }
+        energy += energyRegen
     }
 
     /**

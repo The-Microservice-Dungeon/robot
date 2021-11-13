@@ -1,7 +1,6 @@
 package com.msd.application
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.msd.planet.domain.PlanetType
 import com.msd.robot.application.TargetPlanetNotReachableException
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -34,7 +33,7 @@ class GameMapServiceTest {
     @Test
     fun `Returns correct GameMapPlanetDto`() {
         // given
-        val targetPlanetDto = GameMapPlanetDto(randomUUID(), 3, PlanetType.STANDARD, randomUUID())
+        val targetPlanetDto = GameMapPlanetDto(randomUUID(), 3)
 
         mockGameServiceWebClient.enqueue(
             MockResponse()
