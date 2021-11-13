@@ -191,9 +191,13 @@ class Robot(
     }
 
     /**
-     * Regenerates this [Robot's] [Robot] `energy`.
+     * Regenerates this [Robot's] [Robot] `energy`. Energy Regeneration is doubled when the Robot is in the [Player's][Player] spawn
      */
     fun regenerateEnergy() {
-        energy += energyRegen
+        energy += if (planet.type == PlanetType.SPAWN) {
+            energyRegen * 2
+        } else {
+            energyRegen
+        }
     }
 }
