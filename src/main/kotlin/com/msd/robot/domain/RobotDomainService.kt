@@ -78,40 +78,85 @@ class RobotDomainService(
         resourcesToBeDistributed: MutableMap<ResourceType, Int>
     ) {
         val robotsAliveOnPlanet = robotRepository.findAllByPlanet_PlanetId(planetId)
-        var numAliveAndFreeInventory = robotsAliveOnPlanet
-            .filter { it.inventory.usedStorage <= it.inventory.maxStorage }
-            .count()
 
         // reversed, so the most valuable resources get distributed first
-        ResourceType.values().reversed().forEach { resource ->
-            while (resourcesToBeDistributed[resource]!! > 0 && numAliveAndFreeInventory > 0) {
-                val resourcesPerRobot = resourcesToBeDistributed[resource]!!.floorDiv(numAliveAndFreeInventory)
-
-                if (resourcesPerRobot >= 1) {
-                    robotsAliveOnPlanet.forEach { robot ->
-                        val freeInventory = robot.inventory.maxStorage - robot.inventory.usedStorage
-                        resourcesToBeDistributed[resource] = resourcesToBeDistributed[resource]!! -
-                            if (freeInventory < resourcesPerRobot) {
-                                numAliveAndFreeInventory -= 1
-                                robot.inventory.addResource(resource, freeInventory)
-                                freeInventory
-                            } else {
-                                robot.inventory.addResource(resource, resourcesPerRobot)
-                                resourcesPerRobot
-                            }
-                    }
-                } else {
-                    // shuffled to make sure its not always the same robots getting the last resources
-                    robotsAliveOnPlanet.shuffled().forEach { robot ->
-                        if (resourcesToBeDistributed[resource]!! > 0 && robot.inventory.maxStorage - robot.inventory.usedStorage > 0) {
-                            resourcesToBeDistributed[resource] = resourcesToBeDistributed[resource]!! - 1
-                            robot.inventory.addResource(resource, 1)
-                        }
-                    }
-                }
-            }
+        resourcesToBeDistributed.entries.sortedBy { it.key }.reversed().forEach {
+            distributeDroppedResourcesOfTypeToRobots(it, robotsAliveOnPlanet)
         }
         robotRepository.saveAll(robotsAliveOnPlanet)
+    }
+
+    /**
+     * Distributes all `Resources` of a given type to all specified `Robots`.
+     *
+     * @param MutableMap.MutableEntry the `MapEntry` specifying how many of which `ResourceType` wil be distributed
+     */
+    private fun distributeDroppedResourcesOfTypeToRobots(
+        resourcesToBeDistributed: MutableMap.MutableEntry<ResourceType, Int>,
+        robotsAliveOnPlanet: List<Robot>
+    ) {
+        while (resourcesToBeDistributed.value > 0 && getNumberOfRobotsWithUnusedStorage(robotsAliveOnPlanet) > 0) {
+            val resourcesPerRobot = resourcesToBeDistributed.value.floorDiv(getNumberOfRobotsWithUnusedStorage(robotsAliveOnPlanet))
+
+            if (resourcesPerRobot >= 1) {
+                distributeResourcesEvenly(robotsAliveOnPlanet, resourcesToBeDistributed, resourcesPerRobot)
+            } else {
+                distributeResourcesShuffled(robotsAliveOnPlanet, resourcesToBeDistributed)
+            }
+        }
+    }
+
+    /**
+     * Calculates the amount of [Robots] [Robot] which have unused storage.
+     *
+     * @return the amount of `Robots` which have unused storage as an Int
+     */
+    private fun getNumberOfRobotsWithUnusedStorage(robots: List<Robot>) =
+        robots.count { !it.inventory.isFull() }
+
+    /**
+     * Distributes the specified amount of a `ResourceType` to each specified `Robot`.
+     *
+     * @param robotsAliveOnPlanet         the `Robots` which are alive and will get the specified `Resource`
+     * @param resourcesToBeDistributed    the `ResourceType` which will be distributed and how many resources of this type there are
+     * @param resourcesPerRobot           how many `Resources` each `Robot` gets
+     */
+    private fun distributeResourcesEvenly(
+        robotsAliveOnPlanet: List<Robot>,
+        resourcesToBeDistributed: MutableMap.MutableEntry<ResourceType, Int>,
+        resourcesPerRobot: Int,
+    ) {
+        robotsAliveOnPlanet.forEach { robot ->
+            val freeStorage = robot.inventory.maxStorage - robot.inventory.usedStorage
+            resourcesToBeDistributed.setValue(
+                resourcesToBeDistributed.value - if (freeStorage < resourcesPerRobot) {
+                    robot.inventory.addResource(resourcesToBeDistributed.key, freeStorage)
+                    freeStorage
+                } else {
+                    robot.inventory.addResource(resourcesToBeDistributed.key, resourcesPerRobot)
+                    resourcesPerRobot
+                }
+            )
+        }
+    }
+
+    /**
+     * Distributes the leftover specified `Resource` to the `Robots`. Not all `Robots` can get a `Resource`, so the `Robots` get shuffled
+     * and each gets a single `Resource` of the specified Type
+     *
+     * @param robotsAliveOnPlanet         the `Robots` which will get the remaining `Resources`
+     * @param resourcesToBeDistributed    the amount and Type of the `Ressource` that will be distributed
+     */
+    private fun distributeResourcesShuffled(
+        robotsAliveOnPlanet: List<Robot>,
+        resourcesToBeDistributed: MutableMap.MutableEntry<ResourceType, Int>,
+    ) {
+        robotsAliveOnPlanet.shuffled().forEach { robot ->
+            if (resourcesToBeDistributed.value > 0 && !robot.inventory.isFull()) {
+                resourcesToBeDistributed.setValue(resourcesToBeDistributed.value - 1)
+                robot.inventory.addResource(resourcesToBeDistributed.key, 1)
+            }
+        }
     }
 
     /**
