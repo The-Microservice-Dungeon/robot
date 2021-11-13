@@ -166,11 +166,11 @@ class Robot(
         }
 
     /**
-     * Moves this `Robot` to a given `Planet`, unless the `Planet` is currently blocked.
+     * Moves this `Robot` to a given `Planet`, unless the `Robots` current `Planet` is blocked.
      *
      * @param planet The `Planet` to move to.
      * @param cost The cost of moving to the `Planet`, which is the movement difficulty of the target.
-     * @throws PlanetBlockedException if the targeted `Planet` is currently blocked.
+     * @throws PlanetBlockedException if the current `Planet` is blocked.
      * @throws NotEnoughEnergyException if the `Robot` does not have enough energy to move to the `Planet`.
      */
     fun move(planet: Planet, cost: Int) {
