@@ -29,8 +29,8 @@ class RobotRepositoryTest(
 
     @BeforeEach
     fun setup() {
-        planet1 = Planet(UUID.randomUUID(), PlanetType.SPACE_STATION, null)
-        planet2 = Planet(UUID.randomUUID(), PlanetType.STANDARD, null)
+        planet1 = Planet(UUID.randomUUID())
+        planet2 = Planet(UUID.randomUUID())
 
         robot1 = Robot(player1Id, planet1)
         robot2 = Robot(player1Id, planet2)
