@@ -1,4 +1,4 @@
-package com.msd.command
+package com.msd.command.domain
 
 import java.util.*
 

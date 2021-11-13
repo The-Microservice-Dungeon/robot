@@ -4,10 +4,10 @@ import com.msd.application.ClientException
 import com.msd.application.CustomExceptionHandler
 import com.msd.application.GameMapPlanetDto
 import com.msd.application.GameMapService
-import com.msd.command.AttackCommand
-import com.msd.command.BlockCommand
-import com.msd.command.MovementCommand
-import com.msd.command.RegenCommand
+import com.msd.command.domain.AttackCommand
+import com.msd.command.domain.BlockCommand
+import com.msd.command.domain.MovementCommand
+import com.msd.command.domain.RegenCommand
 import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
 import com.msd.planet.domain.PlanetType
@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.ArgumentMatchers.any
 import org.springframework.data.repository.findByIdOrNull
 import java.util.*
 

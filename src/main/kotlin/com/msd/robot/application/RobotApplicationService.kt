@@ -2,10 +2,10 @@ package com.msd.robot.application
 
 import com.msd.application.CustomExceptionHandler
 import com.msd.application.GameMapService
-import com.msd.command.AttackCommand
-import com.msd.command.BlockCommand
-import com.msd.command.MovementCommand
-import com.msd.command.RegenCommand
+import com.msd.command.domain.AttackCommand
+import com.msd.command.domain.BlockCommand
+import com.msd.command.domain.MovementCommand
+import com.msd.command.domain.RegenCommand
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
 import org.springframework.stereotype.Service
