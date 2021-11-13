@@ -299,11 +299,11 @@ class RobotTest {
 
     @Test
     fun `Health regenerates successfully`() {
-        //given
+        // given
         robot1.receiveDamage(5)
-        //when
+        // when
         robot1.repair()
-        //then
+        // then
         assertEquals(robot1.maxHealth, robot1.health)
     }
 }

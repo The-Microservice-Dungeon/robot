@@ -2,7 +2,9 @@ package com.msd.robot.domain
 
 import com.msd.planet.domain.Planet
 import com.msd.planet.domain.PlanetType
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertAll
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.repository.findByIdOrNull
@@ -13,21 +15,87 @@ import javax.persistence.EntityNotFoundException
 class RobotRepositoryTest(
     @Autowired val robotRepository: RobotRepository
 ) {
+    val player1Id: UUID = UUID.randomUUID()
+    val player2Id: UUID = UUID.randomUUID()
+
+    lateinit var planet1: Planet
+    lateinit var planet2: Planet
+
+    lateinit var robot1: Robot
+    lateinit var robot2: Robot
+    lateinit var robot3: Robot
+    lateinit var robot4: Robot
+    lateinit var robot5: Robot
+    lateinit var robot6: Robot
+
+    @BeforeEach
+    fun setup() {
+        planet1 = Planet(UUID.randomUUID(), PlanetType.SPACE_STATION, null)
+        planet2 = Planet(UUID.randomUUID(), PlanetType.STANDARD, null)
+
+        robot1 = Robot(player1Id, planet1)
+        robot2 = Robot(player1Id, planet2)
+        robot3 = Robot(player1Id, planet1)
+        robot4 = Robot(player2Id, planet1)
+        robot5 = Robot(player2Id, planet2)
+        robot6 = Robot(player2Id, planet1)
+
+        robotRepository.saveAll(arrayListOf(robot1, robot2, robot3, robot4, robot5, robot6))
+    }
 
     @Test
-    fun `Successfully saves the planet of a robot`() {
-        val planet = Planet(UUID.randomUUID(), PlanetType.STANDARD, null)
-        val robot1 = Robot(UUID.randomUUID(), planet)
-        val savedRobot1 = robotRepository.save(robot1)
-        assert(!savedRobot1.planet.blocked)
+    fun `The Blocked Status of a planet can be viewed from every robot`() {
+        // given
+        robot1.block()
+        robotRepository.save(robot1)
 
-        val robot2 = Robot(UUID.randomUUID(), planet)
-        robot2.block()
-        val savedRobot2 = robotRepository.save(robot2)
-        assert(savedRobot2.planet.blocked)
-
-        val fetchedRobot1 = robotRepository.findByIdOrNull(robot1.id)
+        // then
+        val fetchedRobot3 = robotRepository.findByIdOrNull(robot3.id)
             ?: throw EntityNotFoundException("Robot not found")
-        assert(fetchedRobot1.planet.blocked)
+
+        // then
+        assert(fetchedRobot3.planet.blocked)
+    }
+
+    @Test
+    fun `Retrieves the dead robots on a planet`() {
+        // given
+        robot1.alive = false
+        robot3.alive = false
+
+        robotRepository.save(robot1)
+        robotRepository.save(robot3)
+
+        // when
+        val robotIds = robotRepository.findAllByAliveFalseAndPlanet_PlanetId(planet1.planetId).map { it.id }
+
+        // then
+        assertAll(
+            {
+                assert(robotIds.contains(robot1.id))
+            },
+            {
+                assert(robotIds.contains(robot3.id))
+            }
+        )
+    }
+
+    @Test
+    fun `FindAllByPlanet_PlanetId returns all robots on the planet`() {
+        val robotIds = robotRepository.findAllByPlanet_PlanetId(planet1.planetId).map { it.id }
+        assertAll(
+            {
+                assert(robotIds.contains(robot1.id))
+            },
+            {
+                assert(robotIds.contains(robot3.id))
+            },
+            {
+                assert(robotIds.contains(robot4.id))
+            },
+            {
+                assert(robotIds.contains(robot6.id))
+            }
+        )
     }
 }
