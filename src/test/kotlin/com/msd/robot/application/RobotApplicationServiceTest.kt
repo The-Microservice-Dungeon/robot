@@ -267,6 +267,7 @@ class RobotApplicationServiceTest {
         // given
         robot1.receiveDamage(5)
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+        every { robotRepository.save(robot1) } returns robot1
         // when
         robotApplicationService.repair(robot1.id)
 
