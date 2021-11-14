@@ -6,6 +6,7 @@ import com.msd.command.AttackCommand
 import com.msd.command.BlockCommand
 import com.msd.command.MovementCommand
 import com.msd.command.RegenCommand
+import com.msd.planet.domain.Planet
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
 import org.springframework.stereotype.Service
@@ -17,6 +18,17 @@ class RobotApplicationService(
     val robotDomainService: RobotDomainService,
     val exceptionHandler: CustomExceptionHandler
 ) {
+
+    /**
+     * Spawns a new [Robot]. The `Robot` belongs to the specified player and will spawn on the Specified [Planet]
+     *
+     * @param player  the `UUID` of the player
+     * @param planet the `UUID` of the `Planet`
+     */
+    fun spawn(player: UUID, planet: UUID) {
+        val robot = Robot(player, Planet(planet))
+        robotDomainService.saveRobot(robot)
+    }
 
     /**
      * Executes a single [MovementCommand] by checking whether the robot exists and the player is the owner of the
