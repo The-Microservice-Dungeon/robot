@@ -1,6 +1,8 @@
 package com.msd.robot.application
 
+import com.msd.application.CustomExceptionHandler
 import com.msd.application.GameMapService
+import com.msd.command.AttackCommand
 import com.msd.command.BlockCommand
 import com.msd.command.MovementCommand
 import com.msd.command.RegenCommand
@@ -13,7 +15,8 @@ import java.util.*
 @Service
 class RobotApplicationService(
     val gameMapService: GameMapService,
-    val robotDomainService: RobotDomainService
+    val robotDomainService: RobotDomainService,
+    val exceptionHandler: CustomExceptionHandler
 ) {
 
     /**
@@ -27,7 +30,7 @@ class RobotApplicationService(
 
         val robot = robotDomainService.getRobot(robotId)
 
-        robotDomainService.doesRobotBelongsToPlayer(robot, playerId)
+        robotDomainService.checkRobotBelongsToPlayer(robot, playerId)
         val planetDto =
             gameMapService.retrieveTargetPlanetIfRobotCanReach(robot.planet.planetId, moveCommand.targetPlanetUUID)
         val cost = planetDto.movementCost
@@ -45,7 +48,7 @@ class RobotApplicationService(
      */
     fun block(blockCommand: BlockCommand) {
         val robot = robotDomainService.getRobot(blockCommand.robotId)
-        robotDomainService.doesRobotBelongsToPlayer(robot, blockCommand.playerUUID)
+        robotDomainService.checkRobotBelongsToPlayer(robot, blockCommand.playerUUID)
         robot.block()
         robotDomainService.saveRobot(robot)
     }
@@ -61,7 +64,7 @@ class RobotApplicationService(
     fun regenerateEnergy(regenCommand: RegenCommand) {
         val robot = robotDomainService.getRobot(regenCommand.robotId)
 
-        robotDomainService.doesRobotBelongsToPlayer(robot, regenCommand.playerId)
+        robotDomainService.checkRobotBelongsToPlayer(robot, regenCommand.playerId)
         robot.regenerateEnergy()
         robotDomainService.saveRobot(robot)
     }
@@ -78,6 +81,48 @@ class RobotApplicationService(
     fun upgrade(robotId: UUID, upgradeType: UpgradeType, level: Int) {
         val robot = robotDomainService.getRobot(robotId)
         robot.upgrade(upgradeType, level)
+    }
+
+
+    /**
+     * Execute all attack commands. This has to make sure that all attacks get executed, even if a robot dies during
+     * the round. After all commands have been executed, dead robots get deleted and their resources distributed
+     * equally among all living robots on the planet.
+     *
+     * This method should never throw any exception. Exceptions occuring during the execution of a single command get
+     * handled right then and should not disturb the execution of the following commands.
+     *
+     * @param attackCommands        A list of AttackCommands that need to be executed
+     */
+    fun executeAttacks(attackCommands: List<AttackCommand>) {
+        val battleFields = mutableSetOf<UUID>()
+        attackCommands.forEach {
+            try {
+                val attacker = robotDomainService.getRobot(it.robotId)
+                val target = robotDomainService.getRobot(it.targetRobotUUID)
+                robotDomainService.checkRobotBelongsToPlayer(attacker, it.playerUUID)
+
+                robotDomainService.fight(attacker, target)
+                battleFields.add(attacker.planet.planetId)
+            } catch (re: RuntimeException) {
+                exceptionHandler.handle(re, it.transactionUUID)
+            }
+        }
+
+        battleFields.forEach { planetId ->
+            robotDomainService.postFightCleanup(planetId)
+        }
+    }
+
+    /**
+     * Repairs the specified [Robot] to full health.
+     *
+     * @param robotId             the [UUID] of the to be repaired robot.
+     */
+    fun repair(robotId: UUID) {
+        val robot = robotDomainService.getRobot(robotId)
+
+        robot.repair()
         robotDomainService.saveRobot(robot)
     }
 }
