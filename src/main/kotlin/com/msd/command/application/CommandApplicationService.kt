@@ -34,14 +34,16 @@ class CommandApplicationService {
 
         if (args.count() != commandTypeKeywordsAndNumArgs[verb]) throw CommandParsingException(commandString)
 
-        return if (verb.startsWith("use-item-"))
-            try {
+        try {
+            return if (verb.startsWith("use-item-"))
                 parseItemUsageCommand(verb, args)
-            } catch (iae: IllegalArgumentException) {
-                throw CommandParsingException(commandString, "Unknown ItemType: ${args[2]}")
-            }
-        else
-            parseActionCommand(verb, args)
+            else
+                parseActionCommand(verb, args)
+        } catch (iae: IllegalArgumentException) {
+            if (iae.message?.contains("Invalid UUID") == true)
+                throw CommandParsingException(commandString, "Invalid UUID string")
+            else throw CommandParsingException(commandString, "Unknown ItemType: ${args[2]}")
+        }
     }
 
     private fun getVerbAndArgs(commandString: String): Pair<String, List<String>> {

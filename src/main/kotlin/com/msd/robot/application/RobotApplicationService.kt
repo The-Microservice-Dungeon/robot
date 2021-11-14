@@ -2,12 +2,10 @@ package com.msd.robot.application
 
 import com.msd.application.CustomExceptionHandler
 import com.msd.application.GameMapService
-import com.msd.command.domain.AttackCommand
-import com.msd.command.domain.BlockCommand
-import com.msd.command.domain.EnergyRegenCommand
-import com.msd.command.domain.MovementCommand
+import com.msd.command.domain.*
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
+import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import java.util.*
 
@@ -17,6 +15,12 @@ class RobotApplicationService(
     val robotDomainService: RobotDomainService,
     val exceptionHandler: CustomExceptionHandler
 ) {
+
+    @Async
+    fun executeCommandsAsynchronous(commands: List<Command>) {
+        TODO()
+        // Execute commands and send failure / success events with kafka
+    }
 
     /**
      * Executes a single [MovementCommand] by checking whether the robot exists and the player is the owner of the
