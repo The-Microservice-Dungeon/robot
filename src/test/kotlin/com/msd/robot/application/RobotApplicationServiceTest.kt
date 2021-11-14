@@ -285,6 +285,10 @@ class RobotApplicationServiceTest {
         // then
         assertThrows<RobotNotFoundException> {
             robotApplicationService.upgrade(unknownRobotId, UpgradeType.HEALTH, 1)
+        }
+    }
+
+    @Test
     fun `Throws exception when robot is not found`() {
         // given
         every { robotRepository.findByIdOrNull(robot1.id) } returns null
@@ -354,6 +358,9 @@ class RobotApplicationServiceTest {
         robotApplicationService.upgrade(robot1.id, UpgradeType.HEALTH, 1)
         robotApplicationService.upgrade(robot1.id, UpgradeType.MINING, 1)
         robotApplicationService.upgrade(robot1.id, UpgradeType.STORAGE, 1)
+    }
+
+    @Test
     fun `Health regenerates successfully`() {
         // given
         robot1.receiveDamage(5)
