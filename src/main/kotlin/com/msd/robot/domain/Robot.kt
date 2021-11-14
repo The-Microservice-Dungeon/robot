@@ -2,7 +2,6 @@ package com.msd.robot.domain
 
 import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
-import com.msd.planet.domain.PlanetType
 import java.lang.IllegalArgumentException
 import java.util.*
 import javax.persistence.*
