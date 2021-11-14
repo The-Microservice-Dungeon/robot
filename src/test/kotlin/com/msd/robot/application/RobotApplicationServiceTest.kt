@@ -6,8 +6,8 @@ import com.msd.application.GameMapPlanetDto
 import com.msd.application.GameMapService
 import com.msd.command.domain.AttackCommand
 import com.msd.command.domain.BlockCommand
+import com.msd.command.domain.EnergyRegenCommand
 import com.msd.command.domain.MovementCommand
-import com.msd.command.domain.RegenCommand
 import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
 import com.msd.planet.domain.PlanetType
@@ -201,7 +201,7 @@ class RobotApplicationServiceTest {
         every { robotRepository.findByIdOrNull(unknownRobotId) } returns null
         // then
         assertThrows<RobotNotFoundException> {
-            robotApplicationService.regenerateEnergy(RegenCommand(UUID.randomUUID(), unknownRobotId, UUID.randomUUID()))
+            robotApplicationService.regenerateEnergy(EnergyRegenCommand(UUID.randomUUID(), unknownRobotId, UUID.randomUUID()))
         }
     }
 
@@ -213,7 +213,7 @@ class RobotApplicationServiceTest {
 
         // then
         assertThrows<InvalidPlayerException> {
-            robotApplicationService.regenerateEnergy(RegenCommand(UUID.randomUUID(), robot1.id, UUID.randomUUID()))
+            robotApplicationService.regenerateEnergy(EnergyRegenCommand(UUID.randomUUID(), robot1.id, UUID.randomUUID()))
         }
         assertEquals(10, robot1.energy)
     }
@@ -225,7 +225,7 @@ class RobotApplicationServiceTest {
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { robotRepository.save(robot1) } returns robot1
         // when
-        robotApplicationService.regenerateEnergy(RegenCommand(robot1.player, robot1.id, UUID.randomUUID()))
+        robotApplicationService.regenerateEnergy(EnergyRegenCommand(robot1.player, robot1.id, UUID.randomUUID()))
 
         // then
         assertEquals(18, robot1.energy)

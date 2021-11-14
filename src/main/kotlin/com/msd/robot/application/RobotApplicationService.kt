@@ -4,8 +4,8 @@ import com.msd.application.CustomExceptionHandler
 import com.msd.application.GameMapService
 import com.msd.command.domain.AttackCommand
 import com.msd.command.domain.BlockCommand
+import com.msd.command.domain.EnergyRegenCommand
 import com.msd.command.domain.MovementCommand
-import com.msd.command.domain.RegenCommand
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
 import org.springframework.stereotype.Service
@@ -53,17 +53,17 @@ class RobotApplicationService(
     }
 
     /**
-     * Regenerates the `energy` of a user specified in [regenCommand]. If the specified [Robot] can not be found or the
+     * Regenerates the `energy` of a user specified in [energyRegenCommand]. If the specified [Robot] can not be found or the
      * players don't match an exception is thrown.
      *
-     * @param regenCommand             a [RegenCommand] in which the robot which should regenerate its `energy` and its Player is specified
+     * @param energyRegenCommand             a [EnergyRegenCommand] in which the robot which should regenerate its `energy` and its Player is specified
      * @throws RobotNotFoundException  When a `Robot` with the specified ID can't be found
      * @throws InvalidPlayerException  When the specified `Player` and the `Player` specified in the `Robot` don't match
      */
-    fun regenerateEnergy(regenCommand: RegenCommand) {
-        val robot = robotDomainService.getRobot(regenCommand.robotUUID)
+    fun regenerateEnergy(energyRegenCommand: EnergyRegenCommand) {
+        val robot = robotDomainService.getRobot(energyRegenCommand.robotUUID)
 
-        robotDomainService.checkRobotBelongsToPlayer(robot, regenCommand.playerUUID)
+        robotDomainService.checkRobotBelongsToPlayer(robot, energyRegenCommand.playerUUID)
         robot.regenerateEnergy()
         robotDomainService.saveRobot(robot)
     }
