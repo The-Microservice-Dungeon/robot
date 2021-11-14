@@ -23,7 +23,7 @@ class CommandApplicationServiceTest {
             "MINE $randomUUID  $randomUUID  $randomUUID",
             "regenerate $randomUUID  $randomUUID  $randomUUID",
             "Use-Item-Fighting $randomUUID  $randomUUID Rocket $randomUUID  $randomUUID ",
-            "Use-Item-Fighting $randomUUID  $randomUUID bombardEment $randomUUID  $randomUUID ",
+            "Use-Item-Fighting $randomUUID  $randomUUID bombardment $randomUUID  $randomUUID ",
             "Use-Item-Fighting $randomUUID  $randomUUID self_destruct $randomUUID  $randomUUID ",
             "Use-Item-Fighting $randomUUID  $randomUUID NuKe $randomUUID  $randomUUID",
             "use-item-movement $randomUUID  $randomUUID wormhole $randomUUID",
@@ -68,10 +68,16 @@ class CommandApplicationServiceTest {
         val missingUUID = "block $randomUUID $randomUUID"
         val unknownCommandType = "black $randomUUID $randomUUID $randomUUID"
         val tooManyUUIDs = "regenerate $randomUUID $randomUUID $randomUUID $randomUUID"
+        val unknownMovementItemType = "use-item-movement $randomUUID $randomUUID sheep $randomUUID"
+        val unknownReparationItemType = "use-item-healing $randomUUID $randomUUID sheep $randomUUID"
+        val unknownFightingItemType = "use-item-fighting $randomUUID $randomUUID sheep $randomUUID $randomUUID"
 
         // then
         assertThrows<CommandParsingException> { commandApplicationService.parseCommand(missingUUID) }
         assertThrows<CommandParsingException> { commandApplicationService.parseCommand(unknownCommandType) }
         assertThrows<CommandParsingException> { commandApplicationService.parseCommand(tooManyUUIDs) }
+        assertThrows<CommandParsingException> { commandApplicationService.parseCommand(unknownMovementItemType) }
+        assertThrows<CommandParsingException> { commandApplicationService.parseCommand(unknownReparationItemType) }
+        assertThrows<CommandParsingException> { commandApplicationService.parseCommand(unknownFightingItemType) }
     }
 }
