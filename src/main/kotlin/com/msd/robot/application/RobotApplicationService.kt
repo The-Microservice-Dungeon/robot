@@ -34,6 +34,8 @@ class RobotApplicationService(
      * Executes a single [MovementCommand] by checking whether the robot exists and the player is the owner of the
      * robot. To get the new [Planet] the robot should be positioned on, if calls the GameMap MicroService through
      * a connector service [GameMapService]. If everything goes right, the robot gets moved.
+     *
+     * @param moveCommand a [Command] containing the IDs of the Robot which has to move, the Player who send it and the target `Planet`
      */
     fun move(moveCommand: MovementCommand) {
         val robotId = moveCommand.robotId
