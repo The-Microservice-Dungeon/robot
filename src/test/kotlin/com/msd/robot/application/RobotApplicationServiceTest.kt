@@ -1,7 +1,7 @@
 package com.msd.robot.application
 
 import com.msd.application.ClientException
-import com.msd.application.CustomExceptionHandler
+import com.msd.application.ExceptionConverter
 import com.msd.application.GameMapPlanetDto
 import com.msd.application.GameMapService
 import com.msd.command.domain.AttackCommand
@@ -48,7 +48,7 @@ class RobotApplicationServiceTest {
     lateinit var gameMapMockService: GameMapService
 
     @MockK
-    lateinit var exceptionHandler: CustomExceptionHandler
+    lateinit var exceptionConverter: ExceptionConverter
 
     lateinit var robotApplicationService: RobotApplicationService
     lateinit var robotDomainService: RobotDomainService
@@ -59,7 +59,7 @@ class RobotApplicationServiceTest {
     fun setup() {
         MockKAnnotations.init(this)
         robotDomainService = RobotDomainService(robotRepository)
-        robotApplicationService = RobotApplicationService(gameMapMockService, robotDomainService, exceptionHandler)
+        robotApplicationService = RobotApplicationService(gameMapMockService, robotDomainService, exceptionConverter)
 
         planet1 = Planet(UUID.randomUUID(), PlanetType.SPACE_STATION, null)
         planet2 = Planet(UUID.randomUUID(), PlanetType.STANDARD, null)
@@ -373,7 +373,7 @@ class RobotApplicationServiceTest {
             AttackCommand(player2Id, robot5.id, robot1.id, UUID.randomUUID()),
             AttackCommand(player2Id, robot6.id, robot3.id, UUID.randomUUID()),
         )
-        justRun { exceptionHandler.handle(any(), any()) }
+        justRun { exceptionConverter.handle(any(), any()) }
         // when
         robotApplicationService.executeAttacks(attackCommands)
         // then
@@ -404,7 +404,7 @@ class RobotApplicationServiceTest {
             },
         )
         verify(exactly = 2) {
-            exceptionHandler.handle(any(), any())
+            exceptionConverter.handle(any(), any())
         }
     }
 
@@ -490,14 +490,14 @@ class RobotApplicationServiceTest {
         every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf(
             robot1, robot2, robot3, robot4, robot5, robot6
         )
-        justRun { exceptionHandler.handle(any(), any()) }
+        justRun { exceptionConverter.handle(any(), any()) }
 
         // when
         robotApplicationService.executeAttacks(attackCommands)
 
         // assert
         verify(exactly = 2) {
-            exceptionHandler.handle(any(), any())
+            exceptionConverter.handle(any(), any())
         }
     }
 

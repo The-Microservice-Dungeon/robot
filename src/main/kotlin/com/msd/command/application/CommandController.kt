@@ -14,10 +14,14 @@ class CommandController(
     val commandService: CommandApplicationService
 ) {
 
+    /**
+     * Receives a list of commands in a string representation and executes them asynchronously.
+     * @param commandDto A DTO containing the list of commands
+     */
     @PostMapping
     fun receiveCommand(@RequestBody commandDto: CommandDTO): ResponseEntity<Any> {
         val commands = commandService.parseCommandsFromStrings(commandDto.commands)
         robotService.executeCommands(commands)
-        return ResponseEntity.ok("")
+        return ResponseEntity.ok("Command batch accepted")
     }
 }

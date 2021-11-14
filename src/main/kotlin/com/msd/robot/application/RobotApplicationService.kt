@@ -1,6 +1,6 @@
 package com.msd.robot.application
 
-import com.msd.application.CustomExceptionHandler
+import com.msd.application.ExceptionConverter
 import com.msd.application.GameMapService
 import com.msd.command.domain.*
 import com.msd.robot.domain.Robot
@@ -13,25 +13,46 @@ import java.util.*
 class RobotApplicationService(
     val gameMapService: GameMapService,
     val robotDomainService: RobotDomainService,
-    val exceptionHandler: CustomExceptionHandler
+    val exceptionConverter: ExceptionConverter
 ) {
 
+    /**
+     * Takes a list of commands and passes them on to the corresponding method.
+     * [AttackCommand]s and [AttackItemUsageCommand]s are homogeneous and have to be handled as one single batch.
+     * All other commands can be heterogeneous and thus can be passed to the corresponding methods singly.
+     * This method is executed asynchronous and does not block the calling controller.
+     *
+     * @param commands:     List of commands that need to be executed.
+     */
     @Async
     fun executeCommands(commands: List<Command>) {
         if (commands[0]::class == AttackCommand::class)
+        // Attack commands are always homogenous, so this cast is valid
             executeAttacks(commands as List<AttackCommand>)
         else if (commands[0]:: class == AttackItemUsageCommand::class)
-        // this needs to be handled in a batch as well
-            TODO()
+            TODO() // this needs to be handled in a batch as well
         else
-            commands.forEach {
+            executeHeterogeneousCommands(commands)
+    }
+
+    /**
+     * Execute every command in the list and pass occuring exceptions on to the handler.
+     *
+     * @param commands:     The commands that need to be executed. These can be heterogeneous.
+     */
+    private fun executeHeterogeneousCommands(commands: List<Command>) {
+        commands.forEach {
+            try {
                 when (it::class) {
                     MovementCommand::class -> move(it as MovementCommand)
                     BlockCommand::class -> block(it as BlockCommand)
                     EnergyRegenCommand::class -> regenerateEnergy(it as EnergyRegenCommand)
                     // TODO Add remaining CommandTypes as soon as their methods are implemented
                 }
+            } catch (re: RuntimeException) {
+                exceptionConverter.handle(re, it.transactionUUID)
             }
+        }
     }
 
     /**
@@ -105,7 +126,7 @@ class RobotApplicationService(
                 robotDomainService.fight(attacker, target)
                 battleFields.add(attacker.planet.planetId)
             } catch (re: RuntimeException) {
-                exceptionHandler.handle(re, it.transactionUUID)
+                exceptionConverter.handle(re, it.transactionUUID)
             }
         }
 

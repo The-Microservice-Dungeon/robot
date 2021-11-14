@@ -23,6 +23,12 @@ class CommandApplicationService {
         "use-item-healing" to 4
     )
 
+    /**
+     * Parses the list of commands and thrwos an Exception, if a homogeneity requirement isn't satisfied.
+     *
+     * @param commandStrings:       List of strings representing commands
+     * @returns List of parsed commands
+     */
     fun parseCommandsFromStrings(commandStrings: List<String>): List<Command> {
         val commands = commandStrings.map { parseCommand(it) }
         if (commands.find { it::class == AttackCommand::class } != null)
@@ -34,6 +40,14 @@ class CommandApplicationService {
         return commands
     }
 
+    /**
+     * Parse a single commandString into a Command object.
+     *
+     * @throws CommandParsingException if there are not enough arguments for the command type or if the command type
+     *         is unknown
+     * @param commandString The string representation of a command
+     * @return The corresponding Command object
+     */
     fun parseCommand(commandString: String): Command {
         val (verb, args) = getVerbAndArgs(commandString)
 
@@ -53,6 +67,12 @@ class CommandApplicationService {
         }
     }
 
+    /**
+     * Parse the command string into the verb and the remaining arguments.
+     *
+     * @param commandString: The string containing a command
+     * @return Pair of verb and args
+     */
     private fun getVerbAndArgs(commandString: String): Pair<String, List<String>> {
         val parts = commandString
             .lowercase()
@@ -64,6 +84,12 @@ class CommandApplicationService {
         return Pair(verb, args)
     }
 
+    /**
+     * Parse all commands describing the usage of an item
+     *
+     * @param verb  The command verb, describing the type of command
+     * @param args  The arguments for the command
+     */
     private fun parseItemUsageCommand(verb: String, args: List<String>): Command {
         when (verb) {
             "use-item-fighting" -> return AttackItemUsageCommand(
@@ -89,6 +115,12 @@ class CommandApplicationService {
         throw RuntimeException("Internal Error")
     }
 
+    /**
+     * Parse all commands that are not an item usage
+     *
+     * @param verb  The command verb, describing the type of command
+     * @param args  The arguments for the command
+     */
     private fun parseActionCommand(verb: String, args: List<String>): Command {
         when (verb) {
             "block", "mine", "regenerate" -> return get3PartConstructorByVerb(verb)(
@@ -106,6 +138,12 @@ class CommandApplicationService {
         throw RuntimeException("Internal Error")
     }
 
+    /**
+     * Get the constructor for the command of the verb-type
+     *
+     * @param verb  the verb corresponding with a specific command type
+     * @return The Constructor for the Command
+     */
     fun get3PartConstructorByVerb(verb: String): (UUID, UUID, UUID) -> Command {
         when (verb) {
             "block" -> return ::BlockCommand
@@ -115,6 +153,12 @@ class CommandApplicationService {
         throw RuntimeException("Internal Error")
     }
 
+    /**
+     * Get the constructor for the command of the verb-type
+     *
+     * @param verb  the verb corresponding with a specific command type
+     * @return The Constructor for the Command
+     */
     fun get4PartConstructorByVerb(verb: String): (UUID, UUID, UUID, UUID) -> Command {
         when (verb) {
             "move" -> return ::MovementCommand
