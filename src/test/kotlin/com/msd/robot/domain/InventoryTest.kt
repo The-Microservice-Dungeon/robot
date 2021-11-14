@@ -120,4 +120,14 @@ class InventoryTest {
         // then
         assertAll(ResourceType.values().map { { assertEquals(4, robot1.inventory.takeAllResourcesOfType(it)) } })
     }
+
+    @Test
+    fun `correctly detemines if inventory is full or not`() {
+        // given
+        assertEquals(false, robot1.inventory.isFull())
+        // when
+        robot1.inventory.addResource(ResourceType.COAL, 20)
+        // then
+        assert(robot1.inventory.isFull())
+    }
 }

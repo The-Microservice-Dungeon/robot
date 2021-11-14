@@ -10,7 +10,6 @@ import com.msd.command.domain.EnergyRegenCommand
 import com.msd.command.domain.MovementCommand
 import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
-import com.msd.planet.domain.PlanetType
 import com.msd.robot.domain.*
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
@@ -61,8 +60,8 @@ class RobotApplicationServiceTest {
         robotDomainService = RobotDomainService(robotRepository)
         robotApplicationService = RobotApplicationService(gameMapMockService, robotDomainService, exceptionConverter)
 
-        planet1 = Planet(UUID.randomUUID(), PlanetType.SPACE_STATION, null)
-        planet2 = Planet(UUID.randomUUID(), PlanetType.STANDARD, null)
+        planet1 = Planet(UUID.randomUUID())
+        planet2 = Planet(UUID.randomUUID())
 
         robot1 = Robot(player1Id, planet1)
         robot2 = Robot(player1Id, planet2)
@@ -145,8 +144,8 @@ class RobotApplicationServiceTest {
         while (robot1.energy >= 4) // blocking on Level 0 costs 4 energy
             robot1.block()
         planet1.blocked = false
-        val command = MovementCommand(robot1.player, robot1.id, planet2.planetId, UUID.randomUUID())
-        val planetDto = GameMapPlanetDto(planet2.planetId, 3, planet2.type, planet2.playerId)
+        val command = MovementCommand(robot1.player, robot1.id, planet2.planetId)
+        val planetDto = GameMapPlanetDto(planet2.planetId, 3)
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { gameMapMockService.retrieveTargetPlanetIfRobotCanReach(any(), any()) } returns planetDto
 
@@ -164,8 +163,8 @@ class RobotApplicationServiceTest {
         // given
         robot1.block()
 
-        val command = MovementCommand(robot3.player, robot3.id, planet2.planetId, UUID.randomUUID())
-        val planetDto = GameMapPlanetDto(planet2.planetId, 3, planet2.type, planet2.playerId)
+        val command = MovementCommand(robot3.player, robot3.id, planet2.planetId)
+        val planetDto = GameMapPlanetDto(planet2.planetId, 3)
         every { robotRepository.findByIdOrNull(robot3.id) } returns robot3
         every { gameMapMockService.retrieveTargetPlanetIfRobotCanReach(any(), any()) } returns planetDto
 
@@ -181,8 +180,8 @@ class RobotApplicationServiceTest {
     @Test
     fun `Robot moves if there are no problems`() {
         // given
-        val command = MovementCommand(robot1.player, robot1.id, planet2.planetId, UUID.randomUUID())
-        val planetDto = GameMapPlanetDto(planet2.planetId, 3, planet2.type, planet2.playerId)
+        val command = MovementCommand(robot1.player, robot1.id, planet2.planetId)
+        val planetDto = GameMapPlanetDto(planet2.planetId, 3)
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { robotRepository.save(any()) } returns robot1
         every { gameMapMockService.retrieveTargetPlanetIfRobotCanReach(any(), any()) } returns planetDto
@@ -292,7 +291,7 @@ class RobotApplicationServiceTest {
         // given
         robot1.receiveDamage(5)
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
-
+        every { robotRepository.save(robot1) } returns robot1
         // when
         robotApplicationService.repair(robot1.id)
 

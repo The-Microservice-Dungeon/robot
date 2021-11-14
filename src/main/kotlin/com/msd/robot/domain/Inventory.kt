@@ -87,4 +87,13 @@ class Inventory {
         takeResource(resource, amount)
         return amount
     }
+
+    /**
+     * Checks if the `Inventory` of this `Robot` is full.
+     *
+     * @return `true` if the inventory is full, otherwise `false`
+     */
+    fun isFull(): Boolean {
+        return maxStorage - usedStorage == 0
+    }
 }

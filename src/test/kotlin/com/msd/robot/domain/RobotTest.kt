@@ -2,7 +2,6 @@ package com.msd.robot.domain
 
 import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
-import com.msd.planet.domain.PlanetType
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -272,7 +271,7 @@ class RobotTest {
     fun `Energy regen increases current energy by the correct amount`() {
         // given
         robot1.move(Planet(UUID.randomUUID()), 5)
-        robot2.move(Planet(UUID.randomUUID(), PlanetType.SPACE_STATION), 7)
+        robot2.move(Planet(UUID.randomUUID()), 7)
         // when
         robot1.regenerateEnergy()
         robot2.regenerateEnergy()
@@ -295,31 +294,6 @@ class RobotTest {
         robot1.regenerateEnergy()
         // then
         assertEquals(20, robot1.energy)
-    }
-
-    @Test
-    fun `Energy regenerates at double the amount only when the current planet is the players spawn`() {
-        // given
-        val robot3 = Robot(UUID.randomUUID(), Planet(UUID.randomUUID()))
-        robot1.move(Planet(UUID.randomUUID(), PlanetType.SPAWN, robot1.id), 10)
-        robot2.move(Planet(UUID.randomUUID()), 5)
-        robot3.move(Planet(UUID.randomUUID(), PlanetType.SPACE_STATION), 5)
-        // when
-        robot1.regenerateEnergy()
-        robot2.regenerateEnergy()
-        robot3.regenerateEnergy()
-        // then
-        assertAll(
-            {
-                assertEquals(18, robot1.energy)
-            },
-            {
-                assertEquals(19, robot2.energy)
-            },
-            {
-                assertEquals(19, robot3.energy)
-            }
-        )
     }
 
     @Test
