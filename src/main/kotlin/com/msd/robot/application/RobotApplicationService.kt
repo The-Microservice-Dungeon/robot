@@ -24,7 +24,7 @@ class RobotApplicationService(
      * a connector service [GameMapService]. If everything goes right, the robot gets moved.
      */
     fun move(moveCommand: MovementCommand) {
-        val robotId = moveCommand.robotId
+        val robotId = moveCommand.robotUUID
         val playerId = moveCommand.playerUUID
 
         val robot = robotDomainService.getRobot(robotId)
@@ -46,7 +46,7 @@ class RobotApplicationService(
      * @throws InvalidPlayerException  if the PlayerIDs specified in the `BlockCommand` and `Robot` don't match
      */
     fun block(blockCommand: BlockCommand) {
-        val robot = robotDomainService.getRobot(blockCommand.robotId)
+        val robot = robotDomainService.getRobot(blockCommand.robotUUID)
         robotDomainService.checkRobotBelongsToPlayer(robot, blockCommand.playerUUID)
         robot.block()
         robotDomainService.saveRobot(robot)
@@ -61,9 +61,9 @@ class RobotApplicationService(
      * @throws InvalidPlayerException  When the specified `Player` and the `Player` specified in the `Robot` don't match
      */
     fun regenerateEnergy(regenCommand: RegenCommand) {
-        val robot = robotDomainService.getRobot(regenCommand.robotId)
+        val robot = robotDomainService.getRobot(regenCommand.robotUUID)
 
-        robotDomainService.checkRobotBelongsToPlayer(robot, regenCommand.playerId)
+        robotDomainService.checkRobotBelongsToPlayer(robot, regenCommand.playerUUID)
         robot.regenerateEnergy()
         robotDomainService.saveRobot(robot)
     }
@@ -82,7 +82,7 @@ class RobotApplicationService(
         val battleFields = mutableSetOf<UUID>()
         attackCommands.forEach {
             try {
-                val attacker = robotDomainService.getRobot(it.robotId)
+                val attacker = robotDomainService.getRobot(it.robotUUID)
                 val target = robotDomainService.getRobot(it.targetRobotUUID)
                 robotDomainService.checkRobotBelongsToPlayer(attacker, it.playerUUID)
 
