@@ -27,10 +27,10 @@ class CommandApplicationService {
         val commands = commandStrings.map { parseCommand(it) }
         if (commands.find { it::class == AttackCommand::class } != null)
             if (commands.filter { it::class == AttackCommand::class }.count() != commands.size)
-                throw CommandParsingException("CommandPackage", "AttackCommands need to be homogenous.")
+                throw CommandBatchParsingException("AttackCommands need to be homogeneous.")
         if (commands.find { it::class == AttackItemUsageCommand::class } != null)
             if (commands.filter { it::class == AttackItemUsageCommand::class }.count() != commands.size)
-                throw CommandParsingException("CommandPackage", "AttackItemUsageCommand need to be homogenous.")
+                throw CommandBatchParsingException("AttackItemUsageCommand need to be homogeneous.")
         return commands
     }
 

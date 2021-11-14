@@ -31,7 +31,7 @@ class CommandApplicationServiceTest {
         )
 
         // when
-        val commands = commandApplicationService.parseCommandsFromStrings(commandStrings)
+        val commands = commandStrings.map { commandApplicationService.parseCommand(it) }
 
         // then
         assertAll(
@@ -71,6 +71,7 @@ class CommandApplicationServiceTest {
         val unknownMovementItemType = "use-item-movement $randomUUID $randomUUID sheep $randomUUID"
         val unknownReparationItemType = "use-item-healing $randomUUID $randomUUID sheep $randomUUID"
         val unknownFightingItemType = "use-item-fighting $randomUUID $randomUUID sheep $randomUUID $randomUUID"
+        val invalidUUID = "use-item-fighting 1235 $randomUUID rocket $randomUUID $randomUUID"
 
         // then
         assertThrows<CommandParsingException> { commandApplicationService.parseCommand(missingUUID) }
@@ -79,5 +80,28 @@ class CommandApplicationServiceTest {
         assertThrows<CommandParsingException> { commandApplicationService.parseCommand(unknownMovementItemType) }
         assertThrows<CommandParsingException> { commandApplicationService.parseCommand(unknownReparationItemType) }
         assertThrows<CommandParsingException> { commandApplicationService.parseCommand(unknownFightingItemType) }
+        assertThrows<CommandParsingException> { commandApplicationService.parseCommand(invalidUUID) }
+    }
+
+    @Test
+    fun `Rejects heterogeneous Attack and AttackItemUsage Commands`() {
+        // given
+        val attackCommandAndMineCommand = arrayListOf(
+            "fight $randomUUID  $randomUUID  $randomUUID $randomUUID",
+            "MINE $randomUUID  $randomUUID  $randomUUID"
+        )
+
+        val attackItemUsageCommandAndMovementItemUsageCommand = arrayListOf(
+            "Use-Item-Fighting $randomUUID  $randomUUID NuKe $randomUUID  $randomUUID",
+            "use-item-movement $randomUUID  $randomUUID wormhole $randomUUID",
+        )
+
+        // then
+        assertThrows<CommandBatchParsingException> {
+            commandApplicationService.parseCommandsFromStrings(attackCommandAndMineCommand)
+        }
+        assertThrows<CommandBatchParsingException> {
+            commandApplicationService.parseCommandsFromStrings(attackItemUsageCommandAndMovementItemUsageCommand)
+        }
     }
 }
