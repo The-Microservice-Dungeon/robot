@@ -17,8 +17,7 @@ class CommandController(
     @PostMapping
     fun receiveCommand(@RequestBody commandDto: CommandDTO): ResponseEntity<Any> {
         val commands = commandService.parseCommandsFromStrings(commandDto.commands)
-        robotService.executeCommandsAsynchronous(commands)
-        print("itsse me, caller")
+        robotService.executeCommands(commands)
         return ResponseEntity.ok("")
     }
 }

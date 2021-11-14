@@ -17,9 +17,21 @@ class RobotApplicationService(
 ) {
 
     @Async
-    fun executeCommandsAsynchronous(commands: List<Command>) {
-        TODO()
-        // Execute commands and send failure / success events with kafka
+    fun executeCommands(commands: List<Command>) {
+        if (commands[0]::class == AttackCommand::class)
+            executeAttacks(commands as List<AttackCommand>)
+        else if (commands[0]:: class == AttackItemUsageCommand::class)
+        // this needs to be handled in a batch as well
+            TODO()
+        else
+            commands.forEach {
+                when (it::class) {
+                    MovementCommand::class -> move(it as MovementCommand)
+                    BlockCommand::class -> block(it as BlockCommand)
+                    EnergyRegenCommand::class -> regenerateEnergy(it as EnergyRegenCommand)
+                    // TODO Add remaining CommandTypes as soon as their methods are implemented
+                }
+            }
     }
 
     /**
