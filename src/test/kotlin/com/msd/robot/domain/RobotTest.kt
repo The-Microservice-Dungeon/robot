@@ -2,7 +2,6 @@ package com.msd.robot.domain
 
 import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
-import com.msd.planet.domain.PlanetType
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -272,7 +271,7 @@ class RobotTest {
     fun `Energy regen increases current energy by the correct amount`() {
         // given
         robot1.move(Planet(UUID.randomUUID()), 5)
-        robot2.move(Planet(UUID.randomUUID(), PlanetType.SPACE_STATION), 7)
+        robot2.move(Planet(UUID.randomUUID()), 7)
         // when
         robot1.regenerateEnergy()
         robot2.regenerateEnergy()
