@@ -26,7 +26,7 @@ class CommandApplicationServiceTest {
             "Use-Item-Fighting $randomUUID  $randomUUID self_destruct $randomUUID  $randomUUID ",
             "Use-Item-Fighting $randomUUID  $randomUUID NuKe $randomUUID  $randomUUID",
             "use-item-movement $randomUUID  $randomUUID wormhole $randomUUID",
-            "use-item-healing $randomUUID  $randomUUID REPARATION_SWARM $randomUUID"
+            "use-item-reparation $randomUUID  $randomUUID REPARATION_SWARM $randomUUID"
         )
 
         // when
@@ -68,7 +68,7 @@ class CommandApplicationServiceTest {
         val unknownCommandType = "black $randomUUID $randomUUID $randomUUID"
         val tooManyUUIDs = "regenerate $randomUUID $randomUUID $randomUUID $randomUUID"
         val unknownMovementItemType = "use-item-movement $randomUUID $randomUUID sheep $randomUUID"
-        val unknownReparationItemType = "use-item-healing $randomUUID $randomUUID sheep $randomUUID"
+        val unknownReparationItemType = "use-item-reparation $randomUUID $randomUUID sheep $randomUUID"
         val unknownFightingItemType = "use-item-fighting $randomUUID $randomUUID sheep $randomUUID $randomUUID"
         val invalidUUID = "use-item-fighting 1235 $randomUUID rocket $randomUUID $randomUUID"
 

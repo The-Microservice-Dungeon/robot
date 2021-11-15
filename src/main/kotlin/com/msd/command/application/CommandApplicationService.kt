@@ -19,7 +19,7 @@ class CommandApplicationService {
         "regenerate" to 3,
         "use-item-fighting" to 5,
         "use-item-movement" to 4,
-        "use-item-healing" to 4
+        "use-item-reparation" to 4
     )
 
     /**
@@ -104,7 +104,7 @@ class CommandApplicationService {
                 MovementItemType.valueOf(args[2].uppercase()),
                 UUID.fromString(args[3])
             )
-            "use-item-healing" -> return ReparationItemUsageCommand(
+            "use-item-reparation" -> return ReparationItemUsageCommand(
                 UUID.fromString(args[0]),
                 UUID.fromString(args[1]),
                 ReparationItemType.valueOf(args[2].uppercase()),
