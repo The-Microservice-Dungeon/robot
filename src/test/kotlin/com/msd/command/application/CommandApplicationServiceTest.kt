@@ -35,28 +35,28 @@ class CommandApplicationServiceTest {
         // then
         assertAll(
             {
-                assert(commands.filter { it::class == BlockCommand::class }.count() == 1)
+                assert(commands.count { it is BlockCommand } == 1)
             },
             {
-                assert(commands.filter { it::class == MovementCommand::class }.count() == 1)
+                assert(commands.count { it is MovementCommand } == 1)
             },
             {
-                assert(commands.filter { it::class == AttackCommand::class }.count() == 1)
+                assert(commands.count { it is AttackCommand } == 1)
             },
             {
-                assert(commands.filter { it::class == MiningCommand::class }.count() == 1)
+                assert(commands.count { it is MiningCommand } == 1)
             },
             {
-                assert(commands.filter { it::class == EnergyRegenCommand::class }.count() == 1)
+                assert(commands.count { it is EnergyRegenCommand } == 1)
             },
             {
-                assert(commands.filter { it::class == AttackItemUsageCommand::class }.count() == 4) // 4 !!!
+                assert(commands.count { it is AttackItemUsageCommand } == 4) // 4 !!!
             },
             {
-                assert(commands.filter { it::class == MovementItemsUsageCommand::class }.count() == 1)
+                assert(commands.count { it is MovementItemsUsageCommand } == 1)
             },
             {
-                assert(commands.filter { it::class == ReparationItemUsageCommand::class }.count() == 1)
+                assert(commands.count { it is ReparationItemUsageCommand } == 1)
             }
         )
     }
