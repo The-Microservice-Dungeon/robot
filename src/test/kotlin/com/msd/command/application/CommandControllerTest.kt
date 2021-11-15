@@ -1,13 +1,13 @@
 package com.msd.command.application
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.msd.application.GameMapPlanetDto
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import com.msd.robot.domain.UpgradeType
+import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.assertAll
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -42,6 +42,7 @@ class CommandControllerTest(
     private lateinit var robot6: Robot
     private lateinit var robot7: Robot
     private lateinit var robot8: Robot
+    private lateinit var robots: List<Robot>
 
     @BeforeEach
     fun `setup database`() {
@@ -53,6 +54,7 @@ class CommandControllerTest(
         robot6 = robotRepository.save(Robot(player2Id, Planet(planet1Id)))
         robot7 = robotRepository.save(Robot(player2Id, Planet(planet2Id)))
         robot8 = robotRepository.save(Robot(player2Id, Planet(planet2Id)))
+        robots = listOf(robot1, robot2, robot3, robot4, robot5, robot6, robot7, robot8)
     }
 
     @Test
@@ -61,6 +63,52 @@ class CommandControllerTest(
         assertNotNull(mockMvc)
         assertNotNull(robotRepository)
         assertNotNull(mapper)
+    }
+
+    @Test
+    fun `incorrect commands return error code 400`() {
+        // given
+        val command1 = "regenerate ${robot2.player} ${UUID.randomUUID()}"
+        val command2 = "block ${robot2.player} ${robot2.id}"
+        val command3 = "move ${robot2.player} ${robot2.id}"
+        val command4 = "mine ${robot2.player} ${robot2.id} broken"
+        val command5 = "use-item-movement ${UUID.randomUUID()} ${robot2.id} broken ${UUID.randomUUID()}"
+        val command6 = "fight ${robot6.player} ${robot6.id} noTarget ${UUID.randomUUID()}"
+        val command7 = "use-item-fighting ${UUID.randomUUID()} ${robot2.id} broken ${UUID.randomUUID()}"
+        val command8 = "nonsense ${UUID.randomUUID()} ${UUID.randomUUID()} ${UUID.randomUUID()}"
+        val commands = listOf(command1, command2, command3, command4, command5, command6, command7, command8)
+
+        // then
+        commands.forEach {
+            mockMvc.post("/commands") {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(CommandDTO(listOf(it)))
+            }.andExpect {
+                status { isBadRequest() }
+            }.andDo { print() }
+        }
+    }
+
+    @Test
+    fun `can't mix attack commands with other commands`() {
+        // given
+        val command1 = "fight ${robot1.player} ${robot1.id} ${robot5.id} ${UUID.randomUUID()}"
+        val command2 = "regenerate ${robot2.player} ${robot2.id} ${UUID.randomUUID()}"
+
+        val commands = listOf(command1, command2)
+
+        // when
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(commands))
+        }.andExpect {
+            status { isBadRequest() }
+            content { string("AttackCommands need to be homogeneous.") }
+        }.andDo { print() }
+
+        // then
+        assertEquals(10, robot5.health)
+        assertEquals(20, robot1.energy)
     }
 
     @Test
@@ -75,12 +123,12 @@ class CommandControllerTest(
         val command7 = "fight ${robot7.player} ${robot7.id} ${robot3.id} ${UUID.randomUUID()}"
         val command8 = "fight ${robot8.player} ${robot8.id} ${robot4.id} ${UUID.randomUUID()}"
 
-        val commandList = listOf(command1, command2, command3, command4, command5, command6, command7, command8)
+        val commands = listOf(command1, command2, command3, command4, command5, command6, command7, command8)
 
         // when
         mockMvc.post("/commands") {
             contentType = MediaType.APPLICATION_JSON
-            content = mapper.writeValueAsString(CommandDTO(commandList))
+            content = mapper.writeValueAsString(CommandDTO(commands))
         }.andExpect {
             status { isOk() }
             content { string("Command batch accepted") }
@@ -89,38 +137,121 @@ class CommandControllerTest(
         // then
         assertAll(
             "Check all robot values",
-            {
-                assertEquals(9, robotRepository.findByIdOrNull(robot1.id)!!.health)
-                assertEquals(19, robotRepository.findByIdOrNull(robot1.id)!!.energy)
-            },
-            {
-                assertEquals(9, robotRepository.findByIdOrNull(robot2.id)!!.health)
-                assertEquals(19, robotRepository.findByIdOrNull(robot2.id)!!.energy)
-            },
-            {
-                assertEquals(9, robotRepository.findByIdOrNull(robot3.id)!!.health)
-                assertEquals(19, robotRepository.findByIdOrNull(robot3.id)!!.energy)
-            },
-            {
-                assertEquals(9, robotRepository.findByIdOrNull(robot4.id)!!.health)
-                assertEquals(19, robotRepository.findByIdOrNull(robot4.id)!!.energy)
-            },
-            {
-                assertEquals(9, robotRepository.findByIdOrNull(robot5.id)!!.health)
-                assertEquals(19, robotRepository.findByIdOrNull(robot5.id)!!.energy)
-            },
-            {
-                assertEquals(9, robotRepository.findByIdOrNull(robot6.id)!!.health)
-                assertEquals(19, robotRepository.findByIdOrNull(robot6.id)!!.energy)
-            },
-            {
-                assertEquals(9, robotRepository.findByIdOrNull(robot7.id)!!.health)
-                assertEquals(19, robotRepository.findByIdOrNull(robot7.id)!!.energy)
-            },
-            {
-                assertEquals(9, robotRepository.findByIdOrNull(robot8.id)!!.health)
-                assertEquals(19, robotRepository.findByIdOrNull(robot8.id)!!.energy)
-            },
+            robots.map {
+                {
+                    assertEquals(9, robotRepository.findByIdOrNull(it.id)!!.health)
+                    assertEquals(19, robotRepository.findByIdOrNull(it.id)!!.energy)
+                }
+            }
         )
+    }
+
+    @Test
+    fun `destroyed robots get deleted after combat attacks are executed`() {
+        // given
+        for (i in 1..3) robot1.upgrade(UpgradeType.DAMAGE)
+        assertEquals(10, robot1.attackDamage)
+        robotRepository.save(robot1)
+        val command = "fight ${robot1.player} ${robot1.id} ${robot5.id} ${UUID.randomUUID()}"
+        // when
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(listOf(command)))
+        }.andExpect {
+            status { isOk() }
+            content { string("Command batch accepted") }
+        }.andDo { print() }
+        // then
+        assertNull(robotRepository.findByIdOrNull(robot5.id))
+    }
+
+    @Test
+    fun `movement works correctly`() {
+        // given
+        val targetPlanetDto = GameMapPlanetDto(planet2Id, 3)
+
+        // TODO add MapService mock
+        val command = "move ${robot1.player} ${robot1.id} $planet2Id ${UUID.randomUUID()}"
+        // when
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(listOf(command)))
+        }.andExpect {
+            status { isOk() }
+            content { string("Command batch accepted") }
+        }.andDo { print() }
+        // then
+        val robot = robotRepository.findByIdOrNull(robot1.id)!!
+        assertEquals(planet2Id, robot.planet.planetId)
+        assertEquals(17, robot.energy)
+    }
+
+    @Test
+    fun `block works correctly`() {
+        // given
+        val command = "block ${robot1.player} ${robot1.id} ${UUID.randomUUID()}"
+
+        // when
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(listOf(command)))
+        }.andExpect {
+            status { isOk() }
+            content { string("Command batch accepted") }
+        }.andDo { print() }
+        // then
+        assertAll(
+            "All robots on planet1 have planet block",
+            robotRepository.findAllByPlanet_PlanetId(planet1Id).map {
+                {
+                    assert(it.planet.blocked)
+                }
+            }
+        )
+        assertEquals(16, robotRepository.findByIdOrNull(robot1.id)!!.energy)
+    }
+
+    @Test
+    fun `robots can't move from blocked planet`() {
+        // given
+        val targetPlanetDto = GameMapPlanetDto(planet2Id, 3)
+
+        // TODO add MapService mock
+
+        val command1 = "block ${robot1.player} ${robot2.id} ${UUID.randomUUID()}"
+        val command2 = "move ${robot2.player} ${robot2.id} $planet2Id ${UUID.randomUUID()}"
+        val commands = listOf(command1, command2)
+
+        // when
+        commands.forEach {
+            mockMvc.post("/commands") {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(CommandDTO(listOf(it)))
+            }.andExpect {
+                status { isOk() }
+                content { string("Command batch accepted") }
+            }.andDo { print() }
+        }
+        // then
+        assertEquals(planet1Id, robot2.planet.planetId)
+    }
+
+    @Test
+    fun `robot correctly regenerates energy`() {
+        // given
+        robot1.move(Planet(planet2Id), 10)
+        assertEquals(10, robot1.energy)
+        robotRepository.save(robot1)
+        val command = "regenerate ${robot1.player} ${robot1.id} ${UUID.randomUUID()}"
+        // when
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(listOf(command)))
+        }.andExpect {
+            status { isOk() }
+            content { string("Command batch accepted") }
+        }.andDo { print() }
+        // then
+        assertEquals(14, robotRepository.findByIdOrNull(robot1.id)!!.energy)
     }
 }
