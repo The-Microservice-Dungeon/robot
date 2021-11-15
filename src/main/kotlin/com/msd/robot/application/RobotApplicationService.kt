@@ -26,7 +26,7 @@ class RobotApplicationService(
      */
     @Async
     fun executeCommands(commands: List<Command>) {
-        if (commands[0]::class == AttackCommand::class)
+        if (commands[0] is AttackCommand)
         // Attack commands are always homogenous, so this cast is valid
             executeAttacks(commands as List<AttackCommand>)
         else if (commands[0] is AttackItemUsageCommand)
@@ -43,10 +43,10 @@ class RobotApplicationService(
     private fun executeHeterogeneousCommands(commands: List<Command>) {
         commands.forEach {
             try {
-                when (it::class) {
-                    MovementCommand::class -> move(it as MovementCommand)
-                    BlockCommand::class -> block(it as BlockCommand)
-                    EnergyRegenCommand::class -> regenerateEnergy(it as EnergyRegenCommand)
+                when (it) {
+                    is MovementCommand -> move(it)
+                    is BlockCommand -> block(it)
+                    is EnergyRegenCommand -> regenerateEnergy(it)
                     // TODO Add remaining CommandTypes as soon as their methods are implemented
                 }
             } catch (re: RuntimeException) {
