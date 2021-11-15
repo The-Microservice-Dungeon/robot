@@ -23,7 +23,7 @@ class CommandApplicationService {
     )
 
     /**
-     * Parses the list of commands and thrwos an Exception, if a homogeneity requirement isn't satisfied.
+     * Parses the list of commands and throws an Exception, if a homogeneity requirement isn't satisfied.
      *
      * @param commandStrings:       List of strings representing commands
      * @returns List of parsed commands
