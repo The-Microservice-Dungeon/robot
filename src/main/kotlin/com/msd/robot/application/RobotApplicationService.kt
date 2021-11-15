@@ -2,7 +2,7 @@ package com.msd.robot.application
 
 import com.msd.application.ExceptionConverter
 import com.msd.application.GameMapService
-import com.msd.command.domain.*
+import com.msd.command.application.*
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
 import org.springframework.scheduling.annotation.Async
@@ -19,7 +19,7 @@ class RobotApplicationService(
     /**
      * Takes a list of commands and passes them on to the corresponding method.
      * [AttackCommand]s and [AttackItemUsageCommand]s are homogeneous and have to be handled as one single batch.
-     * All other commands can be heterogeneous and thus can be passed to the corresponding methods singly.
+     * All other commands can be heterogeneous and thus can be passed to the corresponding methods individually.
      * This method is executed asynchronous and does not block the calling controller.
      *
      * @param commands:     List of commands that need to be executed.
@@ -29,7 +29,7 @@ class RobotApplicationService(
         if (commands[0]::class == AttackCommand::class)
         // Attack commands are always homogenous, so this cast is valid
             executeAttacks(commands as List<AttackCommand>)
-        else if (commands[0]:: class == AttackItemUsageCommand::class)
+        else if (commands[0] is AttackItemUsageCommand)
             TODO() // this needs to be handled in a batch as well
         else
             executeHeterogeneousCommands(commands)

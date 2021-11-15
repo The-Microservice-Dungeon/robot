@@ -1,6 +1,5 @@
 package com.msd.command.application
 
-import com.msd.command.domain.*
 import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.ReparationItemType
@@ -31,11 +30,11 @@ class CommandApplicationService {
      */
     fun parseCommandsFromStrings(commandStrings: List<String>): List<Command> {
         val commands = commandStrings.map { parseCommand(it) }
-        if (commands.find { it::class == AttackCommand::class } != null)
-            if (commands.filter { it::class == AttackCommand::class }.count() != commands.size)
+        if (commands.find { it is AttackCommand } != null)
+            if (commands.filterIsInstance<AttackCommand>().count() != commands.size)
                 throw CommandBatchParsingException("AttackCommands need to be homogeneous.")
-        if (commands.find { it::class == AttackItemUsageCommand::class } != null)
-            if (commands.filter { it::class == AttackItemUsageCommand::class }.count() != commands.size)
+        if (commands.find { it is AttackItemUsageCommand } != null)
+            if (commands.filterIsInstance<AttackItemUsageCommand>().count() != commands.size)
                 throw CommandBatchParsingException("AttackItemUsageCommand need to be homogeneous.")
         return commands
     }
@@ -111,8 +110,8 @@ class CommandApplicationService {
                 ReparationItemType.valueOf(args[2].uppercase()),
                 UUID.fromString(args[3])
             )
+            else -> throw RuntimeException("Internal Error")
         }
-        throw RuntimeException("Internal Error")
     }
 
     /**
@@ -122,20 +121,20 @@ class CommandApplicationService {
      * @param args  The arguments for the command
      */
     private fun parseActionCommand(verb: String, args: List<String>): Command {
-        when (verb) {
-            "block", "mine", "regenerate" -> return get3PartConstructorByVerb(verb)(
+        return when (verb) {
+            "block", "mine", "regenerate" -> get3PartConstructorByVerb(verb)(
                 UUID.fromString(args[0]),
                 UUID.fromString(args[1]),
                 UUID.fromString(args[2])
             )
-            "move", "fight" -> return get4PartConstructorByVerb(verb)(
+            "move", "fight" -> get4PartConstructorByVerb(verb)(
                 UUID.fromString(args[0]),
                 UUID.fromString(args[1]),
                 UUID.fromString(args[2]),
                 UUID.fromString(args[3])
             )
+            else -> throw RuntimeException("Internal Error")
         }
-        throw RuntimeException("Internal Error")
     }
 
     /**
@@ -145,12 +144,12 @@ class CommandApplicationService {
      * @return The Constructor for the Command
      */
     fun get3PartConstructorByVerb(verb: String): (UUID, UUID, UUID) -> Command {
-        when (verb) {
-            "block" -> return ::BlockCommand
-            "mine" -> return ::MiningCommand
-            "regenerate" -> return ::EnergyRegenCommand
+        return when (verb) {
+            "block" -> ::BlockCommand
+            "mine" -> ::MiningCommand
+            "regenerate" -> ::EnergyRegenCommand
+            else -> throw RuntimeException("Internal Error")
         }
-        throw RuntimeException("Internal Error")
     }
 
     /**
@@ -160,10 +159,10 @@ class CommandApplicationService {
      * @return The Constructor for the Command
      */
     fun get4PartConstructorByVerb(verb: String): (UUID, UUID, UUID, UUID) -> Command {
-        when (verb) {
-            "move" -> return ::MovementCommand
-            "fight" -> return ::AttackCommand
+        return when (verb) {
+            "move" -> ::MovementCommand
+            "fight" -> ::AttackCommand
+            else -> throw RuntimeException("Internal Error")
         }
-        throw RuntimeException("Internal Error")
     }
 }

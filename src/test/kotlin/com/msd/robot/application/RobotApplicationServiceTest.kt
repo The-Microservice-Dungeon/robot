@@ -4,10 +4,10 @@ import com.msd.application.ClientException
 import com.msd.application.ExceptionConverter
 import com.msd.application.GameMapPlanetDto
 import com.msd.application.GameMapService
-import com.msd.command.domain.AttackCommand
-import com.msd.command.domain.BlockCommand
-import com.msd.command.domain.EnergyRegenCommand
-import com.msd.command.domain.MovementCommand
+import com.msd.command.application.AttackCommand
+import com.msd.command.application.BlockCommand
+import com.msd.command.application.EnergyRegenCommand
+import com.msd.command.application.MovementCommand
 import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.*

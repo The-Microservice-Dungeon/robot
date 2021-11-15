@@ -1,4 +1,4 @@
-package com.msd.command.domain
+package com.msd.command.application
 
 import com.msd.item.domain.ReparationItemType
 import java.util.*

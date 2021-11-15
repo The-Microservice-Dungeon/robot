@@ -16,7 +16,9 @@ class CommandController(
 
     /**
      * Receives a list of commands in a string representation and executes them asynchronously.
+     *
      * @param commandDto A DTO containing the list of commands
+     * @return ResponseEntity stating the success of the Command Queueing
      */
     @PostMapping
     fun receiveCommand(@RequestBody commandDto: CommandDTO): ResponseEntity<Any> {
