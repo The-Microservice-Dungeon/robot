@@ -12,14 +12,14 @@ import java.util.*
 class CommandApplicationService {
 
     val commandTypeKeywordsAndNumArgs = mapOf(
-        "block" to 3,
-        "move" to 4,
-        "fight" to 4,
-        "mine" to 3,
-        "regenerate" to 3,
-        "use-item-fighting" to 5,
-        "use-item-movement" to 4,
-        "use-item-reparation" to 4
+        CommandVerbs.BLOCK.verb to 3,
+        CommandVerbs.MOVE.verb to 4,
+        CommandVerbs.FIGHT.verb to 4,
+        CommandVerbs.MINE.verb to 3,
+        CommandVerbs.REGENERATE.verb to 3,
+        CommandVerbs.USE_ITEM_FIGHTING.verb to 5,
+        CommandVerbs.USE_ITEM_MOVEMENT.verb to 4,
+        CommandVerbs.USE_ITEM_REPARATION.verb to 4
     )
 
     /**
@@ -91,20 +91,20 @@ class CommandApplicationService {
      */
     private fun parseItemUsageCommand(verb: String, args: List<String>): Command {
         when (verb) {
-            "use-item-fighting" -> return AttackItemUsageCommand(
+            CommandVerbs.USE_ITEM_FIGHTING.verb -> return AttackItemUsageCommand(
                 UUID.fromString(args[0]),
                 UUID.fromString(args[1]),
                 AttackItemType.valueOf(args[2].uppercase()),
                 UUID.fromString(args[3]),
                 UUID.fromString(args[4])
             )
-            "use-item-movement" -> return MovementItemsUsageCommand(
+            CommandVerbs.USE_ITEM_MOVEMENT.verb -> return MovementItemsUsageCommand(
                 UUID.fromString(args[0]),
                 UUID.fromString(args[1]),
                 MovementItemType.valueOf(args[2].uppercase()),
                 UUID.fromString(args[3])
             )
-            "use-item-reparation" -> return ReparationItemUsageCommand(
+            CommandVerbs.USE_ITEM_REPARATION.verb -> return ReparationItemUsageCommand(
                 UUID.fromString(args[0]),
                 UUID.fromString(args[1]),
                 ReparationItemType.valueOf(args[2].uppercase()),
@@ -122,12 +122,14 @@ class CommandApplicationService {
      */
     private fun parseActionCommand(verb: String, args: List<String>): Command {
         return when (verb) {
-            "block", "mine", "regenerate" -> get3PartConstructorByVerb(verb)(
+            CommandVerbs.BLOCK.verb,
+            CommandVerbs.MINE.verb,
+            CommandVerbs.REGENERATE.verb -> get3PartConstructorByVerb(verb)(
                 UUID.fromString(args[0]),
                 UUID.fromString(args[1]),
                 UUID.fromString(args[2])
             )
-            "move", "fight" -> get4PartConstructorByVerb(verb)(
+            CommandVerbs.MOVE.verb, CommandVerbs.FIGHT.verb -> get4PartConstructorByVerb(verb)(
                 UUID.fromString(args[0]),
                 UUID.fromString(args[1]),
                 UUID.fromString(args[2]),
@@ -145,9 +147,9 @@ class CommandApplicationService {
      */
     fun get3PartConstructorByVerb(verb: String): (UUID, UUID, UUID) -> Command {
         return when (verb) {
-            "block" -> ::BlockCommand
-            "mine" -> ::MiningCommand
-            "regenerate" -> ::EnergyRegenCommand
+            CommandVerbs.BLOCK.verb -> ::BlockCommand
+            CommandVerbs.MINE.verb -> ::MiningCommand
+            CommandVerbs.REGENERATE.verb -> ::EnergyRegenCommand
             else -> throw RuntimeException("Internal Error")
         }
     }
@@ -160,8 +162,8 @@ class CommandApplicationService {
      */
     fun get4PartConstructorByVerb(verb: String): (UUID, UUID, UUID, UUID) -> Command {
         return when (verb) {
-            "move" -> ::MovementCommand
-            "fight" -> ::AttackCommand
+            CommandVerbs.MOVE.verb -> ::MovementCommand
+            CommandVerbs.FIGHT.verb -> ::AttackCommand
             else -> throw RuntimeException("Internal Error")
         }
     }
