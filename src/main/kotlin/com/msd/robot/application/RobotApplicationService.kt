@@ -6,6 +6,7 @@ import com.msd.command.AttackCommand
 import com.msd.command.BlockCommand
 import com.msd.command.MovementCommand
 import com.msd.command.RegenCommand
+import com.msd.planet.domain.Planet
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
 import org.springframework.stereotype.Service
@@ -19,9 +20,22 @@ class RobotApplicationService(
 ) {
 
     /**
+     * Spawns a new [Robot]. The `Robot` belongs to the specified player and will spawn on the Specified [Planet]
+     *
+     * @param player  the `UUID` of the player
+     * @param planet the `UUID` of the `Planet`
+     */
+    fun spawn(player: UUID, planet: UUID) {
+        val robot = Robot(player, Planet(planet))
+        robotDomainService.saveRobot(robot)
+    }
+
+    /**
      * Executes a single [MovementCommand] by checking whether the robot exists and the player is the owner of the
      * robot. To get the new [Planet] the robot should be positioned on, if calls the GameMap MicroService through
      * a connector service [GameMapService]. If everything goes right, the robot gets moved.
+     *
+     * @param moveCommand a [Command] containing the IDs of the Robot which has to move, the Player who send it and the target `Planet`
      */
     fun move(moveCommand: MovementCommand) {
         val robotId = moveCommand.robotId

@@ -577,4 +577,16 @@ class RobotApplicationServiceTest {
             }
         )
     }
+
+    @Test
+    fun `Robots spawn correctly`() {
+        // given
+        val slot = CapturingSlot<Robot>()
+        every { robotRepository.save(capture(slot)) } returns robot1 // we don't care about the return value, only the capture
+        // when
+        robotApplicationService.spawn(player1Id, planet1.planetId)
+        // then
+        assertEquals(player1Id, slot.captured.player)
+        assertEquals(planet1.planetId, slot.captured.planet.planetId)
+    }
 }
