@@ -203,6 +203,16 @@ class RobotDomainService(
         return robotRepository.saveAll(robots).toList()
     }
 
+    /**
+     * Makes the specified [Robot] use an item. The function of the Item is specified via a higher order function, which
+     * should be the value of the [ReparationItemType]. Those function need specify the `playerId`, `robotId` and pass the
+     * [RobotRepository].
+     * TODO rewrite to have a ReparationItemType as param instead of function
+     *
+     * @param robotId     the `UUID` of the `Robot` which should use the item.
+     * @param playerId    the `UUID` of the player the `Robot` belongs to
+     * @param func        a higher order function which specifies which effects an Item has. The function should be part of the [ReparationItemType]
+     */
     fun useReparationItem(robotId: UUID, playerId: UUID, func: (UUID, UUID, RobotRepository) -> Unit) {
         func(playerId, robotId, robotRepository)
     }
