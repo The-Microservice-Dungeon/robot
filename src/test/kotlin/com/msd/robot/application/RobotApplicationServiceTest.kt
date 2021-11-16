@@ -1,13 +1,13 @@
 package com.msd.robot.application
 
 import com.msd.application.ClientException
-import com.msd.application.CustomExceptionHandler
+import com.msd.application.ExceptionConverter
 import com.msd.application.GameMapPlanetDto
 import com.msd.application.GameMapService
-import com.msd.command.AttackCommand
-import com.msd.command.BlockCommand
-import com.msd.command.MovementCommand
-import com.msd.command.RegenCommand
+import com.msd.command.application.AttackCommand
+import com.msd.command.application.BlockCommand
+import com.msd.command.application.EnergyRegenCommand
+import com.msd.command.application.MovementCommand
 import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.*
@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.ArgumentMatchers.any
 import org.springframework.data.repository.findByIdOrNull
 import java.util.*
 
@@ -48,7 +47,7 @@ class RobotApplicationServiceTest {
     lateinit var gameMapMockService: GameMapService
 
     @MockK
-    lateinit var exceptionHandler: CustomExceptionHandler
+    lateinit var exceptionConverter: ExceptionConverter
 
     lateinit var robotApplicationService: RobotApplicationService
     lateinit var robotDomainService: RobotDomainService
@@ -59,7 +58,7 @@ class RobotApplicationServiceTest {
     fun setup() {
         MockKAnnotations.init(this)
         robotDomainService = RobotDomainService(robotRepository)
-        robotApplicationService = RobotApplicationService(gameMapMockService, robotDomainService, exceptionHandler)
+        robotApplicationService = RobotApplicationService(gameMapMockService, robotDomainService, exceptionConverter)
 
         planet1 = Planet(UUID.randomUUID())
         planet2 = Planet(UUID.randomUUID())
@@ -85,7 +84,7 @@ class RobotApplicationServiceTest {
     @Test
     fun `Robot doesn't move if it is unknown`() {
         // given
-        val command = MovementCommand(unknownRobotId, player1Id, planet1.planetId)
+        val command = MovementCommand(player1Id, unknownRobotId, planet1.planetId, UUID.randomUUID())
         every { robotRepository.findByIdOrNull(unknownRobotId) } returns null
         // then
         assertThrows<RobotNotFoundException> { robotApplicationService.move(command) }
@@ -94,7 +93,7 @@ class RobotApplicationServiceTest {
     @Test
     fun `Robot doesn't move if players don't match`() {
         // given
-        val command = MovementCommand(robot1.id, robot4.player, planet2.planetId)
+        val command = MovementCommand(robot4.player, robot1.id, planet2.planetId, UUID.randomUUID())
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         // when
         assertThrows<InvalidPlayerException> { robotApplicationService.move(command) }
@@ -105,7 +104,7 @@ class RobotApplicationServiceTest {
     @Test
     fun `If GameMap Service returns impossible path, robot doesn't move`() {
         // given
-        val command = MovementCommand(robot1.id, robot1.player, planet2.planetId)
+        val command = MovementCommand(robot1.player, robot1.id, planet2.planetId, UUID.randomUUID())
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every {
             gameMapMockService.retrieveTargetPlanetIfRobotCanReach(
@@ -126,7 +125,7 @@ class RobotApplicationServiceTest {
     @Test
     fun `Robot doesn't move when GameMap MicroService is not reachable`() {
         // given
-        val command = MovementCommand(robot1.id, robot1.player, planet2.planetId)
+        val command = MovementCommand(robot1.player, robot1.id, planet2.planetId, UUID.randomUUID())
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { gameMapMockService.retrieveTargetPlanetIfRobotCanReach(any(), any()) } throws ClientException("")
 
@@ -145,7 +144,7 @@ class RobotApplicationServiceTest {
         while (robot1.energy >= 4) // blocking on Level 0 costs 4 energy
             robot1.block()
         planet1.blocked = false
-        val command = MovementCommand(robot1.id, robot1.player, planet2.planetId)
+        val command = MovementCommand(robot1.player, robot1.id, planet2.planetId, UUID.randomUUID())
         val planetDto = GameMapPlanetDto(planet2.planetId, 3)
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { gameMapMockService.retrieveTargetPlanetIfRobotCanReach(any(), any()) } returns planetDto
@@ -164,7 +163,7 @@ class RobotApplicationServiceTest {
         // given
         robot1.block()
 
-        val command = MovementCommand(robot3.id, robot3.player, planet2.planetId)
+        val command = MovementCommand(robot3.player, robot3.id, planet2.planetId, UUID.randomUUID())
         val planetDto = GameMapPlanetDto(planet2.planetId, 3)
         every { robotRepository.findByIdOrNull(robot3.id) } returns robot3
         every { gameMapMockService.retrieveTargetPlanetIfRobotCanReach(any(), any()) } returns planetDto
@@ -181,7 +180,7 @@ class RobotApplicationServiceTest {
     @Test
     fun `Robot moves if there are no problems`() {
         // given
-        val command = MovementCommand(robot1.id, robot1.player, planet2.planetId)
+        val command = MovementCommand(robot1.player, robot1.id, planet2.planetId, UUID.randomUUID())
         val planetDto = GameMapPlanetDto(planet2.planetId, 3)
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { robotRepository.save(any()) } returns robot1
@@ -201,7 +200,7 @@ class RobotApplicationServiceTest {
         every { robotRepository.findByIdOrNull(unknownRobotId) } returns null
         // then
         assertThrows<RobotNotFoundException> {
-            robotApplicationService.regenerateEnergy(RegenCommand(unknownRobotId, UUID.randomUUID()))
+            robotApplicationService.regenerateEnergy(EnergyRegenCommand(UUID.randomUUID(), unknownRobotId, UUID.randomUUID()))
         }
     }
 
@@ -213,7 +212,7 @@ class RobotApplicationServiceTest {
 
         // then
         assertThrows<InvalidPlayerException> {
-            robotApplicationService.regenerateEnergy(RegenCommand(robot1.id, UUID.randomUUID()))
+            robotApplicationService.regenerateEnergy(EnergyRegenCommand(UUID.randomUUID(), robot1.id, UUID.randomUUID()))
         }
         assertEquals(10, robot1.energy)
     }
@@ -225,7 +224,7 @@ class RobotApplicationServiceTest {
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { robotRepository.save(robot1) } returns robot1
         // when
-        robotApplicationService.regenerateEnergy(RegenCommand(robot1.id, robot1.player))
+        robotApplicationService.regenerateEnergy(EnergyRegenCommand(robot1.player, robot1.id, UUID.randomUUID()))
 
         // then
         assertEquals(18, robot1.energy)
@@ -235,7 +234,7 @@ class RobotApplicationServiceTest {
     @Test
     fun `Robot blocks planet successfully`() {
         // given
-        val command = BlockCommand(robot1.id, robot1.player)
+        val command = BlockCommand(robot1.player, robot1.id, UUID.randomUUID())
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { robotRepository.save(any()) } returns robot1
 
@@ -251,7 +250,7 @@ class RobotApplicationServiceTest {
     fun `Robot cannot block planet if it has not enough energy`() {
         // given
         robot1.move(planet1, 19)
-        val command = BlockCommand(robot1.id, robot1.player)
+        val command = BlockCommand(robot1.player, robot1.id, UUID.randomUUID())
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
 
         // when
@@ -266,7 +265,7 @@ class RobotApplicationServiceTest {
     @Test
     fun `Robot can't block planet if players don't match`() {
         // given
-        val command = BlockCommand(robot1.id, UUID.randomUUID())
+        val command = BlockCommand(UUID.randomUUID(), robot1.id, UUID.randomUUID())
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         // when
         assertThrows<InvalidPlayerException> {
@@ -314,12 +313,12 @@ class RobotApplicationServiceTest {
         )
 
         val attackCommands = listOf(
-            AttackCommand(robot1.id, player1Id, robot4.id),
-            AttackCommand(robot2.id, player1Id, robot5.id),
-            AttackCommand(robot3.id, player1Id, robot6.id),
-            AttackCommand(robot4.id, player2Id, robot1.id),
-            AttackCommand(robot5.id, player2Id, robot2.id),
-            AttackCommand(robot6.id, player2Id, robot3.id),
+            AttackCommand(player1Id, robot1.id, robot4.id, UUID.randomUUID()),
+            AttackCommand(player1Id, robot2.id, robot5.id, UUID.randomUUID()),
+            AttackCommand(player1Id, robot3.id, robot6.id, UUID.randomUUID()),
+            AttackCommand(player2Id, robot4.id, robot1.id, UUID.randomUUID()),
+            AttackCommand(player2Id, robot5.id, robot2.id, UUID.randomUUID()),
+            AttackCommand(player2Id, robot6.id, robot3.id, UUID.randomUUID()),
         )
         // when
         robotApplicationService.executeAttacks(attackCommands)
@@ -366,14 +365,14 @@ class RobotApplicationServiceTest {
         )
 
         val attackCommands = listOf(
-            AttackCommand(robot1.id, player1Id, robot4.id),
-            AttackCommand(robot2.id, player1Id, robot4.id),
-            AttackCommand(robot3.id, player1Id, robot6.id),
-            AttackCommand(robot4.id, player2Id, robot1.id),
-            AttackCommand(robot5.id, player2Id, robot1.id),
-            AttackCommand(robot6.id, player2Id, robot3.id),
+            AttackCommand(player1Id, robot1.id, robot4.id, UUID.randomUUID()),
+            AttackCommand(player1Id, robot2.id, robot4.id, UUID.randomUUID()),
+            AttackCommand(player1Id, robot3.id, robot6.id, UUID.randomUUID()),
+            AttackCommand(player2Id, robot4.id, robot1.id, UUID.randomUUID()),
+            AttackCommand(player2Id, robot5.id, robot1.id, UUID.randomUUID()),
+            AttackCommand(player2Id, robot6.id, robot3.id, UUID.randomUUID()),
         )
-        justRun { exceptionHandler.handle(any(), any()) }
+        justRun { exceptionConverter.handle(any(), any()) }
         // when
         robotApplicationService.executeAttacks(attackCommands)
         // then
@@ -404,7 +403,7 @@ class RobotApplicationServiceTest {
             },
         )
         verify(exactly = 2) {
-            exceptionHandler.handle(any(), any())
+            exceptionConverter.handle(any(), any())
         }
     }
 
@@ -425,12 +424,12 @@ class RobotApplicationServiceTest {
         ResourceType.values().forEach { robot4.inventory.addResource(it, 4) }
 
         val attackCommands = listOf(
-            AttackCommand(robot1.id, player1Id, robot4.id),
-            AttackCommand(robot2.id, player1Id, robot5.id),
-            AttackCommand(robot3.id, player1Id, robot4.id),
-            AttackCommand(robot4.id, player2Id, robot1.id),
-            AttackCommand(robot5.id, player2Id, robot2.id),
-            AttackCommand(robot6.id, player2Id, robot4.id),
+            AttackCommand(player1Id, robot1.id, robot4.id, UUID.randomUUID()),
+            AttackCommand(player1Id, robot2.id, robot5.id, UUID.randomUUID()),
+            AttackCommand(player1Id, robot3.id, robot4.id, UUID.randomUUID()),
+            AttackCommand(player2Id, robot4.id, robot1.id, UUID.randomUUID()),
+            AttackCommand(player2Id, robot5.id, robot2.id, UUID.randomUUID()),
+            AttackCommand(player2Id, robot6.id, robot4.id, UUID.randomUUID()),
         )
 
         // Let every robot attack 3 times
@@ -473,12 +472,12 @@ class RobotApplicationServiceTest {
     fun `Invalid Command in batch leads to ExceptionHandler being called and no damage`() {
         // given
         val attackCommands = listOf(
-            AttackCommand(robot1.id, player1Id, robot4.id),
-            AttackCommand(robot2.id, player2Id, robot5.id), // invalid player
-            AttackCommand(robot3.id, player1Id, robot4.id),
-            AttackCommand(robot4.id, player2Id, robot1.id),
-            AttackCommand(robot5.id, player1Id, robot2.id), // invalid player
-            AttackCommand(robot6.id, player2Id, robot4.id),
+            AttackCommand(player1Id, robot1.id, robot4.id, UUID.randomUUID()),
+            AttackCommand(player2Id, robot2.id, robot5.id, UUID.randomUUID()), // invalid player
+            AttackCommand(player1Id, robot3.id, robot4.id, UUID.randomUUID()),
+            AttackCommand(player2Id, robot4.id, robot1.id, UUID.randomUUID()),
+            AttackCommand(player1Id, robot5.id, robot2.id, UUID.randomUUID()), // invalid player
+            AttackCommand(player2Id, robot6.id, robot4.id, UUID.randomUUID()),
         )
 
         every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns
@@ -490,14 +489,14 @@ class RobotApplicationServiceTest {
         every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf(
             robot1, robot2, robot3, robot4, robot5, robot6
         )
-        justRun { exceptionHandler.handle(any(), any()) }
+        justRun { exceptionConverter.handle(any(), any()) }
 
         // when
         robotApplicationService.executeAttacks(attackCommands)
 
         // assert
         verify(exactly = 2) {
-            exceptionHandler.handle(any(), any())
+            exceptionConverter.handle(any(), any())
         }
     }
 
@@ -538,9 +537,9 @@ class RobotApplicationServiceTest {
         )
 
         val attackCommands = listOf(
-            AttackCommand(robot1.id, player1Id, robot4.id),
-            AttackCommand(robot3.id, player1Id, robot4.id),
-            AttackCommand(robot6.id, player2Id, robot4.id),
+            AttackCommand(player1Id, robot1.id, robot4.id, UUID.randomUUID()),
+            AttackCommand(player1Id, robot3.id, robot4.id, UUID.randomUUID()),
+            AttackCommand(player2Id, robot6.id, robot4.id, UUID.randomUUID()),
         )
 
         // Let every robot attack 3 times

@@ -4,8 +4,11 @@ import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
-class CustomExceptionHandler {
+class ExceptionConverter {
 
+    /**
+     * Convert the Exception into a corresponding Kafka Event
+     */
     fun handle(exception: RuntimeException, transactionId: UUID) {
     }
 }

@@ -1,14 +1,12 @@
 package com.msd.robot.application
 
-import com.msd.application.CustomExceptionHandler
+import com.msd.application.ExceptionConverter
 import com.msd.application.GameMapService
-import com.msd.command.AttackCommand
-import com.msd.command.BlockCommand
-import com.msd.command.MovementCommand
-import com.msd.command.RegenCommand
+import com.msd.command.application.*
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
+import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import java.util.*
 
@@ -16,8 +14,47 @@ import java.util.*
 class RobotApplicationService(
     val gameMapService: GameMapService,
     val robotDomainService: RobotDomainService,
-    val exceptionHandler: CustomExceptionHandler
+    val exceptionConverter: ExceptionConverter
 ) {
+
+    /**
+     * Takes a list of commands and passes them on to the corresponding method.
+     * [AttackCommand]s and [AttackItemUsageCommand]s are homogeneous and have to be handled as one single batch.
+     * All other commands can be heterogeneous and thus can be passed to the corresponding methods individually.
+     * This method is executed asynchronous and does not block the calling controller.
+     *
+     * @param commands:     List of commands that need to be executed.
+     */
+    @Async
+    fun executeCommands(commands: List<Command>) {
+        if (commands[0] is AttackCommand)
+        // Attack commands are always homogenous, so this cast is valid
+            executeAttacks(commands as List<AttackCommand>)
+        else if (commands[0] is AttackItemUsageCommand)
+            TODO() // this needs to be handled in a batch as well
+        else
+            executeHeterogeneousCommands(commands)
+    }
+
+    /**
+     * Execute every command in the list and pass occuring exceptions on to the handler.
+     *
+     * @param commands:     The commands that need to be executed. These can be heterogeneous.
+     */
+    private fun executeHeterogeneousCommands(commands: List<Command>) {
+        commands.forEach {
+            try {
+                when (it) {
+                    is MovementCommand -> move(it)
+                    is BlockCommand -> block(it)
+                    is EnergyRegenCommand -> regenerateEnergy(it)
+                    // TODO Add remaining CommandTypes as soon as their methods are implemented
+                }
+            } catch (re: RuntimeException) {
+                exceptionConverter.handle(re, it.transactionUUID)
+            }
+        }
+    }
 
     /**
      * Spawns a new [Robot]. The `Robot` belongs to the specified player and will spawn on the Specified [Planet]
@@ -38,7 +75,7 @@ class RobotApplicationService(
      * @param moveCommand a [Command] containing the IDs of the Robot which has to move, the Player who send it and the target `Planet`
      */
     fun move(moveCommand: MovementCommand) {
-        val robotId = moveCommand.robotId
+        val robotId = moveCommand.robotUUID
         val playerId = moveCommand.playerUUID
 
         val robot = robotDomainService.getRobot(robotId)
@@ -60,24 +97,24 @@ class RobotApplicationService(
      * @throws InvalidPlayerException  if the PlayerIDs specified in the `BlockCommand` and `Robot` don't match
      */
     fun block(blockCommand: BlockCommand) {
-        val robot = robotDomainService.getRobot(blockCommand.robotId)
+        val robot = robotDomainService.getRobot(blockCommand.robotUUID)
         robotDomainService.checkRobotBelongsToPlayer(robot, blockCommand.playerUUID)
         robot.block()
         robotDomainService.saveRobot(robot)
     }
 
     /**
-     * Regenerates the `energy` of a user specified in [regenCommand]. If the specified [Robot] can not be found or the
+     * Regenerates the `energy` of a user specified in [energyRegenCommand]. If the specified [Robot] can not be found or the
      * players don't match an exception is thrown.
      *
-     * @param regenCommand             a [RegenCommand] in which the robot which should regenerate its `energy` and its Player is specified
+     * @param energyRegenCommand             a [EnergyRegenCommand] in which the robot which should regenerate its `energy` and its Player is specified
      * @throws RobotNotFoundException  When a `Robot` with the specified ID can't be found
      * @throws InvalidPlayerException  When the specified `Player` and the `Player` specified in the `Robot` don't match
      */
-    fun regenerateEnergy(regenCommand: RegenCommand) {
-        val robot = robotDomainService.getRobot(regenCommand.robotId)
+    fun regenerateEnergy(energyRegenCommand: EnergyRegenCommand) {
+        val robot = robotDomainService.getRobot(energyRegenCommand.robotUUID)
 
-        robotDomainService.checkRobotBelongsToPlayer(robot, regenCommand.playerId)
+        robotDomainService.checkRobotBelongsToPlayer(robot, energyRegenCommand.playerUUID)
         robot.regenerateEnergy()
         robotDomainService.saveRobot(robot)
     }
@@ -96,14 +133,14 @@ class RobotApplicationService(
         val battleFields = mutableSetOf<UUID>()
         attackCommands.forEach {
             try {
-                val attacker = robotDomainService.getRobot(it.robotId)
+                val attacker = robotDomainService.getRobot(it.robotUUID)
                 val target = robotDomainService.getRobot(it.targetRobotUUID)
                 robotDomainService.checkRobotBelongsToPlayer(attacker, it.playerUUID)
 
                 robotDomainService.fight(attacker, target)
                 battleFields.add(attacker.planet.planetId)
             } catch (re: RuntimeException) {
-                exceptionHandler.handle(re, it.transactionUUID)
+                exceptionConverter.handle(re, it.transactionUUID)
             }
         }
 
