@@ -3,6 +3,7 @@ package com.msd.robot.application
 import com.msd.application.ExceptionConverter
 import com.msd.application.GameMapService
 import com.msd.command.application.*
+import com.msd.planet.domain.Planet
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
 import org.springframework.scheduling.annotation.Async
