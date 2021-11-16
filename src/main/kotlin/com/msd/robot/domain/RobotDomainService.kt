@@ -96,7 +96,8 @@ class RobotDomainService(
         robotsAliveOnPlanet: List<Robot>
     ) {
         while (resourcesToBeDistributed.value > 0 && getNumberOfRobotsWithUnusedStorage(robotsAliveOnPlanet) > 0) {
-            val resourcesPerRobot = resourcesToBeDistributed.value.floorDiv(getNumberOfRobotsWithUnusedStorage(robotsAliveOnPlanet))
+            val resourcesPerRobot =
+                resourcesToBeDistributed.value.floorDiv(getNumberOfRobotsWithUnusedStorage(robotsAliveOnPlanet))
 
             if (resourcesPerRobot >= 1) {
                 distributeResourcesEvenly(robotsAliveOnPlanet, resourcesToBeDistributed, resourcesPerRobot)
@@ -200,5 +201,9 @@ class RobotDomainService(
      */
     fun saveAll(robots: List<Robot>): List<Robot> {
         return robotRepository.saveAll(robots).toList()
+    }
+
+    fun useReparationItem(robotId: UUID, playerId: UUID, func: (UUID, UUID, RobotRepository) -> Unit) {
+        func(playerId, robotId, robotRepository)
     }
 }
