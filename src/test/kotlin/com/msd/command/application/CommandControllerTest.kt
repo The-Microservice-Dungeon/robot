@@ -1,11 +1,14 @@
 package com.msd.command.application
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.application.GameMapPlanetDto
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
 import com.msd.robot.domain.UpgradeType
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.assertAll
@@ -19,14 +22,14 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
 import java.util.*
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @ActiveProfiles(profiles = ["no-async"])
 class CommandControllerTest(
     @Autowired private var mockMvc: MockMvc,
     @Autowired private var commandController: CommandController,
     @Autowired private var robotRepository: RobotRepository,
-    @Autowired private var mapper: ObjectMapper
+    @Autowired private var mapper: ObjectMapper,
 ) {
     private val player1Id = UUID.randomUUID()
     private val player2Id = UUID.randomUUID()
@@ -43,6 +46,22 @@ class CommandControllerTest(
     private lateinit var robot7: Robot
     private lateinit var robot8: Robot
     private lateinit var robots: List<Robot>
+
+    companion object {
+        val mockGameServiceWebClient = MockWebServer()
+
+        @BeforeAll
+        @JvmStatic
+        internal fun setUp() {
+            mockGameServiceWebClient.start(port = 8080)
+        }
+
+        @AfterAll
+        @JvmStatic
+        internal fun tearDown() {
+            mockGameServiceWebClient.shutdown()
+        }
+    }
 
     @BeforeEach
     fun `setup database`() {
@@ -170,7 +189,12 @@ class CommandControllerTest(
         // given
         val targetPlanetDto = GameMapPlanetDto(planet2Id, 3)
 
-        // TODO add MapService mock
+        mockGameServiceWebClient.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(jacksonObjectMapper().writeValueAsString(targetPlanetDto))
+        )
+
         val command = "move ${robot1.player} ${robot1.id} $planet2Id ${UUID.randomUUID()}"
         // when
         mockMvc.post("/commands") {
@@ -216,7 +240,11 @@ class CommandControllerTest(
         // given
         val targetPlanetDto = GameMapPlanetDto(planet2Id, 3)
 
-        // TODO add MapService mock
+        mockGameServiceWebClient.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(jacksonObjectMapper().writeValueAsString(targetPlanetDto))
+        )
 
         val command1 = "block ${robot1.player} ${robot2.id} ${UUID.randomUUID()}"
         val command2 = "move ${robot2.player} ${robot2.id} $planet2Id ${UUID.randomUUID()}"
