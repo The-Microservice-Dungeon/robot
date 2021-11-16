@@ -275,4 +275,8 @@ class Robot(
     fun repair() {
         this.health = this.maxHealth
     }
+
+    fun repairBy(repairAmount: Int) {
+        this.health += repairAmount
+    }
 }
