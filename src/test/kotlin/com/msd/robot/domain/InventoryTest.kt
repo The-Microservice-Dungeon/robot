@@ -1,6 +1,9 @@
 package com.msd.robot.domain
 
 import com.msd.domain.ResourceType
+import com.msd.item.domain.AttackItemType
+import com.msd.item.domain.MovementItemType
+import com.msd.item.domain.ReparationItemType
 import com.msd.planet.domain.Planet
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -129,5 +132,87 @@ class InventoryTest {
         robot1.inventory.addResource(ResourceType.COAL, 20)
         // then
         assert(robot1.inventory.isFull())
+    }
+
+    @Test
+    fun `adding an item correctly increases its count`() {
+        // when
+        robot1.inventory.addItem(MovementItemType.WORMHOLE)
+        robot1.inventory.addItem(ReparationItemType.REPARATION_SWARM)
+        robot1.inventory.addItem(AttackItemType.ROCKET)
+        robot1.inventory.addItem(AttackItemType.BOMBARDMENT)
+        robot1.inventory.addItem(AttackItemType.SELF_DESTRUCT)
+        robot1.inventory.addItem(AttackItemType.NUKE)
+        // then
+        assertEquals(1, robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
+        assertEquals(1, robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM))
+        assertEquals(1, robot1.inventory.getItemAmountByType(AttackItemType.ROCKET))
+        assertEquals(1, robot1.inventory.getItemAmountByType(AttackItemType.BOMBARDMENT))
+        assertEquals(1, robot1.inventory.getItemAmountByType(AttackItemType.SELF_DESTRUCT))
+        assertEquals(1, robot1.inventory.getItemAmountByType(AttackItemType.NUKE))
+    }
+
+    @Test
+    fun `removing an item correctly decreases its count`() {
+        // given
+        robot1.inventory.addItem(MovementItemType.WORMHOLE)
+        robot1.inventory.addItem(ReparationItemType.REPARATION_SWARM)
+        robot1.inventory.addItem(AttackItemType.ROCKET)
+        robot1.inventory.addItem(AttackItemType.BOMBARDMENT)
+        robot1.inventory.addItem(AttackItemType.SELF_DESTRUCT)
+        robot1.inventory.addItem(AttackItemType.NUKE)
+
+        // when
+        robot1.inventory.removeItem(MovementItemType.WORMHOLE)
+        robot1.inventory.removeItem(ReparationItemType.REPARATION_SWARM)
+        robot1.inventory.removeItem(AttackItemType.ROCKET)
+        robot1.inventory.removeItem(AttackItemType.BOMBARDMENT)
+        robot1.inventory.removeItem(AttackItemType.SELF_DESTRUCT)
+        robot1.inventory.removeItem(AttackItemType.NUKE)
+        // then
+        assertEquals(0, robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
+        assertEquals(0, robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM))
+        assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.ROCKET))
+        assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.BOMBARDMENT))
+        assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.SELF_DESTRUCT))
+        assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.NUKE))
+    }
+
+    @Test
+    fun `Can't remove items when item amount is 0`() {
+        // then
+        assertAll(
+            "all item amounts can't fall below 0",
+            {
+                assertThrows<NotEnoughItemsException> {
+                    assertEquals(0, robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
+                }
+            },
+            {
+                assertThrows<NotEnoughItemsException> {
+                    assertEquals(0, robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM))
+                }
+            },
+            {
+                assertThrows<NotEnoughItemsException> {
+                    assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.ROCKET))
+                }
+            },
+            {
+                assertThrows<NotEnoughItemsException> {
+                    assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.BOMBARDMENT))
+                }
+            },
+            {
+                assertThrows<NotEnoughItemsException> {
+                    assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.SELF_DESTRUCT))
+                }
+            },
+            {
+                assertThrows<NotEnoughItemsException> {
+                    assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.NUKE))
+                }
+            }
+        )
     }
 }

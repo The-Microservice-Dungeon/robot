@@ -5,7 +5,7 @@ import com.msd.robot.domain.RobotRepository
 import org.springframework.data.repository.findByIdOrNull
 import java.util.*
 
-enum class ReparationItemType(val func: (UUID, UUID, RobotRepository) -> Unit) {
+enum class ReparationItemType(val func: (UUID, UUID, RobotRepository) -> Unit) : ItemType {
     REPARATION_SWARM(::useRepairSwarm)
 }
 

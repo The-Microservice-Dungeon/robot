@@ -1,6 +1,7 @@
 package com.msd.robot.domain
 
 import com.msd.domain.ResourceType
+import com.msd.item.domain.ItemType
 import java.util.*
 import javax.persistence.ElementCollection
 import javax.persistence.Entity
@@ -95,5 +96,33 @@ class Inventory {
      */
     fun isFull(): Boolean {
         return maxStorage - usedStorage == 0
+    }
+
+    /**
+     * Adds one special item to this `Inventory`. There is no limit to how many items an `Inventory` can hold.
+     *
+     * @param item    the type of the item that should be added
+     */
+    fun addItem(item: ItemType) {
+        TODO("Not yet implemented")
+    }
+
+    /**
+     * Removes one item from this `Inventory`. The amount of items held cannot be smaller than 0.
+     *
+     * @param item    the Type of the item that should be remove
+     */
+    fun removeItem(item: ItemType) {
+        TODO("Not yet implemented")
+    }
+
+    /**
+     * Returns the held amount of the specified `ItemType`.
+     *
+     * @param item    the type of the item of which the amount should be retrieved
+     * @return the amount of the specified item held as an `Int`
+     */
+    fun getItemAmountByType(item: ItemType): Int {
+        TODO("Not yet implemented")
     }
 }

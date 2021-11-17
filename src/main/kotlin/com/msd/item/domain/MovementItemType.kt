@@ -4,7 +4,7 @@ import com.msd.application.GameMapService
 import com.msd.robot.domain.RobotRepository
 import java.util.*
 
-enum class MovementItemType(val func: (UUID, UUID, RobotRepository, GameMapService) -> Unit) {
+enum class MovementItemType(val func: (UUID, UUID, RobotRepository, GameMapService) -> Unit) : ItemType {
     WORMHOLE(::useWormhole),
 }
 
