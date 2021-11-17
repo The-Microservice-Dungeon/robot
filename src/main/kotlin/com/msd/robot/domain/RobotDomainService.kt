@@ -219,6 +219,7 @@ class RobotDomainService(
         if (robot.inventory.getItemAmountByType(item) > 0) {
             item.func(playerId, robot, robotRepository)
             robot.inventory.removeItem(item)
+            robotRepository.save(robot)
         } else
             throw NotEnoughItemsException("This Robot doesn't have the required Item")
     }
