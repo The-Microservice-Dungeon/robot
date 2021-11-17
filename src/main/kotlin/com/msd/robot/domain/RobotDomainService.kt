@@ -214,6 +214,7 @@ class RobotDomainService(
      */
     fun useReparationItem(robotId: UUID, playerId: UUID, item: ReparationItemType) {
         val robot = this.getRobot(robotId)
+        this.checkRobotBelongsToPlayer(robot, playerId)
         if (robot.inventory.getItemAmountByType(item) > 0) {
             item.func(playerId, robot, robotRepository)
             robot.inventory.removeItem(item)
