@@ -28,10 +28,9 @@ class RobotApplicationService(
     @Async
     fun executeCommands(commands: List<Command>) {
         if (commands[0] is AttackCommand)
-        // Attack commands are always homogenous, so this cast is valid
-            executeAttacks(commands as List<AttackCommand>)
+            executeAttacks(commands as List<AttackCommand>) // homogeneous
         else if (commands[0] is AttackItemUsageCommand)
-            TODO() // this needs to be handled in a batch as well
+            useAttackItems(commands as List<AttackItemUsageCommand>) // homogeneous
         else
             executeHeterogeneousCommands(commands)
     }
@@ -157,6 +156,25 @@ class RobotApplicationService(
      */
     fun useReparationItem(command: ReparationItemUsageCommand) {
         robotDomainService.useReparationItem(command.robotUUID, command.playerUUID, command.itemType)
+    }
+
+    /**
+     *
+     */
+    fun useAttackItems(usageCommands: List<AttackItemUsageCommand>) {
+        val battleFields = mutableSetOf<UUID>()
+        usageCommands.forEach {
+            try {
+                val battlefield = robotDomainService.useAttackItem(it.robotUUID, it.targetUUID, it.playerUUID, it.itemType)
+                battleFields.add(battlefield)
+            } catch (re: RuntimeException) {
+                exceptionConverter.handle(re, it.transactionUUID)
+            }
+        }
+
+        battleFields.forEach { planetId ->
+            robotDomainService.postFightCleanup(planetId)
+        }
     }
 
     /**

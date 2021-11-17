@@ -1,6 +1,7 @@
 package com.msd.robot.domain
 
 import com.msd.domain.ResourceType
+import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.ReparationItemType
 import com.msd.robot.application.InvalidPlayerException
 import com.msd.robot.application.RobotNotFoundException
@@ -216,9 +217,21 @@ class RobotDomainService(
         val robot = this.getRobot(robotId)
         this.checkRobotBelongsToPlayer(robot, playerId)
         if (robot.inventory.getItemAmountByType(item) > 0) {
-            item.func(playerId, robot, robotRepository)
+            item.use(playerId, robot, robotRepository)
             robot.inventory.removeItem(item)
             robotRepository.save(robot)
+        } else
+            throw NotEnoughItemsException("This Robot doesn't have the required Item")
+    }
+
+    fun useAttackItem(userId: UUID, target: UUID, player: UUID, item: AttackItemType): UUID {
+        val user = getRobot(userId)
+        checkRobotBelongsToPlayer(user, player)
+        if (user.inventory.getItemAmountByType(item) > 0) {
+            val battlefield = item.use(user, target, robotRepository)
+            user.inventory.removeItem(item)
+            robotRepository.save(user)
+            return battlefield
         } else
             throw NotEnoughItemsException("This Robot doesn't have the required Item")
     }
