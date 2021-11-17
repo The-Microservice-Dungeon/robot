@@ -21,7 +21,9 @@ class RobotDomainService(
      * @param target        The target of the attack
      * @throws OutOfReachException If the robots are not on the same planet
      */
-    fun fight(attacker: Robot, target: Robot) {
+    fun fight(attacker: Robot, target: Robot, player: UUID) {
+        checkRobotBelongsToPlayer(attacker, player)
+
         if (attacker.planet.planetId != target.planet.planetId)
             throw OutOfReachException("The attacking robot and the defending robot are not on the same planet")
 

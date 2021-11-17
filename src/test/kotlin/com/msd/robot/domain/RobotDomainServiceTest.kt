@@ -64,7 +64,7 @@ internal class RobotDomainServiceTest {
 
         // when
         assertThrows<OutOfReachException>("Robots must be on the same Planet to attack each other") {
-            robotDomainService.fight(robot1, robot6)
+            robotDomainService.fight(robot1, robot6, robot1.player)
         }
         // then
         assertEquals(10, robot6.health)
@@ -79,13 +79,13 @@ internal class RobotDomainServiceTest {
         every { robotRepository.save(robot2) } returns robot2
         every { robotRepository.save(robot4) } returns robot4
 
-        for (i in 1..5) robotDomainService.fight(robot1, robot4)
-        for (i in 1..5) robotDomainService.fight(robot2, robot4)
+        for (i in 1..5) robotDomainService.fight(robot1, robot4, robot1.player)
+        for (i in 1..5) robotDomainService.fight(robot2, robot4, robot2.player)
         assert(!robot4.alive)
 
         // when
-        robotDomainService.fight(robot1, robot4)
-        robotDomainService.fight(robot2, robot4)
+        robotDomainService.fight(robot1, robot4, robot1.player)
+        robotDomainService.fight(robot2, robot4, robot2.player)
         // then
         assertEquals(-2, robot4.health)
         assertAll(
@@ -105,11 +105,11 @@ internal class RobotDomainServiceTest {
         every { robotRepository.save(robot1) } returns robot1
         every { robotRepository.save(robot4) } returns robot4
 
-        for (i in 1..10) robotDomainService.fight(robot1, robot4)
+        for (i in 1..10) robotDomainService.fight(robot1, robot4, robot1.player)
         assert(!robot4.alive)
 
         // when
-        robotDomainService.fight(robot4, robot1)
+        robotDomainService.fight(robot4, robot1, robot4.player)
         // then
         assertEquals(9, robot1.health)
         assertEquals(19, robot4.energy)
@@ -123,7 +123,7 @@ internal class RobotDomainServiceTest {
 
         // when
         assertThrows<NotEnoughEnergyException> {
-            robotDomainService.fight(robot1, robot6)
+            robotDomainService.fight(robot1, robot6, robot1.player)
         }
         // then
         assertEquals(10, robot6.health)
@@ -192,6 +192,7 @@ internal class RobotDomainServiceTest {
             )
         } returns player1Robots
         every { robotRepository.saveAll(player1Robots) } returns player1Robots
+        every { robotRepository.save(any()) } returns robot1
 
         // when
         robotDomainService.useReparationItem(robot1.id, robot1.player, ReparationItemType.REPARATION_SWARM)

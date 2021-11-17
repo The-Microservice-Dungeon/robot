@@ -135,9 +135,8 @@ class RobotApplicationService(
             try {
                 val attacker = robotDomainService.getRobot(it.robotUUID)
                 val target = robotDomainService.getRobot(it.targetRobotUUID)
-                robotDomainService.checkRobotBelongsToPlayer(attacker, it.playerUUID)
 
-                robotDomainService.fight(attacker, target)
+                robotDomainService.fight(attacker, target, it.playerUUID)
                 battleFields.add(attacker.planet.planetId)
             } catch (re: RuntimeException) {
                 exceptionConverter.handle(re, it.transactionUUID)
