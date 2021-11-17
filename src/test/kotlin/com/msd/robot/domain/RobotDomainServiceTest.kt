@@ -176,6 +176,7 @@ internal class RobotDomainServiceTest {
     fun `using repair swarm heals all robots of the player owning the robot`() {
         // given
         robot3.move(planet2, 0)
+        robot1.inventory.addItem(ReparationItemType.REPARATION_SWARM)
         val player1Robots = listOf(robot1, robot2, robot3)
         player1Robots.forEach {
             it.upgrade(UpgradeType.HEALTH)
@@ -200,5 +201,6 @@ internal class RobotDomainServiceTest {
             "all robots of player1 healed for 20 health",
             robots.filter { it.player == player1Id }.map { { assertEquals(24, it.health) } }
         )
+        assertEquals(0, robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM))
     }
 }
