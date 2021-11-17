@@ -194,7 +194,7 @@ internal class RobotDomainServiceTest {
         every { robotRepository.saveAll(player1Robots) } returns player1Robots
 
         // when
-        robotDomainService.useReparationItem(robot1.id, robot1.player, ReparationItemType.REPARATION_SWARM.func)
+        robotDomainService.useReparationItem(robot1.id, robot1.player, ReparationItemType.REPARATION_SWARM)
 
         // then
         assertAll(

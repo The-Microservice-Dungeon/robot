@@ -1,11 +1,10 @@
 package com.msd.item.domain
 
-import com.msd.robot.application.RobotNotFoundException
+import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
-import org.springframework.data.repository.findByIdOrNull
 import java.util.*
 
-enum class ReparationItemType(val func: (UUID, UUID, RobotRepository) -> Unit) : ItemType {
+enum class ReparationItemType(val func: (UUID, Robot, RobotRepository) -> Unit) : ItemType {
     REPARATION_SWARM(::useRepairSwarm)
 }
 
@@ -17,9 +16,7 @@ enum class ReparationItemType(val func: (UUID, UUID, RobotRepository) -> Unit) :
  * @param robotId           the `UUID` of the `Robot` which should use the item
  * @param robotRepository   the [RobotRepository] containing all Robots. Necessary so all Robots can be correctly saved
  */
-private fun useRepairSwarm(playerId: UUID, robotId: UUID, robotRepository: RobotRepository) {
-    val robot = robotRepository.findByIdOrNull(robotId)
-        ?: throw RobotNotFoundException("There is no robot with the ID $robotId")
+private fun useRepairSwarm(playerId: UUID, robot: Robot, robotRepository: RobotRepository) {
     val robots = robotRepository.findAllByPlayerAndPlanet_PlanetId(playerId, robot.planet.planetId)
     robots.forEach {
         it.repairBy(20)

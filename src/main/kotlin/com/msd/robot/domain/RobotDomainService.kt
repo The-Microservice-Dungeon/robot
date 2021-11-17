@@ -1,6 +1,7 @@
 package com.msd.robot.domain
 
 import com.msd.domain.ResourceType
+import com.msd.item.domain.ReparationItemType
 import com.msd.robot.application.InvalidPlayerException
 import com.msd.robot.application.RobotNotFoundException
 import org.springframework.data.repository.findByIdOrNull
@@ -213,7 +214,12 @@ class RobotDomainService(
      * @param playerId    the `UUID` of the player the `Robot` belongs to
      * @param func        a higher order function which specifies which effects an Item has. The function should be part of the [ReparationItemType]
      */
-    fun useReparationItem(robotId: UUID, playerId: UUID, func: (UUID, UUID, RobotRepository) -> Unit) {
-        func(playerId, robotId, robotRepository)
+    fun useReparationItem(robotId: UUID, playerId: UUID, item: ReparationItemType) {
+        val robot = this.getRobot(robotId)
+        if (robot.inventory.getItemAmountByType(item) > 0) {
+            item.func(playerId, robot, robotRepository)
+            robot.inventory.removeItem(item)
+        } else
+            throw NotEnoughItemsException("This Robot doesn't have the required Item")
     }
 }

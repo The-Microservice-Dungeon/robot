@@ -156,7 +156,7 @@ class RobotApplicationService(
      * @param command the [ReparationItemUsageCommand] which specifies which `Robot` should use which item
      */
     fun useReparationItem(command: ReparationItemUsageCommand) {
-        robotDomainService.useReparationItem(command.robotUUID, command.playerUUID, command.itemType.func)
+        robotDomainService.useReparationItem(command.robotUUID, command.playerUUID, command.itemType)
     }
 
     /**
