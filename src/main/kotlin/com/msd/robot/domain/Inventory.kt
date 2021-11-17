@@ -1,7 +1,10 @@
 package com.msd.robot.domain
 
 import com.msd.domain.ResourceType
+import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.ItemType
+import com.msd.item.domain.MovementItemType
+import com.msd.item.domain.ReparationItemType
 import java.util.*
 import javax.persistence.ElementCollection
 import javax.persistence.Entity
@@ -35,6 +38,37 @@ class Inventory {
         ResourceType.GOLD to 0,
         ResourceType.PLATIN to 0,
     )
+
+    private var wormholeAmount = 0
+        set(value) {
+            if (value < 0) throw IllegalArgumentException("Can't set ItemAmount below 0")
+            field = value
+        }
+    private var repairSwarmAmount = 0
+        set(value) {
+            if (value < 0) throw IllegalArgumentException("Can't set ItemAmount below 0")
+            field = value
+        }
+    private var rocketAmount = 0
+        set(value) {
+            if (value < 0) throw IllegalArgumentException("Can't set ItemAmount below 0")
+            field = value
+        }
+    private var bombardmentAmount = 0
+        set(value) {
+            if (value < 0) throw IllegalArgumentException("Can't set ItemAmount below 0")
+            field = value
+        }
+    private var selfDestructAmount = 0
+        set(value) {
+            if (value < 0) throw IllegalArgumentException("Can't set ItemAmount below 0")
+            field = value
+        }
+    private var nukeAmount = 0
+        set(value) {
+            if (value < 0) throw IllegalArgumentException("Can't set ItemAmount below 0")
+            field = value
+        }
 
     /**
      * Adds a resource to this inventory. The inventory can hold all resources simultaneously, but the amount of
@@ -102,18 +136,36 @@ class Inventory {
      * Adds one special item to this `Inventory`. There is no limit to how many items an `Inventory` can hold.
      *
      * @param item    the type of the item that should be added
+     * @throws IllegalArgumentException    when the passed `ItemType` is invalid
      */
     fun addItem(item: ItemType) {
-        TODO("Not yet implemented")
+        when (item) {
+            MovementItemType.WORMHOLE -> wormholeAmount++
+            ReparationItemType.REPARATION_SWARM -> repairSwarmAmount++
+            AttackItemType.ROCKET -> rocketAmount++
+            AttackItemType.BOMBARDMENT -> bombardmentAmount++
+            AttackItemType.SELF_DESTRUCT -> selfDestructAmount++
+            AttackItemType.NUKE -> nukeAmount++
+            else -> throw IllegalArgumentException("$item is not a valid item")
+        }
     }
 
     /**
      * Removes one item from this `Inventory`. The amount of items held cannot be smaller than 0.
      *
-     * @param item    the Type of the item that should be remove
+     * @param item    the Type of the item that should be removed
+     * @throws IllegalArgumentException    when the passed `ItemType` is invalid
      */
     fun removeItem(item: ItemType) {
-        TODO("Not yet implemented")
+        when (item) {
+            MovementItemType.WORMHOLE -> wormholeAmount--
+            ReparationItemType.REPARATION_SWARM -> repairSwarmAmount--
+            AttackItemType.ROCKET -> rocketAmount--
+            AttackItemType.BOMBARDMENT -> bombardmentAmount--
+            AttackItemType.SELF_DESTRUCT -> selfDestructAmount--
+            AttackItemType.NUKE -> nukeAmount--
+            else -> throw IllegalArgumentException("$item is not a valid item")
+        }
     }
 
     /**
@@ -121,8 +173,17 @@ class Inventory {
      *
      * @param item    the type of the item of which the amount should be retrieved
      * @return the amount of the specified item held as an `Int`
+     * @throws IllegalArgumentException    when the passed `ItemType` is invalid
      */
     fun getItemAmountByType(item: ItemType): Int {
-        TODO("Not yet implemented")
+        return when (item) {
+            MovementItemType.WORMHOLE -> wormholeAmount
+            ReparationItemType.REPARATION_SWARM -> repairSwarmAmount
+            AttackItemType.ROCKET -> rocketAmount
+            AttackItemType.BOMBARDMENT -> bombardmentAmount
+            AttackItemType.SELF_DESTRUCT -> selfDestructAmount
+            AttackItemType.NUKE -> nukeAmount
+            else -> throw IllegalArgumentException("$item is not a valid item")
+        }
     }
 }

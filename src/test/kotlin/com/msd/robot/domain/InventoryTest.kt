@@ -184,33 +184,33 @@ class InventoryTest {
         assertAll(
             "all item amounts can't fall below 0",
             {
-                assertThrows<NotEnoughItemsException> {
-                    assertEquals(0, robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
+                assertThrows<IllegalArgumentException> {
+                    assertEquals(0, robot1.inventory.removeItem(MovementItemType.WORMHOLE))
                 }
             },
             {
-                assertThrows<NotEnoughItemsException> {
-                    assertEquals(0, robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM))
+                assertThrows<IllegalArgumentException> {
+                    assertEquals(0, robot1.inventory.removeItem(ReparationItemType.REPARATION_SWARM))
                 }
             },
             {
-                assertThrows<NotEnoughItemsException> {
-                    assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.ROCKET))
+                assertThrows<IllegalArgumentException> {
+                    assertEquals(0, robot1.inventory.removeItem(AttackItemType.ROCKET))
                 }
             },
             {
-                assertThrows<NotEnoughItemsException> {
-                    assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.BOMBARDMENT))
+                assertThrows<IllegalArgumentException> {
+                    assertEquals(0, robot1.inventory.removeItem(AttackItemType.BOMBARDMENT))
                 }
             },
             {
-                assertThrows<NotEnoughItemsException> {
-                    assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.SELF_DESTRUCT))
+                assertThrows<IllegalArgumentException> {
+                    assertEquals(0, robot1.inventory.removeItem(AttackItemType.SELF_DESTRUCT))
                 }
             },
             {
-                assertThrows<NotEnoughItemsException> {
-                    assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.NUKE))
+                assertThrows<IllegalArgumentException> {
+                    assertEquals(0, robot1.inventory.removeItem(AttackItemType.NUKE))
                 }
             }
         )
