@@ -357,8 +357,6 @@ paths:
                 schema:
                   type: string
                   example: "Robot not fount"
-  "/robots/{robot-uuid}/inventory":
-  
   "/commands":
     post:
       summary: Post a batch of commands to be executed
