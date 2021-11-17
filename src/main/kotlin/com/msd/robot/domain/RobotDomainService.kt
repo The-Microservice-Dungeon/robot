@@ -1,6 +1,7 @@
 package com.msd.robot.domain
 
 import com.msd.domain.ResourceType
+import com.msd.item.domain.ReparationItemType
 import com.msd.robot.application.InvalidPlayerException
 import com.msd.robot.application.RobotNotFoundException
 import org.springframework.data.repository.findByIdOrNull
@@ -96,7 +97,8 @@ class RobotDomainService(
         robotsAliveOnPlanet: List<Robot>
     ) {
         while (resourcesToBeDistributed.value > 0 && getNumberOfRobotsWithUnusedStorage(robotsAliveOnPlanet) > 0) {
-            val resourcesPerRobot = resourcesToBeDistributed.value.floorDiv(getNumberOfRobotsWithUnusedStorage(robotsAliveOnPlanet))
+            val resourcesPerRobot =
+                resourcesToBeDistributed.value.floorDiv(getNumberOfRobotsWithUnusedStorage(robotsAliveOnPlanet))
 
             if (resourcesPerRobot >= 1) {
                 distributeResourcesEvenly(robotsAliveOnPlanet, resourcesToBeDistributed, resourcesPerRobot)
@@ -200,5 +202,24 @@ class RobotDomainService(
      */
     fun saveAll(robots: List<Robot>): List<Robot> {
         return robotRepository.saveAll(robots).toList()
+    }
+
+    /**
+     * Makes the specified [Robot] use an item. The function of the Item is specified via a higher order function, which
+     * is the value of the passed [ReparationItemType].
+     *
+     * @param robotId     the `UUID` of the `Robot` which should use the item.
+     * @param playerId    the `UUID` of the player the `Robot` belongs to
+     * @param item        the `ReparationItemType` which should be used.
+     */
+    fun useReparationItem(robotId: UUID, playerId: UUID, item: ReparationItemType) {
+        val robot = this.getRobot(robotId)
+        this.checkRobotBelongsToPlayer(robot, playerId)
+        if (robot.inventory.getItemAmountByType(item) > 0) {
+            item.func(playerId, robot, robotRepository)
+            robot.inventory.removeItem(item)
+            robotRepository.save(robot)
+        } else
+            throw NotEnoughItemsException("This Robot doesn't have the required Item")
     }
 }

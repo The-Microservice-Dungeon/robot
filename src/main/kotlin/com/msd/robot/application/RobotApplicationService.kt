@@ -23,7 +23,7 @@ class RobotApplicationService(
      * All other commands can be heterogeneous and thus can be passed to the corresponding methods individually.
      * This method is executed asynchronous and does not block the calling controller.
      *
-     * @param commands:     List of commands that need to be executed.
+     * @param commands  List of commands that need to be executed.
      */
     @Async
     fun executeCommands(commands: List<Command>) {
@@ -39,7 +39,7 @@ class RobotApplicationService(
     /**
      * Execute every command in the list and pass occuring exceptions on to the handler.
      *
-     * @param commands:     The commands that need to be executed. These can be heterogeneous.
+     * @param commands  The commands that need to be executed. These can be heterogeneous.
      */
     private fun executeHeterogeneousCommands(commands: List<Command>) {
         commands.forEach {
@@ -48,6 +48,7 @@ class RobotApplicationService(
                     is MovementCommand -> move(it)
                     is BlockCommand -> block(it)
                     is EnergyRegenCommand -> regenerateEnergy(it)
+                    is ReparationItemUsageCommand -> useReparationItem(it)
                     // TODO Add remaining CommandTypes as soon as their methods are implemented
                 }
             } catch (re: RuntimeException) {
@@ -107,7 +108,7 @@ class RobotApplicationService(
      * Regenerates the `energy` of a user specified in [energyRegenCommand]. If the specified [Robot] can not be found or the
      * players don't match an exception is thrown.
      *
-     * @param energyRegenCommand             a [EnergyRegenCommand] in which the robot which should regenerate its `energy` and its Player is specified
+     * @param energyRegenCommand       a [EnergyRegenCommand] in which the robot which should regenerate its `energy` and its Player is specified
      * @throws RobotNotFoundException  When a `Robot` with the specified ID can't be found
      * @throws InvalidPlayerException  When the specified `Player` and the `Player` specified in the `Robot` don't match
      */
@@ -124,10 +125,10 @@ class RobotApplicationService(
      * the round. After all commands have been executed, dead robots get deleted and their resources distributed
      * equally among all living robots on the planet.
      *
-     * This method should never throw any exception. Exceptions occuring during the execution of a single command get
+     * This method should never throw any exception. Exceptions occurring during the execution of a single command get
      * handled right then and should not disturb the execution of the following commands.
      *
-     * @param attackCommands        A list of AttackCommands that need to be executed
+     * @param attackCommands    A list of AttackCommands that need to be executed
      */
     fun executeAttacks(attackCommands: List<AttackCommand>) {
         val battleFields = mutableSetOf<UUID>()
@@ -150,9 +151,18 @@ class RobotApplicationService(
     }
 
     /**
+     * Makes the specified [Robot] use the specified [ReparationItem][ReparationItemType].
+     *
+     * @param command the [ReparationItemUsageCommand] which specifies which `Robot` should use which item
+     */
+    fun useReparationItem(command: ReparationItemUsageCommand) {
+        robotDomainService.useReparationItem(command.robotUUID, command.playerUUID, command.itemType)
+    }
+
+    /**
      * Repairs the specified [Robot] to full health.
      *
-     * @param robotId             the [UUID] of the to be repaired robot.
+     * @param robotId the [UUID] of the to be repaired robot.
      */
     fun repair(robotId: UUID) {
         val robot = robotDomainService.getRobot(robotId)

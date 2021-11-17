@@ -3,6 +3,7 @@ package com.msd.command.application
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.application.GameMapPlanetDto
+import com.msd.item.domain.ReparationItemType
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
@@ -281,5 +282,40 @@ class CommandControllerTest(
         }.andDo { print() }
         // then
         assertEquals(14, robotRepository.findByIdOrNull(robot1.id)!!.energy)
+    }
+
+    @Test
+    fun `all robots correctly regenerate health when using repair swarm`() {
+        // given
+        val command = "use-item-reparation ${robot1.player} ${robot1.id} ${ReparationItemType.REPARATION_SWARM} ${UUID.randomUUID()}"
+        robot1.upgrade(UpgradeType.HEALTH)
+        robot2.upgrade(UpgradeType.HEALTH)
+        robot1.repair()
+        robot2.repair()
+        robot1.receiveDamage(21)
+        robot2.receiveDamage(10)
+        robot1.inventory.addItem(ReparationItemType.REPARATION_SWARM)
+        robotRepository.saveAll(listOf(robot1, robot2))
+        // when
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(listOf(command)))
+        }.andExpect {
+            status { isOk() }
+            content { string("Command batch accepted") }
+        }.andDo { print() }
+
+        // then
+
+        assertAll(
+            "assert all robots healed correctly",
+            {
+                assertEquals(24, robotRepository.findByIdOrNull(robot1.id)!!.health)
+                assertEquals(0, robotRepository.findByIdOrNull(robot1.id)!!.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM))
+            },
+            {
+                assertEquals(25, robotRepository.findByIdOrNull(robot2.id)!!.health)
+            }
+        )
     }
 }

@@ -1,6 +1,6 @@
 package com.msd.item.domain
 
-enum class AttackItemType {
+enum class AttackItemType : ItemType {
     ROCKET,
     BOMBARDMENT,
     SELF_DESTRUCT,

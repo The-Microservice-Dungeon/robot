@@ -1,6 +1,7 @@
 package com.msd.robot.domain
 
 import com.msd.domain.ResourceType
+import com.msd.item.domain.ReparationItemType
 import com.msd.planet.domain.Planet
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -169,5 +170,37 @@ internal class RobotDomainServiceTest {
                 }
             }
         )
+    }
+
+    @Test
+    fun `using repair swarm heals all robots of the player owning the robot`() {
+        // given
+        robot3.move(planet2, 0)
+        robot1.inventory.addItem(ReparationItemType.REPARATION_SWARM)
+        val player1Robots = listOf(robot1, robot2, robot3)
+        player1Robots.forEach {
+            it.upgrade(UpgradeType.HEALTH)
+            it.repair()
+            it.receiveDamage(21)
+        }
+
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+        every {
+            robotRepository.findAllByPlayerAndPlanet_PlanetId(
+                robot1.player,
+                robot1.planet.planetId
+            )
+        } returns player1Robots
+        every { robotRepository.saveAll(player1Robots) } returns player1Robots
+
+        // when
+        robotDomainService.useReparationItem(robot1.id, robot1.player, ReparationItemType.REPARATION_SWARM)
+
+        // then
+        assertAll(
+            "all robots of player1 healed for 20 health",
+            robots.filter { it.player == player1Id }.map { { assertEquals(24, it.health) } }
+        )
+        assertEquals(0, robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM))
     }
 }
