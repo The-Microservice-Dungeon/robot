@@ -13,7 +13,7 @@ enum class ReparationItemType(val func: (UUID, Robot, RobotRepository) -> Unit) 
  * 20 health. Health can't be healed past `maxHealth`.
  *
  * @param playerId          the `UUID` of the player which owns the specified `Robot`
- * @param robotId           the `UUID` of the `Robot` which should use the item
+ * @param robot             the `Robot` which should use the item
  * @param robotRepository   the [RobotRepository] containing all Robots. Necessary so all Robots can be correctly saved
  */
 private fun useRepairSwarm(playerId: UUID, robot: Robot, robotRepository: RobotRepository) {

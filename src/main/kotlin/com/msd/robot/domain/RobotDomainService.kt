@@ -206,13 +206,11 @@ class RobotDomainService(
 
     /**
      * Makes the specified [Robot] use an item. The function of the Item is specified via a higher order function, which
-     * should be the value of the [ReparationItemType]. Those function need specify the `playerId`, `robotId` and pass the
-     * [RobotRepository].
-     * TODO rewrite to have a ReparationItemType as param instead of function
+     * is the value of the passed [ReparationItemType].
      *
      * @param robotId     the `UUID` of the `Robot` which should use the item.
      * @param playerId    the `UUID` of the player the `Robot` belongs to
-     * @param func        a higher order function which specifies which effects an Item has. The function should be part of the [ReparationItemType]
+     * @param item        the `ReparationItemType` which should be used.
      */
     fun useReparationItem(robotId: UUID, playerId: UUID, item: ReparationItemType) {
         val robot = this.getRobot(robotId)
