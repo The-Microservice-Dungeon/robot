@@ -1,6 +1,9 @@
 package com.msd.robot.domain
 
+import com.msd.application.GameMapPlanetDto
+import com.msd.application.GameMapService
 import com.msd.domain.ResourceType
+import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.ReparationItemType
 import com.msd.planet.domain.Planet
 import io.mockk.every
@@ -36,6 +39,9 @@ internal class RobotDomainServiceTest {
 
     @MockK
     lateinit var robotRepository: RobotRepository
+
+    @MockK
+    lateinit var gameMapService: GameMapService
 
     lateinit var robotDomainService: RobotDomainService
 
@@ -202,5 +208,29 @@ internal class RobotDomainServiceTest {
             robots.filter { it.player == player1Id }.map { { assertEquals(24, it.health) } }
         )
         assertEquals(0, robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM))
+    }
+
+    @Test
+    fun `using a wormhole moves a robot`() {
+        // given
+        val planet = Planet(UUID.randomUUID())
+        robot1.inventory.addItem(MovementItemType.WORMHOLE)
+        every { gameMapService.retrieveTargetPlanetIfRobotCanReach(robot1.planet.planetId, planet.planetId) }
+        assertThrows<OutOfReachException> {
+            robot1.move(planet, 3)
+        }
+
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+        justRun { robotRepository.save(robot1) }
+
+        val planetDTO = GameMapPlanetDto(UUID.randomUUID(), 3)
+        every { gameMapService.getAllPlanets() } returns listOf(planetDTO)
+
+        // when
+        robotDomainService.useMovementItem(robot1.id, robot1.player, MovementItemType.WORMHOLE)
+
+        // then
+        assertEquals(planetDTO.id, robot1.planet.planetId)
+        assertEquals(0, robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
     }
 }

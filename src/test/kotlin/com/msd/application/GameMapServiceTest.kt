@@ -4,11 +4,8 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.robot.application.TargetPlanetNotReachableException
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
-import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import java.util.UUID.*
 
 class GameMapServiceTest {
@@ -90,5 +87,25 @@ class GameMapServiceTest {
             gameMapService.retrieveTargetPlanetIfRobotCanReach(randomUUID(), randomUUID())
         }
         assertEquals("Could not connect to GameMap client", exception.message)
+    }
+
+    @Test
+    fun `returns a list of planets`() {
+        // given
+        val planetDto1 = GameMapPlanetDto(randomUUID(), 3)
+        val planetDto2 = GameMapPlanetDto(randomUUID(), 3)
+        val planetDto3 = GameMapPlanetDto(randomUUID(), 3)
+        val planetDto4 = GameMapPlanetDto(randomUUID(), 3)
+
+        val planetDTOs = listOf(planetDto1, planetDto2, planetDto3, planetDto4)
+        mockGameServiceWebClient.enqueue(
+            MockResponse().setResponseCode(200)
+                .setBody(jacksonObjectMapper().writeValueAsString(planetDTOs))
+        )
+        // when
+        val responsePlanets = gameMapService.getAllPlanets()
+        // then
+        assertEquals(planetDTOs.size, responsePlanets.size)
+        assert(responsePlanets.containsAll(responsePlanets))
     }
 }

@@ -85,4 +85,8 @@ class GameMapService {
             throw ClientException("Could not connect to GameMap client")
         }
     }
+
+    fun getAllPlanets(): List<GameMapPlanetDto> {
+        TODO("Not yet implemented")
+    }
 }

@@ -1,6 +1,7 @@
 package com.msd.robot.domain
 
 import com.msd.domain.ResourceType
+import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.ReparationItemType
 import com.msd.robot.application.InvalidPlayerException
 import com.msd.robot.application.RobotNotFoundException
@@ -221,5 +222,9 @@ class RobotDomainService(
             robotRepository.save(robot)
         } else
             throw NotEnoughItemsException("This Robot doesn't have the required Item")
+    }
+
+    fun useMovementItem(robotId: UUID, playerId: UUID, itemType: MovementItemType) {
+        TODO("Not yet implemented")
     }
 }
