@@ -49,8 +49,10 @@ class Robot(
 
     var health: Int = maxHealth
         private set(value) {
-            if (value > this.maxHealth) throw HealthFullException("Tried to repair robot but it is already at full health.")
-            field = value
+            field = if (value > this.maxHealth)
+                maxHealth
+            else
+                value
         }
 
     var energy: Int = maxEnergy
@@ -275,5 +277,9 @@ class Robot(
      */
     fun repair() {
         this.health = this.maxHealth
+    }
+
+    fun repairBy(repairAmount: Int) {
+        this.health += repairAmount
     }
 }

@@ -7,6 +7,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.noarg") version "1.5.31"
     id("org.jlleitschuh.gradle.ktlint") version "10.2.0"
     id("org.jetbrains.dokka") version "1.5.31"
+    jacoco
     kotlin("jvm") version "1.5.31"
     kotlin("plugin.spring") version "1.5.31"
     kotlin("plugin.jpa") version "1.5.31"
@@ -48,6 +49,16 @@ tasks.withType<KotlinCompile> {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test) // tests are required to run before generating the report
+}
+
+jacoco {
+    // You may modify the Jacoco version here
+    toolVersion = "0.8.7"
 }
 
 configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
