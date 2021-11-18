@@ -4,7 +4,7 @@ import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
 import java.util.*
 
-enum class ReparationItemType(val use: (UUID, Robot, RobotRepository) -> Unit) : ItemType {
+enum class ReparationItemType(val func: (UUID, Robot, RobotRepository) -> Unit) : ItemType {
     REPARATION_SWARM(::useRepairSwarm)
 }
 
