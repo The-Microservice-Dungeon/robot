@@ -13,6 +13,7 @@ import org.springframework.http.client.reactive.ReactorClientHttpConnector
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientRequestException
+import org.springframework.web.reactive.function.client.bodyToMono
 import reactor.netty.http.client.HttpClient
 import java.time.Duration
 import java.util.*
@@ -24,8 +25,9 @@ class GameMapService {
     private val gameMapClient: WebClient
 
     object GameMapServiceMetaData {
-        const val GAME_MAP_SERVICE_URL = "http://localhost:8080"
+        const val GAME_MAP_SERVICE_URL = "http://localhost:8080" // TODO change port in the future
         const val NEIGHBOR_CHECK_URI = "/getNeighbor"
+        const val PLANETS_URI = "/planets"
         const val NEIGHBOR_CHECK_START_PLANET_PARAM = "startPlanet"
         const val NEIGHBOR_CHECK_TARGET_PLANET_PARAM = "targetPlanet"
     }
@@ -68,7 +70,7 @@ class GameMapService {
         try {
             val response = querySpec.exchangeToMono { response ->
                 if (response.statusCode() == HttpStatus.OK)
-                    response.bodyToMono(String::class.java)
+                    response.bodyToMono<String>()
 
                 // Right now we assume a 4xx being returned if the two planets are no neighbors
                 else if (response.statusCode().is4xxClientError)
@@ -87,6 +89,23 @@ class GameMapService {
     }
 
     fun getAllPlanets(): List<GameMapPlanetDto> {
-        TODO("Not yet implemented")
+        val uriSpec = gameMapClient.get()
+        val querySpec = uriSpec.uri {
+            it.path(GameMapServiceMetaData.PLANETS_URI)
+                .build()
+        }
+        try {
+            val response = querySpec.exchangeToMono { response ->
+                if (response.statusCode() == HttpStatus.OK)
+                    response.bodyToMono<List<GameMapPlanetDto>>()
+                else
+                    throw ClientException(
+                        "GameMap Client returned internal error when retrieving all planets"
+                    )
+            }.block()!!
+            return response
+        } catch (wcre: WebClientRequestException) {
+            throw ClientException("Could not connect to GameMap MicroService")
+        }
     }
 }

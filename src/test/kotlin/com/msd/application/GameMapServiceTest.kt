@@ -6,6 +6,8 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import java.util.UUID.*
 
 class GameMapServiceTest {
@@ -99,7 +101,7 @@ class GameMapServiceTest {
 
         val planetDTOs = listOf(planetDto1, planetDto2, planetDto3, planetDto4)
         mockGameServiceWebClient.enqueue(
-            MockResponse().setResponseCode(200)
+            MockResponse().setResponseCode(200).setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .setBody(jacksonObjectMapper().writeValueAsString(planetDTOs))
         )
         // when
