@@ -179,7 +179,7 @@ internal class RobotDomainServiceTest {
         robot1.inventory.addItem(ReparationItemType.REPARATION_SWARM)
         val player1Robots = listOf(robot1, robot2, robot3)
         player1Robots.forEach {
-            it.upgrade(UpgradeType.HEALTH)
+            it.upgrade(UpgradeType.HEALTH, 1)
             it.repair()
             it.receiveDamage(21)
         }
@@ -192,6 +192,7 @@ internal class RobotDomainServiceTest {
             )
         } returns player1Robots
         every { robotRepository.saveAll(player1Robots) } returns player1Robots
+        every { robotRepository.save(robot1) } returns robot1
 
         // when
         robotDomainService.useReparationItem(robot1.id, robot1.player, ReparationItemType.REPARATION_SWARM)

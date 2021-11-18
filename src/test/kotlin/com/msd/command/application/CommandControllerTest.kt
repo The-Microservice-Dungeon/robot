@@ -169,7 +169,7 @@ class CommandControllerTest(
     @Test
     fun `destroyed robots get deleted after combat attacks are executed`() {
         // given
-        for (i in 1..3) robot1.upgrade(UpgradeType.DAMAGE)
+        for (i in 1..3) robot1.upgrade(UpgradeType.DAMAGE , i)
         assertEquals(10, robot1.attackDamage)
         robotRepository.save(robot1)
         val command = "fight ${robot1.player} ${robot1.id} ${robot5.id} ${UUID.randomUUID()}"
@@ -288,8 +288,8 @@ class CommandControllerTest(
     fun `all robots correctly regenerate health when using repair swarm`() {
         // given
         val command = "use-item-reparation ${robot1.player} ${robot1.id} ${ReparationItemType.REPARATION_SWARM} ${UUID.randomUUID()}"
-        robot1.upgrade(UpgradeType.HEALTH)
-        robot2.upgrade(UpgradeType.HEALTH)
+        robot1.upgrade(UpgradeType.HEALTH, 1)
+        robot2.upgrade(UpgradeType.HEALTH, 1)
         robot1.repair()
         robot2.repair()
         robot1.receiveDamage(21)
