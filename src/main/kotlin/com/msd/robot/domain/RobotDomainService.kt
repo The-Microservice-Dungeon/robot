@@ -215,7 +215,7 @@ class RobotDomainService(
      * @param playerId    the `UUID` of the player the `Robot` belongs to
      * @param item        the `ReparationItemType` which should be used.
      */
-    fun useReparationItem(robotId: UUID, playerId: UUID, item: ReparationItemType) {
+    fun useReparationItem(playerId: UUID, robotId: UUID, item: ReparationItemType) {
         val robot = this.getRobot(robotId)
         this.checkRobotBelongsToPlayer(robot, playerId)
         if (robot.inventory.getItemAmountByType(item) > 0) {
@@ -226,7 +226,7 @@ class RobotDomainService(
             throw NotEnoughItemsException("This Robot doesn't have the required Item")
     }
 
-    fun useMovementItem(robotId: UUID, playerId: UUID, itemType: MovementItemType) {
+    fun useMovementItem(playerId: UUID, robotId: UUID, itemType: MovementItemType) {
         val robot = this.getRobot(robotId)
         this.checkRobotBelongsToPlayer(robot, playerId)
         if (robot.inventory.getItemAmountByType(itemType) > 0) {

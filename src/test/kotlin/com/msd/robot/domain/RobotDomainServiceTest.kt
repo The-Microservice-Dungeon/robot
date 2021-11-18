@@ -200,7 +200,7 @@ internal class RobotDomainServiceTest {
         every { robotRepository.saveAll(player1Robots) } returns player1Robots
 
         // when
-        robotDomainService.useReparationItem(robot1.id, robot1.player, ReparationItemType.REPARATION_SWARM)
+        robotDomainService.useReparationItem(robot1.player, robot1.id, ReparationItemType.REPARATION_SWARM)
 
         // then
         assertAll(
@@ -223,7 +223,7 @@ internal class RobotDomainServiceTest {
         every { gameMapService.getAllPlanets() } returns listOf(planetDTO)
 
         // when
-        robotDomainService.useMovementItem(robot1.id, robot1.player, MovementItemType.WORMHOLE)
+        robotDomainService.useMovementItem(robot1.player, robot1.id, MovementItemType.WORMHOLE)
 
         // then
         assertEquals(planetDTO.id, robot1.planet.planetId)

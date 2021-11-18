@@ -9,7 +9,8 @@ enum class MovementItemType(val func: (Robot, RobotRepository, GameMapService) -
     WORMHOLE(::useWormhole),
 }
 
-fun useWormhole(robot: Robot, repository: RobotRepository, gameMapService: GameMapService) {
+private fun useWormhole(robot: Robot, repository: RobotRepository, gameMapService: GameMapService) {
     val planetDTO = gameMapService.getAllPlanets().random()
     robot.move(Planet(planetDTO.id), 0)
+    repository.save(robot)
 }

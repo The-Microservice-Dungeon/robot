@@ -49,12 +49,17 @@ class RobotApplicationService(
                     is BlockCommand -> block(it)
                     is EnergyRegenCommand -> regenerateEnergy(it)
                     is ReparationItemUsageCommand -> useReparationItem(it)
+                    is MovementItemsUsageCommand -> useMovementItem(it)
                     // TODO Add remaining CommandTypes as soon as their methods are implemented
                 }
             } catch (re: RuntimeException) {
                 exceptionConverter.handle(re, it.transactionUUID)
             }
         }
+    }
+
+    private fun useMovementItem(command: MovementItemsUsageCommand) {
+        robotDomainService.useMovementItem(command.playerUUID, command.robotUUID, command.itemType)
     }
 
     /**
@@ -156,7 +161,7 @@ class RobotApplicationService(
      * @param command the [ReparationItemUsageCommand] which specifies which `Robot` should use which item
      */
     fun useReparationItem(command: ReparationItemUsageCommand) {
-        robotDomainService.useReparationItem(command.robotUUID, command.playerUUID, command.itemType)
+        robotDomainService.useReparationItem(command.playerUUID, command.robotUUID, command.itemType)
     }
 
     /**

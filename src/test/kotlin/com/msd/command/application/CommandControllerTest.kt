@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
@@ -335,7 +336,7 @@ class CommandControllerTest(
 
         mockGameServiceWebClient.enqueue(
             MockResponse()
-                .setResponseCode(200)
+                .setResponseCode(200).setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                 .setBody(jacksonObjectMapper().writeValueAsString(planetDTOs))
         )
         // then
@@ -348,7 +349,7 @@ class CommandControllerTest(
         }.andDo { print() }
 
         // then
-        assertNotEquals(planet1Id, robot1.planet.planetId)
-        assertEquals(0, robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
+        assertNotEquals(planet1Id, robotRepository.findByIdOrNull(robot1.id)!!.planet.planetId)
+        assertEquals(0, robotRepository.findByIdOrNull(robot1.id)!!.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
     }
 }
