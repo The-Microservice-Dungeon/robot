@@ -3,6 +3,7 @@ package com.msd.command.application
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.application.GameMapPlanetDto
+import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.ReparationItemType
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.Robot
@@ -317,5 +318,37 @@ class CommandControllerTest(
                 assertEquals(25, robotRepository.findByIdOrNull(robot2.id)!!.health)
             }
         )
+    }
+
+    @Test
+    fun `robot moves to a random planet after using a wormhole`() {
+        // given
+        val command = "use-item-movement ${robot1.player} ${robot1.id} ${MovementItemType.WORMHOLE} ${UUID.randomUUID()}"
+        robot1.inventory.addItem(MovementItemType.WORMHOLE)
+        robotRepository.save(robot1)
+
+        val planetDto1 = GameMapPlanetDto(UUID.randomUUID(), 3)
+        val planetDto2 = GameMapPlanetDto(UUID.randomUUID(), 3)
+        val planetDto3 = GameMapPlanetDto(UUID.randomUUID(), 3)
+        val planetDto4 = GameMapPlanetDto(UUID.randomUUID(), 3)
+        val planetDTOs = listOf(planetDto1, planetDto2, planetDto3, planetDto4)
+
+        mockGameServiceWebClient.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(jacksonObjectMapper().writeValueAsString(planetDTOs))
+        )
+        // then
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(listOf(command)))
+        }.andExpect {
+            status { isOk() }
+            content { string("Command batch accepted") }
+        }.andDo { print() }
+
+        // then
+        assertNotEquals(planet1Id, robot1.planet.planetId)
+        assertEquals(0, robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
     }
 }
