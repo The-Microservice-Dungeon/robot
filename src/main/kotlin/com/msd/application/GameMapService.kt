@@ -4,9 +4,9 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.msd.robot.application.TargetPlanetNotReachableException
 import io.netty.channel.ChannelOption
-import io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE
 import io.netty.handler.timeout.ReadTimeoutHandler
 import io.netty.handler.timeout.WriteTimeoutHandler
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.client.reactive.ReactorClientHttpConnector
@@ -41,7 +41,7 @@ class GameMapService {
 
         gameMapClient = WebClient.builder()
             .baseUrl(GameMapServiceMetaData.GAME_MAP_SERVICE_URL)
-            .defaultHeader(CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .clientConnector(ReactorClientHttpConnector(httpClient))
             .build()
     }
