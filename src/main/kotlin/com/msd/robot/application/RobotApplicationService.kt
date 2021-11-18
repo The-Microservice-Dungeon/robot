@@ -133,6 +133,7 @@ class RobotApplicationService(
     fun upgrade(robotId: UUID, upgradeType: UpgradeType, level: Int) {
         val robot = robotDomainService.getRobot(robotId)
         robot.upgrade(upgradeType, level)
+        robotDomainService.saveRobot(robot)
     }
 
 
