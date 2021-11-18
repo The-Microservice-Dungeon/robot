@@ -1,5 +1,6 @@
 package com.msd.robot.domain
 
+import com.msd.application.GameMapService
 import com.msd.domain.ResourceType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.ReparationItemType
@@ -11,7 +12,8 @@ import java.util.*
 
 @Service
 class RobotDomainService(
-    val robotRepository: RobotRepository
+    val robotRepository: RobotRepository,
+    val gameMapService: GameMapService
 ) {
 
     /**
@@ -217,7 +219,7 @@ class RobotDomainService(
         val robot = this.getRobot(robotId)
         this.checkRobotBelongsToPlayer(robot, playerId)
         if (robot.inventory.getItemAmountByType(item) > 0) {
-            item.func(playerId, robot, robotRepository)
+            item.func(robot, robotRepository)
             robot.inventory.removeItem(item)
             robotRepository.save(robot)
         } else
@@ -225,6 +227,13 @@ class RobotDomainService(
     }
 
     fun useMovementItem(robotId: UUID, playerId: UUID, itemType: MovementItemType) {
-        TODO("Not yet implemented")
+        val robot = this.getRobot(robotId)
+        this.checkRobotBelongsToPlayer(robot, playerId)
+        if (robot.inventory.getItemAmountByType(itemType) > 0) {
+            itemType.func(robot, robotRepository, gameMapService)
+            robot.inventory.removeItem(itemType)
+            robotRepository.save(robot)
+        } else
+            throw NotEnoughItemsException("This Robot doesn't have the required Item")
     }
 }

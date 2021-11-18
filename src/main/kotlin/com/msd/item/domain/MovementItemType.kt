@@ -1,12 +1,15 @@
 package com.msd.item.domain
 
 import com.msd.application.GameMapService
+import com.msd.planet.domain.Planet
+import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
-import java.util.*
 
-enum class MovementItemType(val func: (UUID, UUID, RobotRepository, GameMapService) -> Unit) : ItemType {
+enum class MovementItemType(val func: (Robot, RobotRepository, GameMapService) -> Unit) : ItemType {
     WORMHOLE(::useWormhole),
 }
 
-fun useWormhole(player: UUID, robot: UUID, repository: RobotRepository, gameMapService: GameMapService) {
+fun useWormhole(robot: Robot, repository: RobotRepository, gameMapService: GameMapService) {
+    val planetDTO = gameMapService.getAllPlanets().random()
+    robot.move(Planet(planetDTO.id), planetDTO.movementCost)
 }

@@ -47,7 +47,7 @@ internal class RobotDomainServiceTest {
 
     @BeforeEach
     fun setup() {
-        robotDomainService = RobotDomainService(robotRepository)
+        robotDomainService = RobotDomainService(robotRepository, gameMapService)
         player1Id = UUID.randomUUID()
         player2Id = UUID.randomUUID()
 
@@ -213,17 +213,13 @@ internal class RobotDomainServiceTest {
     @Test
     fun `using a wormhole moves a robot`() {
         // given
-        val planet = Planet(UUID.randomUUID())
+        val planetDTO = GameMapPlanetDto(UUID.randomUUID(), 3)
+
         robot1.inventory.addItem(MovementItemType.WORMHOLE)
-        every { gameMapService.retrieveTargetPlanetIfRobotCanReach(robot1.planet.planetId, planet.planetId) }
-        assertThrows<OutOfReachException> {
-            robot1.move(planet, 3)
-        }
 
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
-        justRun { robotRepository.save(robot1) }
+        every { robotRepository.save(robot1) } returns robot1
 
-        val planetDTO = GameMapPlanetDto(UUID.randomUUID(), 3)
         every { gameMapService.getAllPlanets() } returns listOf(planetDTO)
 
         // when
