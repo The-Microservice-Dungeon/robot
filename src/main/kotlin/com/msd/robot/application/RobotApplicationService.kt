@@ -28,9 +28,10 @@ class RobotApplicationService(
     @Async
     fun executeCommands(commands: List<Command>) {
         if (commands[0] is AttackCommand)
-            executeAttacks(commands as List<AttackCommand>) // homogeneous
+        // Attack commands are always homogenous, so this cast is valid
+            executeAttacks(commands as List<AttackCommand>)
         else if (commands[0] is AttackItemUsageCommand)
-            useAttackItems(commands as List<AttackItemUsageCommand>) // homogeneous
+            TODO() // this needs to be handled in a batch as well
         else
             executeHeterogeneousCommands(commands)
     }
