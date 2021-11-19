@@ -58,6 +58,12 @@ class RobotApplicationService(
         }
     }
 
+    /**
+     * Executes the given [MovementItemsUsageCommand]. The [Robot's][Robot] `player` and the `command` `playerId` must
+     * match, otherwise and exception is thrown.
+     *
+     * @param command   the `MovementItemsUsageCommand` specifying which `Robot` should use which `item`
+     */
     private fun useMovementItem(command: MovementItemsUsageCommand) {
         robotDomainService.useMovementItem(command.playerUUID, command.robotUUID, command.itemType)
     }

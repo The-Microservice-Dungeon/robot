@@ -209,11 +209,14 @@ class RobotDomainService(
 
     /**
      * Makes the specified [Robot] use an item. The function of the Item is specified via a higher order function, which
-     * is the value of the passed [ReparationItemType].
+     * is the value of the passed [ReparationItemType]. To use an item the specified `playerId` and the `Robot's`
+     * `player` must match. If the Robot doesn't own the specified item a NotEnoughItemsException
+     * is thrown.
      *
      * @param robotId     the `UUID` of the `Robot` which should use the item.
-     * @param playerId    the `UUID` of the player the `Robot` belongs to
+     * @param playerId    the `UUID` of the player the `Robot` belongs to.
      * @param item        the `ReparationItemType` which should be used.
+     * @throws  NotEnoughItemsException when the specified `Robot` doesn't own the specified item.
      */
     fun useReparationItem(playerId: UUID, robotId: UUID, item: ReparationItemType) {
         val robot = this.getRobot(robotId)
@@ -226,6 +229,17 @@ class RobotDomainService(
             throw NotEnoughItemsException("This Robot doesn't have the required Item")
     }
 
+
+    /**
+     * Makes the specified [Robot] use the specified item. To use an item the specified `playerId` and the `Robot's`
+     * `player` must match. The items function is specified via a higher order function which is the `func`value of the
+     * itemType. If the `Robot` doesn't have enough of the specified items an exception is thrown.
+     *
+     * @param   playerId    the `UUID` of the player which owns the specified `Robot`
+     * @param   robotId     the `UUID`of the `Robot` which should use the item.
+     * @param   itemType    the [MovementItemType] of the used item.
+     * @throws  NotEnoughItemsException when the `Robot` doesn't own enough of the specified `itemType`
+     */
     fun useMovementItem(playerId: UUID, robotId: UUID, itemType: MovementItemType) {
         val robot = this.getRobot(robotId)
         this.checkRobotBelongsToPlayer(robot, playerId)
