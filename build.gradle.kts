@@ -29,6 +29,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.springframework.kafka:spring-kafka:2.7.6")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.0")
     testImplementation("com.squareup.okhttp3:okhttp:4.0.1")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.0.1")
     testImplementation(platform("org.junit:junit-bom:5.8.1"))
