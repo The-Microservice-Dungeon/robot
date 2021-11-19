@@ -158,7 +158,11 @@ class RobotApplicationService(
     }
 
     /**
+     * Execute all [AttackItemUsageCommands][AttackItemUsageCommand]. The failure of one command execution does not
+     * impair the other command executions. After all commands have been executed, the battlefields get cleaned up,
+     * i.e. all dead robots get removed and their resources distributed between the remaining robots on the planet.
      *
+     * @param usageCommands: The AttackItemUsageCommands that should be executed
      */
     fun useAttackItems(usageCommands: List<AttackItemUsageCommand>) {
         val battleFields = mutableSetOf<UUID>()

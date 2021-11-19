@@ -204,4 +204,39 @@ internal class RobotDomainServiceTest {
         )
         assertEquals(0, robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM))
     }
+
+    @Test
+    fun `Cannot use any attack item if the robot doesnt belong to the player`() {
+
+    }
+
+    @Test
+    fun `Cannot use any attack item if the robot doesnt have the item`() {
+
+    }
+
+    @Test
+    fun `Using an attack item removes the item from the robots inventory`() {
+
+    }
+
+    @Test
+    fun `distributeResourcesEvenly correctly distributes resources`() {
+
+    }
+
+    @Test
+    fun `distributeResourcesShuffled correctly distributes resources`() {
+
+    }
+
+    @Test
+    fun `deleteDeadRobots returns the correct amount of dropped resources`() {
+
+    }
+
+    @Test
+    fun `deleteDeadRobots deletes all dead robots`() {
+
+    }
 }

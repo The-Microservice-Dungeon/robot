@@ -588,4 +588,19 @@ class RobotApplicationServiceTest {
         assertEquals(player1Id, slot.captured.player)
         assertEquals(planet1.planetId, slot.captured.planet.planetId)
     }
+
+    @Test
+    fun `UseAttackItem ignores invalid commands`() {
+
+    }
+
+    @Test
+    fun `UseAttackItems correctly deals damage according to the commands`() {
+
+    }
+
+    @Test
+    fun `UseAttackitems distributes remaining resources`() {
+
+    }
 }

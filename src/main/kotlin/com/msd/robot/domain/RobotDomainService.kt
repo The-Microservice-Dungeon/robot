@@ -223,9 +223,21 @@ class RobotDomainService(
             robot.inventory.removeItem(item)
             robotRepository.save(robot)
         } else
-            throw NotEnoughItemsException("This Robot doesn't have the required Item")
+            throw NotEnoughItemsException("This Robot doesn't have the required Item", item)
     }
 
+    /**
+     * Use the specified item. A player is allowed to use the item, if the specified robot has the item in its
+     * inventory and the player issuing the command owns the robot.
+     *
+     * @throws NotEnoughItemsException when the robot does not have the specified item
+     * @param userId: The UUID of the robot that's suppoed to use the item
+     * @param target: Either a robot or planet UUID, depending upon the AttackItemType
+     * @param item:   The kind of item to be used. The specified robot should at least have one of those in its
+     *                inventory
+     *
+     * @return the UUID of the planet on which robots could have died.
+     */
     fun useAttackItem(userId: UUID, target: UUID, player: UUID, item: AttackItemType): UUID {
         val user = getRobot(userId)
         checkRobotBelongsToPlayer(user, player)
@@ -235,6 +247,6 @@ class RobotDomainService(
             robotRepository.save(user)
             return battlefield
         } else
-            throw NotEnoughItemsException("This Robot doesn't have the required Item")
+            throw NotEnoughItemsException("This Robot doesn't have the required Item", item)
     }
 }
