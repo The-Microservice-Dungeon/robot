@@ -88,6 +88,13 @@ class GameMapService {
         }
     }
 
+
+    /**
+     * Retrieves all `Planets` from the GameMap Microservice.
+     *
+     * @return a `List` of [GameMapPlanetDtos] [GameMapPlanetDto] containing all `Planets`
+     * @throws ClientException  when the GameMap Microservice is down
+     */
     fun getAllPlanets(): List<GameMapPlanetDto> {
         val uriSpec = gameMapClient.get()
         val querySpec = uriSpec.uri {
