@@ -1,7 +1,9 @@
 name: Unit Test + Docker Image
 on:
   workflow_dispatch:
-
+  push:
+    branches:
+      - 'devops'
 jobs:
   all-in-one:
     runs-on: ubuntu-latest
