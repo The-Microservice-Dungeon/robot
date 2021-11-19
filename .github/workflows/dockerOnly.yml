@@ -1,9 +1,9 @@
-name: Unit Test + Docker Image
+name: Docker Image
 on:
   workflow_dispatch:
-  push:
     branches:
       - 'devops'
+
 jobs:
   all-in-one:
     runs-on: ubuntu-latest
@@ -30,7 +30,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
         
     - name: Publish to GitHub Container Registry
-      run: ./gradlew jib --image=ghcr.io/the-microservice-dungeon/robot/robotService --no-daemon
+      run: ./gradlew jib --image=ghcr.io/the-microservice-dungeon/robot/robotservice --no-daemon
       
     - name: Cleanup Gradle Cache
         # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
