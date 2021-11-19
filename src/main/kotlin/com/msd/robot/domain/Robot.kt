@@ -198,6 +198,7 @@ class Robot(
      * @param damage the amount of damage to be received
      */
     fun receiveDamage(damage: Int) {
+        println("Robot $id receives $damage damage")
         this.health -= damage
         if (health <= 0) alive = false
     }
