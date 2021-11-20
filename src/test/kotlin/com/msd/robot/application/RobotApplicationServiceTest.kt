@@ -655,12 +655,16 @@ class RobotApplicationServiceTest {
 
     @Test
     fun `UseAttackitems distributes remaining resources`() {
-// given
+        // given
         every { robotRepository.save(any()) } returns robot1
         every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf()
         every { robotRepository.findAllByPlanet_PlanetId(planet2.planetId) } returns listOf(robot2, robot5)
-        every { robotRepository.findAllByPlanet_PlanetId(planet1.planetId) } returns
-            listOf(robot1, robot3, robot4, robot6)
+        every { robotRepository.findAllByPlanet_PlanetId(planet1.planetId) } returnsMany
+            listOf(
+                listOf(robot1, robot3, robot4, robot6),
+                listOf(robot1, robot3, robot4, robot6),
+                listOf(robot1)
+            )
         every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(planet2.planetId) } returns
             listOf(robot2, robot5)
         every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(planet1.planetId) } returns
