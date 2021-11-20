@@ -171,7 +171,7 @@ class CommandControllerTest(
     @Test
     fun `destroyed robots get deleted after combat attacks are executed`() {
         // given
-        for (i in 1..3) robot1.upgrade(UpgradeType.DAMAGE , i)
+        for (i in 1..3) robot1.upgrade(UpgradeType.DAMAGE, i)
         assertEquals(10, robot1.attackDamage)
         robotRepository.save(robot1)
         val command = "fight ${robot1.player} ${robot1.id} ${robot5.id} ${UUID.randomUUID()}"

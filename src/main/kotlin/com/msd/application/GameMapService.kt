@@ -88,7 +88,6 @@ class GameMapService {
         }
     }
 
-
     /**
      * Retrieves all `Planets` from the GameMap Microservice.
      *
