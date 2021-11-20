@@ -157,7 +157,7 @@ class Inventory {
             MovementItemType.WORMHOLE -> wormholeAmount++
             ReparationItemType.REPARATION_SWARM -> repairSwarmAmount++
             AttackItemType.ROCKET -> rocketAmount++
-            AttackItemType.BOMBARDMENT -> bombardmentAmount++
+            AttackItemType.LONG_RANGE_BOMBARDMENT -> bombardmentAmount++
             AttackItemType.SELF_DESTRUCTION -> selfDestructAmount++
             AttackItemType.NUKE -> nukeAmount++
             else -> throw IllegalArgumentException("$item is not a valid item")
@@ -175,7 +175,7 @@ class Inventory {
             MovementItemType.WORMHOLE -> wormholeAmount--
             ReparationItemType.REPARATION_SWARM -> repairSwarmAmount--
             AttackItemType.ROCKET -> rocketAmount--
-            AttackItemType.BOMBARDMENT -> bombardmentAmount--
+            AttackItemType.LONG_RANGE_BOMBARDMENT -> bombardmentAmount--
             AttackItemType.SELF_DESTRUCTION -> selfDestructAmount--
             AttackItemType.NUKE -> nukeAmount--
             else -> throw IllegalArgumentException("$item is not a valid item")
@@ -194,7 +194,7 @@ class Inventory {
             MovementItemType.WORMHOLE -> wormholeAmount
             ReparationItemType.REPARATION_SWARM -> repairSwarmAmount
             AttackItemType.ROCKET -> rocketAmount
-            AttackItemType.BOMBARDMENT -> bombardmentAmount
+            AttackItemType.LONG_RANGE_BOMBARDMENT -> bombardmentAmount
             AttackItemType.SELF_DESTRUCTION -> selfDestructAmount
             AttackItemType.NUKE -> nukeAmount
             else -> throw IllegalArgumentException("$item is not a valid item")

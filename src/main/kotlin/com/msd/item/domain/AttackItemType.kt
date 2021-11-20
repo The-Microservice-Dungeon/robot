@@ -10,8 +10,8 @@ import java.util.*
 
 enum class AttackItemType(val use: (Robot, UUID, RobotRepository) -> UUID) : ItemType {
     ROCKET(::useRocket),
-    BOMBARDMENT(::useBombardment),
-    SELF_DESTRUCT(::useSelfDestruct),
+    LONG_RANGE_BOMBARDMENT(::useBombardment),
+    SELF_DESTRUCTION(::useSelfDestruct),
     NUKE(::useNuke)
 }
 

@@ -240,12 +240,12 @@ internal class RobotDomainServiceTest {
             },
             {
                 assertThrows<InvalidPlayerException> {
-                    robotDomainService.useAttackItem(robot1.id, robot2.id, robot4.player, AttackItemType.BOMBARDMENT)
+                    robotDomainService.useAttackItem(robot1.id, robot2.id, robot4.player, AttackItemType.LONG_RANGE_BOMBARDMENT)
                 }
             },
             {
                 assertThrows<InvalidPlayerException> {
-                    robotDomainService.useAttackItem(robot1.id, robot1.id, robot4.player, AttackItemType.SELF_DESTRUCT)
+                    robotDomainService.useAttackItem(robot1.id, robot1.id, robot4.player, AttackItemType.SELF_DESTRUCTION)
                 }
             },
             {
@@ -280,12 +280,12 @@ internal class RobotDomainServiceTest {
             },
             {
                 assertThrows<NotEnoughItemsException> {
-                    robotDomainService.useAttackItem(robot1.id, robot2.id, robot1.player, AttackItemType.BOMBARDMENT)
+                    robotDomainService.useAttackItem(robot1.id, robot2.id, robot1.player, AttackItemType.LONG_RANGE_BOMBARDMENT)
                 }
             },
             {
                 assertThrows<NotEnoughItemsException> {
-                    robotDomainService.useAttackItem(robot1.id, robot1.id, robot1.player, AttackItemType.SELF_DESTRUCT)
+                    robotDomainService.useAttackItem(robot1.id, robot1.id, robot1.player, AttackItemType.SELF_DESTRUCTION)
                 }
             },
             {
@@ -319,8 +319,8 @@ internal class RobotDomainServiceTest {
 
         // when
         robotDomainService.useAttackItem(robot1.id, robot2.id, robot1.player, AttackItemType.ROCKET)
-        robotDomainService.useAttackItem(robot1.id, robot2.planet.planetId, robot1.player, AttackItemType.BOMBARDMENT)
-        robotDomainService.useAttackItem(robot1.id, robot1.id, robot1.player, AttackItemType.SELF_DESTRUCT)
+        robotDomainService.useAttackItem(robot1.id, robot2.planet.planetId, robot1.player, AttackItemType.LONG_RANGE_BOMBARDMENT)
+        robotDomainService.useAttackItem(robot1.id, robot1.id, robot1.player, AttackItemType.SELF_DESTRUCTION)
         robotDomainService.useAttackItem(robot1.id, robot2.planet.planetId, robot1.player, AttackItemType.NUKE)
         robotDomainService.useReparationItem(robot1.player, robot1.id, ReparationItemType.REPARATION_SWARM)
         robotDomainService.useMovementItem(robot1.player, robot1.id, MovementItemType.WORMHOLE)
@@ -337,13 +337,13 @@ internal class RobotDomainServiceTest {
                 assert(robot1.inventory.getItemAmountByType(AttackItemType.NUKE) == 0)
             },
             {
-                assert(robot1.inventory.getItemAmountByType(AttackItemType.SELF_DESTRUCT) == 0)
+                assert(robot1.inventory.getItemAmountByType(AttackItemType.SELF_DESTRUCTION) == 0)
             },
             {
                 assert(robot1.inventory.getItemAmountByType(AttackItemType.ROCKET) == 0)
             },
             {
-                assert(robot1.inventory.getItemAmountByType(AttackItemType.BOMBARDMENT) == 0)
+                assert(robot1.inventory.getItemAmountByType(AttackItemType.LONG_RANGE_BOMBARDMENT) == 0)
             },
         )
     }

@@ -14,8 +14,7 @@ import java.util.*
 class RobotController(
     val robotApplicationService: RobotApplicationService,
     val robotDomainService: RobotDomainService,
-    val robotMapper: RobotMapper,
-    val inventoryMapper: InventoryMapper
+    val robotMapper: RobotMapper
 ) {
 
     @PostMapping

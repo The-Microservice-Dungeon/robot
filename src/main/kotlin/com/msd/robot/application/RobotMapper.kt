@@ -26,7 +26,7 @@ abstract class RobotMapper {
         return ItemsDto(
             inventory.getItemAmountByType(AttackItemType.ROCKET),
             inventory.getItemAmountByType(MovementItemType.WORMHOLE),
-            inventory.getItemAmountByType(AttackItemType.BOMBARDMENT),
+            inventory.getItemAmountByType(AttackItemType.LONG_RANGE_BOMBARDMENT),
             inventory.getItemAmountByType(AttackItemType.SELF_DESTRUCTION),
             inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM),
             inventory.getItemAmountByType(AttackItemType.NUKE),

@@ -104,7 +104,7 @@ class AttackItemTypeTest {
         every { robotRepository.findAllByPlanet_PlanetId(planet2.planetId) } returns listOf(robot2, robot4)
 
         // when
-        AttackItemType.BOMBARDMENT.use(robot1, planet2.planetId, robotRepository)
+        AttackItemType.LONG_RANGE_BOMBARDMENT.use(robot1, planet2.planetId, robotRepository)
 
         // then
         assertAll(
@@ -129,7 +129,7 @@ class AttackItemTypeTest {
         every { robotRepository.findAllByPlanet_PlanetId(planet2.planetId) } returns listOf(robot3, robot4)
 
         // when
-        val battlefield = AttackItemType.BOMBARDMENT.use(robot1, planet2.planetId, robotRepository)
+        val battlefield = AttackItemType.LONG_RANGE_BOMBARDMENT.use(robot1, planet2.planetId, robotRepository)
 
         // then
         assert(battlefield == planet2.planetId)
@@ -141,7 +141,7 @@ class AttackItemTypeTest {
         every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns listOf(robot1, robot3, robot6)
 
         // when
-        AttackItemType.SELF_DESTRUCT.use(robot1, robot1.id, robotRepository)
+        AttackItemType.SELF_DESTRUCTION.use(robot1, robot1.id, robotRepository)
 
         // then
         assert(!robot1.alive)
@@ -153,7 +153,7 @@ class AttackItemTypeTest {
         every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns listOf(robot1, robot3, robot6)
 
         // when
-        AttackItemType.SELF_DESTRUCT.use(robot1, robot1.id, robotRepository)
+        AttackItemType.SELF_DESTRUCTION.use(robot1, robot1.id, robotRepository)
 
         // then
         assertAll(
@@ -178,7 +178,7 @@ class AttackItemTypeTest {
         every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns listOf(robot1, robot3, robot6)
 
         // when
-        val battlefield = AttackItemType.SELF_DESTRUCT.use(robot1, robot1.id, robotRepository)
+        val battlefield = AttackItemType.SELF_DESTRUCTION.use(robot1, robot1.id, robotRepository)
 
         // then
         assert(battlefield == robot1.planet.planetId)
@@ -188,7 +188,7 @@ class AttackItemTypeTest {
     fun `Self destruct cannot be issued for another robot than the item carrier`() {
         // when
         assertThrows<InvalidTargetException>("Robot cannot self-destruct other robot than itself") {
-            AttackItemType.SELF_DESTRUCT.use(robot1, robot1.planet.planetId, robotRepository)
+            AttackItemType.SELF_DESTRUCTION.use(robot1, robot1.planet.planetId, robotRepository)
         }
     }
 
