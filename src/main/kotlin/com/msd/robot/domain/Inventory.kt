@@ -107,7 +107,9 @@ class Inventory {
     fun takeAllResources(): MutableMap<ResourceType, Int> {
         val takenResources = mutableMapOf<ResourceType, Int>()
         ResourceType.values().forEach {
-            takenResources[it] = resourceMap[it]!!
+            val amount = resourceMap[it]!!
+            takenResources[it] = amount
+            usedStorage -= amount
             resourceMap[it] = 0
         }
         return takenResources

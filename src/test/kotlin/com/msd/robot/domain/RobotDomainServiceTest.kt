@@ -486,4 +486,79 @@ internal class RobotDomainServiceTest {
         assertEquals(planetDTO.id, robot1.planet.planetId)
         assertEquals(0, robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
     }
+
+    @Test
+    fun `takeAllResources empties the inventory of the robot of its resources and returns the correct amount`() {
+        // given
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+        every { robotRepository.save(any()) } returns robot1
+
+        robot1.inventory.addResource(ResourceType.COAL, 4)
+        robot1.inventory.addResource(ResourceType.IRON, 4)
+        robot1.inventory.addResource(ResourceType.GEM, 4)
+        robot1.inventory.addResource(ResourceType.GOLD, 4)
+        robot1.inventory.addResource(ResourceType.PLATIN, 4)
+
+        // when
+        val resources = robotDomainService.takeAllResources(robot1.id)
+
+        // then
+        assertAll(
+            {
+                assert(robot1.inventory.usedStorage == 0)
+            },
+            {
+                assert(resources[ResourceType.COAL] == 4)
+            },
+            {
+                assert(resources[ResourceType.IRON] == 4)
+            },
+            {
+                assert(resources[ResourceType.GEM] == 4)
+            },
+            {
+                assert(resources[ResourceType.GOLD] == 4)
+            },
+            {
+                assert(resources[ResourceType.PLATIN] == 4)
+            }
+        )
+    }
+
+    @Test
+    fun `Adding an item to a robot increases the corresponding item amount in its inventory`() {
+        // given
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+        every { robotRepository.save(any()) } returns robot1
+
+        // when
+        robotDomainService.addItem(robot1.id, AttackItemType.ROCKET)
+        robotDomainService.addItem(robot1.id, AttackItemType.NUKE)
+        robotDomainService.addItem(robot1.id, AttackItemType.LONG_RANGE_BOMBARDMENT)
+        robotDomainService.addItem(robot1.id, AttackItemType.SELF_DESTRUCTION)
+        robotDomainService.addItem(robot1.id, MovementItemType.WORMHOLE)
+        robotDomainService.addItem(robot1.id, ReparationItemType.REPARATION_SWARM)
+
+        // then
+        assertAll(
+            {
+                assert(robot1.inventory.getItemAmountByType(AttackItemType.ROCKET) == 1)
+            },
+            {
+                assert(robot1.inventory.getItemAmountByType(AttackItemType.SELF_DESTRUCTION) == 1)
+            },
+            {
+                assert(robot1.inventory.getItemAmountByType(AttackItemType.LONG_RANGE_BOMBARDMENT) == 1)
+            },
+            {
+                assert(robot1.inventory.getItemAmountByType(AttackItemType.NUKE) == 1)
+            },
+            {
+                assert(robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE) == 1)
+            },
+            {
+                assert(robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM) == 1)
+            }
+        )
+    }
 }
