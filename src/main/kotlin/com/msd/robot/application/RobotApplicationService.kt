@@ -6,6 +6,7 @@ import com.msd.command.application.*
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
+import com.msd.robot.domain.UpgradeType
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import java.util.*
@@ -130,6 +131,22 @@ class RobotApplicationService(
         robot.regenerateEnergy()
         robotDomainService.saveRobot(robot)
     }
+
+    /**
+     * Upgrades the [Robot's][Robot] specified Upgrade to the given level.
+     *
+     * @param robotId     the `Robot` which should be updated
+     * @param upgradeType The upgrade which should increase its level
+     * @param level       the level to which the upgrade should increase
+     * @throws RobotNotFoundException  if there is not `Robot` with the specified ID
+     * @throws UpgradeException        if there is an attempt to skip a level, downgrade or upgrade past the max level
+     */
+    fun upgrade(robotId: UUID, upgradeType: UpgradeType, level: Int) {
+        val robot = robotDomainService.getRobot(robotId)
+        robot.upgrade(upgradeType, level)
+        robotDomainService.saveRobot(robot)
+    }
+
 
     /**
      * Execute all attack commands. This has to make sure that all attacks get executed, even if a robot dies during
