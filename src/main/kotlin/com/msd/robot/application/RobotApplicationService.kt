@@ -6,6 +6,7 @@ import com.msd.command.application.*
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
+import com.msd.robot.domain.UpgradeType
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import java.util.*
@@ -49,12 +50,23 @@ class RobotApplicationService(
                     is BlockCommand -> block(it)
                     is EnergyRegenCommand -> regenerateEnergy(it)
                     is ReparationItemUsageCommand -> useReparationItem(it)
+                    is MovementItemsUsageCommand -> useMovementItem(it)
                     // TODO Add remaining CommandTypes as soon as their methods are implemented
                 }
             } catch (re: RuntimeException) {
                 exceptionConverter.handle(re, it.transactionUUID)
             }
         }
+    }
+
+    /**
+     * Executes the given [MovementItemsUsageCommand]. The [Robot's][Robot] `player` and the `command` `playerId` must
+     * match, otherwise and exception is thrown.
+     *
+     * @param command   the `MovementItemsUsageCommand` specifying which `Robot` should use which `item`
+     */
+    private fun useMovementItem(command: MovementItemsUsageCommand) {
+        robotDomainService.useMovementItem(command.playerUUID, command.robotUUID, command.itemType)
     }
 
     /**
@@ -121,6 +133,21 @@ class RobotApplicationService(
     }
 
     /**
+     * Upgrades the [Robot's][Robot] specified Upgrade to the given level.
+     *
+     * @param robotId     the `Robot` which should be updated
+     * @param upgradeType The upgrade which should increase its level
+     * @param level       the level to which the upgrade should increase
+     * @throws RobotNotFoundException  if there is not `Robot` with the specified ID
+     * @throws UpgradeException        if there is an attempt to skip a level, downgrade or upgrade past the max level
+     */
+    fun upgrade(robotId: UUID, upgradeType: UpgradeType, level: Int) {
+        val robot = robotDomainService.getRobot(robotId)
+        robot.upgrade(upgradeType, level)
+        robotDomainService.saveRobot(robot)
+    }
+
+    /**
      * Execute all attack commands. This has to make sure that all attacks get executed, even if a robot dies during
      * the round. After all commands have been executed, dead robots get deleted and their resources distributed
      * equally among all living robots on the planet.
@@ -155,7 +182,7 @@ class RobotApplicationService(
      * @param command the [ReparationItemUsageCommand] which specifies which `Robot` should use which item
      */
     fun useReparationItem(command: ReparationItemUsageCommand) {
-        robotDomainService.useReparationItem(command.robotUUID, command.playerUUID, command.itemType)
+        robotDomainService.useReparationItem(command.playerUUID, command.robotUUID, command.itemType)
     }
 
     /**

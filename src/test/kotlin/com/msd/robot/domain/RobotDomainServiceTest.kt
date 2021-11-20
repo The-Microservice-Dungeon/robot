@@ -1,5 +1,7 @@
 package com.msd.robot.domain
 
+import com.msd.application.GameMapPlanetDto
+import com.msd.application.GameMapService
 import com.msd.domain.ResourceType
 import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.MovementItemType
@@ -43,11 +45,14 @@ internal class RobotDomainServiceTest {
     @MockK
     lateinit var robotRepository: RobotRepository
 
+    @MockK
+    lateinit var gameMapService: GameMapService
+
     lateinit var robotDomainService: RobotDomainService
 
     @BeforeEach
     fun setup() {
-        robotDomainService = RobotDomainService(robotRepository)
+        robotDomainService = RobotDomainService(robotRepository, gameMapService)
         player1Id = UUID.randomUUID()
         player2Id = UUID.randomUUID()
 
@@ -185,7 +190,7 @@ internal class RobotDomainServiceTest {
         robot1.inventory.addItem(ReparationItemType.REPARATION_SWARM)
         val player1Robots = listOf(robot1, robot2, robot3)
         player1Robots.forEach {
-            it.upgrade(UpgradeType.HEALTH)
+            it.upgrade(UpgradeType.HEALTH, 1)
             it.repair()
             it.receiveDamage(21)
         }
@@ -198,10 +203,10 @@ internal class RobotDomainServiceTest {
             )
         } returns player1Robots
         every { robotRepository.saveAll(player1Robots) } returns player1Robots
-        every { robotRepository.save(any()) } returns robot1
+        every { robotRepository.save(robot1) } returns robot1
 
         // when
-        robotDomainService.useReparationItem(robot1.id, robot1.player, ReparationItemType.REPARATION_SWARM)
+        robotDomainService.useReparationItem(robot1.player, robot1.id, ReparationItemType.REPARATION_SWARM)
 
         // then
         assertAll(
@@ -457,5 +462,25 @@ internal class RobotDomainServiceTest {
         verify(exactly = 1) { robotRepository.delete(robot1) }
         verify(exactly = 1) { robotRepository.delete(robot2) }
         verify(exactly = 1) { robotRepository.delete(robot4) }
+    }
+
+    @Test
+    fun `using a wormhole moves a robot`() {
+        // given
+        val planetDTO = GameMapPlanetDto(UUID.randomUUID(), 3)
+
+        robot1.inventory.addItem(MovementItemType.WORMHOLE)
+
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+        every { robotRepository.save(robot1) } returns robot1
+
+        every { gameMapService.getAllPlanets() } returns listOf(planetDTO)
+
+        // when
+        robotDomainService.useMovementItem(robot1.player, robot1.id, MovementItemType.WORMHOLE)
+
+        // then
+        assertEquals(planetDTO.id, robot1.planet.planetId)
+        assertEquals(0, robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
     }
 }
