@@ -694,7 +694,7 @@ class RobotApplicationServiceTest {
         )
 
         // when
-        robotApplicationService.useAttackItems(commands)
+        robotApplicationService.executeCommands(commands)
 
         // then
         verify(exactly = 0) { exceptionConverter.handle(any(), any()) }

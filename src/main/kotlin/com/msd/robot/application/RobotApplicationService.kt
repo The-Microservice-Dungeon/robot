@@ -32,7 +32,7 @@ class RobotApplicationService(
         // Attack commands are always homogenous, so this cast is valid
             executeAttacks(commands as List<AttackCommand>)
         else if (commands[0] is AttackItemUsageCommand)
-            TODO() // this needs to be handled in a batch as well
+            useAttackItems(commands as List<AttackItemUsageCommand>)
         else
             executeHeterogeneousCommands(commands)
     }

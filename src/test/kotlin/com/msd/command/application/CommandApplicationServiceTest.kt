@@ -22,7 +22,7 @@ class CommandApplicationServiceTest {
             "MINE $randomUUID  $randomUUID  $randomUUID",
             "regenerate $randomUUID  $randomUUID  $randomUUID",
             "Use-Item-Fighting $randomUUID  $randomUUID Rocket $randomUUID  $randomUUID ",
-            "Use-Item-Fighting $randomUUID  $randomUUID bombardment $randomUUID  $randomUUID ",
+            "Use-Item-Fighting $randomUUID  $randomUUID long_range_bombardment $randomUUID  $randomUUID ",
             "Use-Item-Fighting $randomUUID  $randomUUID self_destruction $randomUUID  $randomUUID ",
             "Use-Item-Fighting $randomUUID  $randomUUID NuKe $randomUUID  $randomUUID",
             "use-item-movement $randomUUID  $randomUUID wormhole $randomUUID",
