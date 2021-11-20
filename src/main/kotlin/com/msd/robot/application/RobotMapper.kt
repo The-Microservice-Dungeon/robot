@@ -20,6 +20,8 @@ abstract class RobotMapper {
     )
     abstract fun robotToRobotDto(robot: Robot): RobotDto
 
+    abstract fun robotsToRobotDtos(robots: List<Robot>): List<RobotDto>
+
     fun getItems(inventory: Inventory): ItemsDto {
         return ItemsDto(
             inventory.getItemAmountByType(AttackItemType.ROCKET),

@@ -2,6 +2,7 @@ package com.msd.robot.domain
 
 import com.msd.application.GameMapService
 import com.msd.domain.ResourceType
+import com.msd.item.domain.ItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.ReparationItemType
 import com.msd.robot.application.InvalidPlayerException
@@ -248,5 +249,15 @@ class RobotDomainService(
             robotRepository.save(robot)
         } else
             throw NotEnoughItemsException("This Robot doesn't have the required Item")
+    }
+
+    fun getRobotsByPlayer(playerId: UUID): List<Robot> {
+        return robotRepository.findAllByPlayer(playerId)
+    }
+
+    fun addItem(robotId: UUID, itemType: ItemType) {
+        val robot = this.getRobot(robotId)
+        robot.inventory.addItem(itemType)
+        robotRepository.save(robot)
     }
 }
