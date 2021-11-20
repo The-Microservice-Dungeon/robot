@@ -1,5 +1,3 @@
 package com.msd.domain
 
-class InvalidTargetException(s: String) : RuntimeException(s) {
-
-}
+class InvalidTargetException(s: String) : RuntimeException(s)

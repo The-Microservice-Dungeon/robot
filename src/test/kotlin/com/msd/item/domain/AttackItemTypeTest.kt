@@ -89,7 +89,7 @@ class AttackItemTypeTest {
     @Test
     fun `Using a rocket item returns the correct battlefield`() {
         // given
-        every { robotRepository.findByIdOrNull(robot3.id)} returns robot3
+        every { robotRepository.findByIdOrNull(robot3.id) } returns robot3
 
         // when
         val battlefield = AttackItemType.ROCKET.use(robot1, robot3.id, robotRepository)
@@ -101,10 +101,10 @@ class AttackItemTypeTest {
     @Test
     fun `Long Range Bombardment deals corresponding damage to every robot on the target planet`() {
         // given
-        every { robotRepository.findAllByPlanet_PlanetId(planet2.planetId)} returns listOf(robot2, robot4)
+        every { robotRepository.findAllByPlanet_PlanetId(planet2.planetId) } returns listOf(robot2, robot4)
 
         // when
-        AttackItemType.BOMBARDMENT.use(robot1, planet2.planetId, robotRepository)
+        AttackItemType.LONG_RANGE_BOMBARDMENT.use(robot1, planet2.planetId, robotRepository)
 
         // then
         assertAll(
@@ -115,8 +115,10 @@ class AttackItemTypeTest {
                 assert(robot2.health == robot2.maxHealth - 10)
             },
             { // does not deal damage to robots on other planets
-                assert(robot1.health + robot3.health + robot5.health ==
-                        robot1.maxHealth + robot3.maxHealth + robot5.maxHealth)
+                assert(
+                    robot1.health + robot3.health + robot5.health ==
+                        robot1.maxHealth + robot3.maxHealth + robot5.maxHealth
+                )
             }
         )
     }
@@ -124,23 +126,22 @@ class AttackItemTypeTest {
     @Test
     fun `Long Range Bombardment returns the correct battlefield`() {
         // given
-        every { robotRepository.findAllByPlanet_PlanetId(planet2.planetId)} returns listOf(robot3, robot4)
+        every { robotRepository.findAllByPlanet_PlanetId(planet2.planetId) } returns listOf(robot3, robot4)
 
         // when
-        val battlefield = AttackItemType.BOMBARDMENT.use(robot1, planet2.planetId, robotRepository)
+        val battlefield = AttackItemType.LONG_RANGE_BOMBARDMENT.use(robot1, planet2.planetId, robotRepository)
 
         // then
         assert(battlefield == planet2.planetId)
     }
 
-
     @Test
     fun `Using self destruct item destroys the robot using it`() {
         // given
-        every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId)} returns listOf(robot1, robot3, robot6)
+        every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns listOf(robot1, robot3, robot6)
 
         // when
-        AttackItemType.SELF_DESTRUCT.use(robot1, robot1.id, robotRepository)
+        AttackItemType.SELF_DESTRUCTION.use(robot1, robot1.id, robotRepository)
 
         // then
         assert(!robot1.alive)
@@ -149,10 +150,10 @@ class AttackItemTypeTest {
     @Test
     fun `Using self destruct deals corresponding damage to all robots on the same planet as the using robot`() {
         // given
-        every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId)} returns listOf(robot1, robot3, robot6)
+        every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns listOf(robot1, robot3, robot6)
 
         // when
-        AttackItemType.SELF_DESTRUCT.use(robot1, robot1.id, robotRepository)
+        AttackItemType.SELF_DESTRUCTION.use(robot1, robot1.id, robotRepository)
 
         // then
         assertAll(
@@ -163,8 +164,10 @@ class AttackItemTypeTest {
                 assert(robot6.health == robot6.maxHealth - 20)
             },
             { // dont deal damage to robots on other planets
-                assert(robot2.health + robot4.health + robot5.health ==
-                        robot2.maxHealth + robot4.maxHealth + robot5.maxHealth)
+                assert(
+                    robot2.health + robot4.health + robot5.health ==
+                        robot2.maxHealth + robot4.maxHealth + robot5.maxHealth
+                )
             }
         )
     }
@@ -172,10 +175,10 @@ class AttackItemTypeTest {
     @Test
     fun `Using self destruct item returns the correct battlefield`() {
         // given
-        every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId)} returns listOf(robot1, robot3, robot6)
+        every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns listOf(robot1, robot3, robot6)
 
         // when
-        val battlefield = AttackItemType.SELF_DESTRUCT.use(robot1, robot1.id, robotRepository)
+        val battlefield = AttackItemType.SELF_DESTRUCTION.use(robot1, robot1.id, robotRepository)
 
         // then
         assert(battlefield == robot1.planet.planetId)
@@ -185,14 +188,14 @@ class AttackItemTypeTest {
     fun `Self destruct cannot be issued for another robot than the item carrier`() {
         // when
         assertThrows<InvalidTargetException>("Robot cannot self-destruct other robot than itself") {
-            AttackItemType.SELF_DESTRUCT.use(robot1, robot1.planet.planetId, robotRepository)
+            AttackItemType.SELF_DESTRUCTION.use(robot1, robot1.planet.planetId, robotRepository)
         }
     }
 
     @Test
     fun `Using nuke deals corresponding damage to all robots on the target planet`() {
         // given
-        every { robotRepository.findAllByPlanet_PlanetId(robot2.planet.planetId)} returns listOf(robot2, robot4)
+        every { robotRepository.findAllByPlanet_PlanetId(robot2.planet.planetId) } returns listOf(robot2, robot4)
 
         // when
         AttackItemType.NUKE.use(robot1, robot2.planet.planetId, robotRepository)
@@ -211,7 +214,7 @@ class AttackItemTypeTest {
     @Test
     fun `Using nuke returns the correct battlefield`() {
         // given
-        every { robotRepository.findAllByPlanet_PlanetId(robot2.planet.planetId)} returns listOf(robot2, robot4)
+        every { robotRepository.findAllByPlanet_PlanetId(robot2.planet.planetId) } returns listOf(robot2, robot4)
 
         // when
         val battlefield = AttackItemType.NUKE.use(robot1, robot2.planet.planetId, robotRepository)

@@ -32,7 +32,7 @@ class RobotApplicationService(
         // Attack commands are always homogenous, so this cast is valid
             executeAttacks(commands as List<AttackCommand>)
         else if (commands[0] is AttackItemUsageCommand)
-            TODO() // this needs to be handled in a batch as well
+            useAttackItems(commands as List<AttackItemUsageCommand>)
         else
             executeHeterogeneousCommands(commands)
     }
@@ -75,9 +75,9 @@ class RobotApplicationService(
      * @param player  the `UUID` of the player
      * @param planet the `UUID` of the `Planet`
      */
-    fun spawn(player: UUID, planet: UUID) {
+    fun spawn(player: UUID, planet: UUID): Robot {
         val robot = Robot(player, Planet(planet))
-        robotDomainService.saveRobot(robot)
+        return robotDomainService.saveRobot(robot)
     }
 
     /**

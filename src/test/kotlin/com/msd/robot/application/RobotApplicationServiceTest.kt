@@ -13,7 +13,6 @@ import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.verify
-import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -680,22 +679,22 @@ class RobotApplicationServiceTest {
         robot1.inventory.addItem(AttackItemType.ROCKET)
         robot2.inventory.addItem(AttackItemType.NUKE)
         robot3.inventory.addItem(AttackItemType.ROCKET)
-        robot4.inventory.addItem(AttackItemType.SELF_DESTRUCT)
-        robot5.inventory.addItem(AttackItemType.BOMBARDMENT)
+        robot4.inventory.addItem(AttackItemType.SELF_DESTRUCTION)
+        robot5.inventory.addItem(AttackItemType.LONG_RANGE_BOMBARDMENT)
 
         val commands = listOf(
             AttackItemUsageCommand(player1Id, robot1.id, AttackItemType.ROCKET, robot1.id, UUID.randomUUID()),
             AttackItemUsageCommand(player1Id, robot2.id, AttackItemType.NUKE, planet2.planetId, UUID.randomUUID()),
             AttackItemUsageCommand(player1Id, robot3.id, AttackItemType.ROCKET, robot4.id, UUID.randomUUID()),
-            AttackItemUsageCommand(player2Id, robot4.id, AttackItemType.SELF_DESTRUCT, robot4.id, UUID.randomUUID()),
+            AttackItemUsageCommand(player2Id, robot4.id, AttackItemType.SELF_DESTRUCTION, robot4.id, UUID.randomUUID()),
             AttackItemUsageCommand(
-                player2Id, robot5.id, AttackItemType.BOMBARDMENT,
+                player2Id, robot5.id, AttackItemType.LONG_RANGE_BOMBARDMENT,
                 robot6.planet.planetId, UUID.randomUUID()
             )
         )
 
         // when
-        robotApplicationService.useAttackItems(commands)
+        robotApplicationService.executeCommands(commands)
 
         // then
         verify(exactly = 0) { exceptionConverter.handle(any(), any()) }
@@ -750,8 +749,8 @@ class RobotApplicationServiceTest {
         robot1.inventory.addItem(AttackItemType.ROCKET)
         robot2.inventory.addItem(AttackItemType.NUKE)
         robot3.inventory.addItem(AttackItemType.ROCKET)
-        robot4.inventory.addItem(AttackItemType.SELF_DESTRUCT)
-        robot5.inventory.addItem(AttackItemType.BOMBARDMENT)
+        robot4.inventory.addItem(AttackItemType.SELF_DESTRUCTION)
+        robot5.inventory.addItem(AttackItemType.LONG_RANGE_BOMBARDMENT)
 
         robot3.inventory.addResource(ResourceType.GOLD, 5)
         robot4.inventory.addResource(ResourceType.PLATIN, 10)
@@ -761,9 +760,9 @@ class RobotApplicationServiceTest {
             AttackItemUsageCommand(player1Id, robot1.id, AttackItemType.ROCKET, robot1.id, UUID.randomUUID()),
             AttackItemUsageCommand(player1Id, robot2.id, AttackItemType.NUKE, planet2.planetId, UUID.randomUUID()),
             AttackItemUsageCommand(player1Id, robot3.id, AttackItemType.ROCKET, robot4.id, UUID.randomUUID()),
-            AttackItemUsageCommand(player2Id, robot4.id, AttackItemType.SELF_DESTRUCT, robot4.id, UUID.randomUUID()),
+            AttackItemUsageCommand(player2Id, robot4.id, AttackItemType.SELF_DESTRUCTION, robot4.id, UUID.randomUUID()),
             AttackItemUsageCommand(
-                player2Id, robot5.id, AttackItemType.BOMBARDMENT,
+                player2Id, robot5.id, AttackItemType.LONG_RANGE_BOMBARDMENT,
                 robot6.planet.planetId, UUID.randomUUID()
             )
         )
