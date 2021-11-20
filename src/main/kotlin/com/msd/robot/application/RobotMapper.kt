@@ -16,7 +16,8 @@ abstract class RobotMapper {
 
     @Mappings(
         Mapping(target = "planet", source = "planet.planetId"),
-        Mapping(target = "items", expression = "java(getItems(robot.getInventory()))")
+        Mapping(target = "items", expression = "java(getItems(robot.getInventory()))"),
+        Mapping(target = "storageLevel", source = "robot.inventory.storageLevel")
     )
     abstract fun robotToRobotDto(robot: Robot): RobotDto
 
