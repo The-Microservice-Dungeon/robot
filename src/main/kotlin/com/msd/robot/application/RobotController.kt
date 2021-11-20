@@ -1,9 +1,7 @@
 package com.msd.robot.application
 
-import com.msd.robot.application.dtos.ItemAdditionDto
-import com.msd.robot.application.dtos.RobotDto
-import com.msd.robot.application.dtos.RobotSpawnDto
-import com.msd.robot.application.dtos.UpgradeDto
+import com.msd.domain.ResourceType
+import com.msd.robot.application.dtos.*
 import com.msd.robot.domain.RobotDomainService
 import org.springframework.data.repository.query.Param
 import org.springframework.http.ResponseEntity
@@ -16,7 +14,8 @@ import java.util.*
 class RobotController(
     val robotApplicationService: RobotApplicationService,
     val robotDomainService: RobotDomainService,
-    val robotMapper: RobotMapper
+    val robotMapper: RobotMapper,
+    val inventoryMapper: InventoryMapper
 ) {
 
     @PostMapping
@@ -47,5 +46,11 @@ class RobotController(
     fun addItemToRobot(@PathVariable("id") robotId: UUID, @RequestBody addItemDto: ItemAdditionDto): ResponseEntity<String> {
         robotDomainService.addItem(robotId, addItemDto.`item-type`)
         return ResponseEntity.ok("Item ${addItemDto.`item-type`} added to robot $robotId")
+    }
+
+    @PostMapping("/{id}/inventory/clearResources")
+    fun clearAllResourcesOfRobot(@PathVariable("id") robotId: UUID): ResponseEntity<Map<ResourceType, Int>> {
+        val takenResources = robotDomainService.takeAllResources(robotId)
+        return ResponseEntity.ok(takenResources)
     }
 }

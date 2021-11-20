@@ -100,6 +100,20 @@ class Inventory {
     }
 
     /**
+     * Removes all resources from the inventory.
+     *
+     * @return a list of all the resources taken
+     */
+    fun takeAllResources(): MutableMap<ResourceType, Int> {
+        val takenResources = mutableMapOf<ResourceType, Int>()
+        ResourceType.values().forEach {
+            takenResources[it] = resourceMap[it]!!
+            resourceMap[it] = 0
+        }
+        return takenResources
+    }
+
+    /**
      * Takes a specified amount of resources from this inventory. The resources will be removed from the inventory.
      *
      * @param resource  the resource which should be taken

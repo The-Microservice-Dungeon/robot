@@ -251,13 +251,37 @@ class RobotDomainService(
             throw NotEnoughItemsException("This Robot doesn't have the required Item")
     }
 
+    /**
+     * Returns all the robots belonging to the given player.
+     *
+     * @param playerId: The UUID of the player whose robots should be returned
+     * @return a list of the robots belonging to the player
+     */
     fun getRobotsByPlayer(playerId: UUID): List<Robot> {
         return robotRepository.findAllByPlayer(playerId)
     }
 
+    /**
+     * Gives a robot a new item.
+     * @param robotId: The UUID of the robot which the item should be given to
+     * @param itemType: The [ItemType] to give the robot
+     */
     fun addItem(robotId: UUID, itemType: ItemType) {
         val robot = this.getRobot(robotId)
         robot.inventory.addItem(itemType)
         robotRepository.save(robot)
+    }
+
+    /**
+     * Clear the given robots resources.
+     *
+     * @param robotId: The UUID of the robot whose resources should be cleared.
+     * @return the taken resources
+     */
+    fun takeAllResources(robotId: UUID): Map<ResourceType, Int> {
+        val robot = this.getRobot(robotId)
+        val takenResources = robot.inventory.takeAllResources()
+        robotRepository.save(robot)
+        return takenResources
     }
 }
