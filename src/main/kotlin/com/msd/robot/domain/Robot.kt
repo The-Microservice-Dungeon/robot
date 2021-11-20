@@ -234,17 +234,18 @@ class Robot(
      * is thrown.
      *
      * @param upgradeType the stat which should be updated
+     * @param level       the level to which an upgrade should be upgraded
      * @throws UpgradeException    when an upgrade level is skipped, a downgrade is attempted or an upgrade past the max
      */
-    fun upgrade(upgradeType: UpgradeType) {
+    fun upgrade(upgradeType: UpgradeType, level: Int) {
         when (upgradeType) {
-            UpgradeType.DAMAGE -> damageLevel++
-            UpgradeType.ENERGY_REGEN -> energyRegenLevel++
-            UpgradeType.MAX_ENERGY -> energyLevel++
-            UpgradeType.HEALTH -> healthLevel++
-            UpgradeType.STORAGE -> inventory.storageLevel++
-            UpgradeType.MINING_SPEED -> miningSpeedLevel++
-            UpgradeType.MINING -> miningLevel++
+            UpgradeType.DAMAGE -> damageLevel = level
+            UpgradeType.ENERGY_REGEN -> energyRegenLevel = level
+            UpgradeType.MAX_ENERGY -> energyLevel = level
+            UpgradeType.HEALTH -> healthLevel = level
+            UpgradeType.STORAGE -> inventory.storageLevel = level
+            UpgradeType.MINING_SPEED -> miningSpeedLevel = level
+            UpgradeType.MINING -> miningLevel = level
         }
     }
 

@@ -108,7 +108,7 @@ class InventoryTest {
     @Test
     fun `Upgrading storage allows robot to hold more resources`() {
         // given
-        robot1.upgrade(UpgradeType.STORAGE)
+        robot1.upgrade(UpgradeType.STORAGE, 1)
         // when
         robot1.inventory.addResource(ResourceType.IRON, 25)
         // then

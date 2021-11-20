@@ -155,7 +155,7 @@ class RobotTest {
     @Test
     fun `Upgrading a robot increases its upgrade level`() {
         // given
-        for (upgradeType in UpgradeType.values()) robot1.upgrade(upgradeType)
+        for (upgradeType in UpgradeType.values()) robot1.upgrade(upgradeType, 1)
         // then
         assertAll(
             "All upgrade levels increase to 1",
@@ -187,7 +187,7 @@ class RobotTest {
     @Test
     fun `Upgrading the level causes corresponding stat changes`() {
         // given
-        for (upgradeType in UpgradeType.values()) robot1.upgrade(upgradeType)
+        for (upgradeType in UpgradeType.values()) robot1.upgrade(upgradeType, 1)
 
         // then
         assertAll(
@@ -217,43 +217,55 @@ class RobotTest {
     }
 
     @Test
+    fun `Can't downgrade the level of a Robot`() {
+        // given
+        robot1.upgrade(UpgradeType.HEALTH, 1)
+        // when
+        assertThrows<UpgradeException> {
+            robot1.upgrade(UpgradeType.HEALTH, 0)
+        }
+        // then
+        assertEquals(1, robot1.healthLevel)
+    }
+
+    @Test
     fun `The upgrade level of a robot cannot go higher than 5 (except MiningLevel)`() {
         // given
         for (upgradeType in UpgradeType.values()) {
             if (upgradeType != UpgradeType.MINING)
-                for (i in 1..5) robot1.upgrade(upgradeType)
+                for (i in 1..5) robot1.upgrade(upgradeType, i)
         }
         // assert
         assertAll(
             "Assert all upgrade levels being maxed at 5",
             {
                 assertThrows<UpgradeException>("Max Storage Level has been reached. Upgrade not possible.") {
-                    robot1.upgrade(UpgradeType.STORAGE)
+                    robot1.upgrade(UpgradeType.STORAGE, 6)
                 }
             },
             {
                 assertThrows<UpgradeException>("Max Health Level has been reached. Upgrade not possible.") {
-                    robot1.upgrade(UpgradeType.HEALTH)
+                    robot1.upgrade(UpgradeType.HEALTH, 6)
                 }
             },
             {
                 assertThrows<UpgradeException>("Max Damage Level has been reached. Upgrade not possible.") {
-                    robot1.upgrade(UpgradeType.DAMAGE)
+                    robot1.upgrade(UpgradeType.DAMAGE, 6)
                 }
             },
             {
                 assertThrows<UpgradeException>("Max Mining Speed has been reached. Upgrade not possible.") {
-                    robot1.upgrade(UpgradeType.MINING_SPEED)
+                    robot1.upgrade(UpgradeType.MINING_SPEED, 6)
                 }
             },
             {
                 assertThrows<UpgradeException>("Max Energy Level has been reached. Upgrade not possible.") {
-                    robot1.upgrade(UpgradeType.MAX_ENERGY)
+                    robot1.upgrade(UpgradeType.MAX_ENERGY, 6)
                 }
             },
             {
                 assertThrows<UpgradeException>("Max Energy Regen has been reached. Upgrade not possible.") {
-                    robot1.upgrade(UpgradeType.ENERGY_REGEN)
+                    robot1.upgrade(UpgradeType.ENERGY_REGEN, 6)
                 }
             }
         )
@@ -261,9 +273,9 @@ class RobotTest {
 
     @Test
     fun `The Mining Upgrade Level of a robot cannot go higher than 4`() {
-        for (i in 1..4) robot1.upgrade(UpgradeType.MINING)
+        for (i in 1..4) robot1.upgrade(UpgradeType.MINING, i)
         assertThrows<UpgradeException>("Max Mining Level has been reached. Upgrade not possible.") {
-            robot1.upgrade(UpgradeType.MINING)
+            robot1.upgrade(UpgradeType.MINING, 5)
         }
     }
 
