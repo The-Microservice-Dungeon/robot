@@ -1,6 +1,9 @@
 package com.msd.robot.domain
 
+import com.msd.application.GameMapPlanetDto
+import com.msd.application.GameMapService
 import com.msd.domain.ResourceType
+import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.ReparationItemType
 import com.msd.planet.domain.Planet
 import io.mockk.every
@@ -37,11 +40,14 @@ internal class RobotDomainServiceTest {
     @MockK
     lateinit var robotRepository: RobotRepository
 
+    @MockK
+    lateinit var gameMapService: GameMapService
+
     lateinit var robotDomainService: RobotDomainService
 
     @BeforeEach
     fun setup() {
-        robotDomainService = RobotDomainService(robotRepository)
+        robotDomainService = RobotDomainService(robotRepository, gameMapService)
         player1Id = UUID.randomUUID()
         player2Id = UUID.randomUUID()
 
@@ -194,7 +200,7 @@ internal class RobotDomainServiceTest {
         every { robotRepository.saveAll(player1Robots) } returns player1Robots
 
         // when
-        robotDomainService.useReparationItem(robot1.id, robot1.player, ReparationItemType.REPARATION_SWARM)
+        robotDomainService.useReparationItem(robot1.player, robot1.id, ReparationItemType.REPARATION_SWARM)
 
         // then
         assertAll(
@@ -202,5 +208,25 @@ internal class RobotDomainServiceTest {
             robots.filter { it.player == player1Id }.map { { assertEquals(24, it.health) } }
         )
         assertEquals(0, robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM))
+    }
+
+    @Test
+    fun `using a wormhole moves a robot`() {
+        // given
+        val planetDTO = GameMapPlanetDto(UUID.randomUUID(), 3)
+
+        robot1.inventory.addItem(MovementItemType.WORMHOLE)
+
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+        every { robotRepository.save(robot1) } returns robot1
+
+        every { gameMapService.getAllPlanets() } returns listOf(planetDTO)
+
+        // when
+        robotDomainService.useMovementItem(robot1.player, robot1.id, MovementItemType.WORMHOLE)
+
+        // then
+        assertEquals(planetDTO.id, robot1.planet.planetId)
+        assertEquals(0, robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
     }
 }

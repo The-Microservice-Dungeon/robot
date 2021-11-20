@@ -57,7 +57,7 @@ class RobotApplicationServiceTest {
     @BeforeEach
     fun setup() {
         MockKAnnotations.init(this)
-        robotDomainService = RobotDomainService(robotRepository)
+        robotDomainService = RobotDomainService(robotRepository, gameMapMockService)
         robotApplicationService = RobotApplicationService(gameMapMockService, robotDomainService, exceptionConverter)
 
         planet1 = Planet(UUID.randomUUID())
