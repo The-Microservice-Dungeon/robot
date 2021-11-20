@@ -10,6 +10,7 @@ plugins {
     kotlin("jvm") version "1.5.31"
     kotlin("plugin.spring") version "1.5.31"
     kotlin("plugin.jpa") version "1.5.31"
+    kotlin("kapt") version "1.5.10"
 }
 
 group = "com.msd"
@@ -29,6 +30,8 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.springframework.kafka:spring-kafka:2.7.6")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.mapstruct:mapstruct:1.5.0.Beta1")
+    kapt("org.mapstruct:mapstruct-processor:1.5.0.Beta1")
     testImplementation("com.squareup.okhttp3:okhttp:4.0.1")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.0.1")
     testImplementation(platform("org.junit:junit-bom:5.8.1"))
@@ -37,6 +40,15 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test:2.5.5")
     testImplementation("org.springframework.kafka:spring-kafka-test:2.7.6")
     testImplementation("io.mockk:mockk:1.12.0")
+}
+
+kapt {
+    arguments {
+        // Set Mapstruct Configuration options here
+        // https://kotlinlang.org/docs/reference/kapt.html#annotation-processor-arguments
+        // https://mapstruct.org/documentation/stable/reference/html/#configuration-options
+        // arg("mapstruct.defaultComponentModel", "spring")
+    }
 }
 
 tasks.withType<KotlinCompile> {

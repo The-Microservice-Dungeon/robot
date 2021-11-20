@@ -44,6 +44,7 @@ class Robot(
 
     @OneToOne(cascade = [CascadeType.ALL])
     val inventory = Inventory()
+
     val miningSpeed: Int
         get() = UpgradeValues.miningSpeedByLevel[miningSpeedLevel]
 

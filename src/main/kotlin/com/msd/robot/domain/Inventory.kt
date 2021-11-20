@@ -144,7 +144,7 @@ class Inventory {
             ReparationItemType.REPARATION_SWARM -> repairSwarmAmount++
             AttackItemType.ROCKET -> rocketAmount++
             AttackItemType.BOMBARDMENT -> bombardmentAmount++
-            AttackItemType.SELF_DESTRUCT -> selfDestructAmount++
+            AttackItemType.SELF_DESTRUCTION -> selfDestructAmount++
             AttackItemType.NUKE -> nukeAmount++
             else -> throw IllegalArgumentException("$item is not a valid item")
         }
@@ -162,7 +162,7 @@ class Inventory {
             ReparationItemType.REPARATION_SWARM -> repairSwarmAmount--
             AttackItemType.ROCKET -> rocketAmount--
             AttackItemType.BOMBARDMENT -> bombardmentAmount--
-            AttackItemType.SELF_DESTRUCT -> selfDestructAmount--
+            AttackItemType.SELF_DESTRUCTION -> selfDestructAmount--
             AttackItemType.NUKE -> nukeAmount--
             else -> throw IllegalArgumentException("$item is not a valid item")
         }
@@ -181,7 +181,7 @@ class Inventory {
             ReparationItemType.REPARATION_SWARM -> repairSwarmAmount
             AttackItemType.ROCKET -> rocketAmount
             AttackItemType.BOMBARDMENT -> bombardmentAmount
-            AttackItemType.SELF_DESTRUCT -> selfDestructAmount
+            AttackItemType.SELF_DESTRUCTION -> selfDestructAmount
             AttackItemType.NUKE -> nukeAmount
             else -> throw IllegalArgumentException("$item is not a valid item")
         }

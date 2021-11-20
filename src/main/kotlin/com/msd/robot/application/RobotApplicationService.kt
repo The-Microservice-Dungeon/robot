@@ -63,9 +63,9 @@ class RobotApplicationService(
      * @param player  the `UUID` of the player
      * @param planet the `UUID` of the `Planet`
      */
-    fun spawn(player: UUID, planet: UUID) {
+    fun spawn(player: UUID, planet: UUID): Robot {
         val robot = Robot(player, Planet(planet))
-        robotDomainService.saveRobot(robot)
+        return robotDomainService.saveRobot(robot)
     }
 
     /**
