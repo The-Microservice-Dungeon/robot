@@ -11,7 +11,7 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import org.mapstruct.Mappings
 
-@Mapper(componentModel = "spring", uses = [InventoryMapper::class])
+@Mapper(uses = [InventoryMapper::class])
 abstract class RobotMapper {
 
     @Mappings(

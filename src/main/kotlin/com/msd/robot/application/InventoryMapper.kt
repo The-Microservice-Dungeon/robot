@@ -7,7 +7,7 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import org.mapstruct.Mappings
 
-@Mapper(componentModel = "spring", imports = [ResourceType::class])
+@Mapper(imports = [ResourceType::class])
 interface InventoryMapper {
 
     @Mappings(
