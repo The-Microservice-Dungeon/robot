@@ -1,4 +1,4 @@
-package com.msd.application
+package com.msd.robot.application
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.msd.command.application.CommandController
@@ -17,7 +17,7 @@ import java.util.*
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @ActiveProfiles(profiles = ["no-async"])
-class SpawningIntegrationTests(
+class RobotControllerTest(
     @Autowired private var mockMvc: MockMvc,
     @Autowired private var commandController: CommandController,
     @Autowired private var robotRepository: RobotRepository,
