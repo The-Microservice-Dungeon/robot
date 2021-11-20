@@ -274,6 +274,6 @@ class RobotDomainService(
             robot.inventory.removeItem(itemType)
             robotRepository.save(robot)
         } else
-            throw NotEnoughItemsException("This Robot doesn't have the required Item")
+            throw NotEnoughItemsException("This Robot doesn't have the required Item", itemType)
     }
 }

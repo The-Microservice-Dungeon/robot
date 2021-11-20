@@ -674,7 +674,7 @@ class RobotApplicationServiceTest {
             listOf(robot3, robot4, robot6)
         justRun { robotRepository.delete(any()) }
 
-        for (i in 1..5) robot1.upgrade(UpgradeType.HEALTH)
+        for (i in 1..5) robot1.upgrade(UpgradeType.HEALTH, i)
         robot1.repair() // TODO fill health on health level upgrade?
 
         robot1.inventory.addItem(AttackItemType.ROCKET)
@@ -744,7 +744,7 @@ class RobotApplicationServiceTest {
             listOf(robot3, robot4, robot6)
         justRun { robotRepository.delete(any()) }
 
-        for (i in 1..5) robot1.upgrade(UpgradeType.HEALTH)
+        for (i in 1..5) robot1.upgrade(UpgradeType.HEALTH, i)
         robot1.repair() // TODO fill health on health level upgrade?
 
         robot1.inventory.addItem(AttackItemType.ROCKET)
