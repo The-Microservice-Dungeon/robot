@@ -4,11 +4,9 @@ import com.msd.application.ClientException
 import com.msd.application.ExceptionConverter
 import com.msd.application.GameMapPlanetDto
 import com.msd.application.GameMapService
-import com.msd.command.application.AttackCommand
-import com.msd.command.application.BlockCommand
-import com.msd.command.application.EnergyRegenCommand
-import com.msd.command.application.MovementCommand
+import com.msd.command.application.*
 import com.msd.domain.ResourceType
+import com.msd.item.domain.AttackItemType
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.*
 import io.mockk.*
@@ -660,5 +658,130 @@ class RobotApplicationServiceTest {
         // then
         assertEquals(player1Id, slot.captured.player)
         assertEquals(planet1.planetId, slot.captured.planet.planetId)
+    }
+
+    @Test
+    fun `UseAttackItems correctly deals damage according to the commands`() {
+        // given
+        every { robotRepository.save(any()) } returns robot1
+        every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf()
+        every { robotRepository.findAllByPlanet_PlanetId(planet2.planetId) } returns listOf(robot2, robot5)
+        every { robotRepository.findAllByPlanet_PlanetId(planet1.planetId) } returns
+            listOf(robot1, robot3, robot4, robot6)
+        every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(planet2.planetId) } returns
+            listOf(robot2, robot5)
+        every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(planet1.planetId) } returns
+            listOf(robot3, robot4, robot6)
+        justRun { robotRepository.delete(any()) }
+
+        for (i in 1..5) robot1.upgrade(UpgradeType.HEALTH, i)
+        robot1.repair() // TODO fill health on health level upgrade?
+
+        robot1.inventory.addItem(AttackItemType.ROCKET)
+        robot2.inventory.addItem(AttackItemType.NUKE)
+        robot3.inventory.addItem(AttackItemType.ROCKET)
+        robot4.inventory.addItem(AttackItemType.SELF_DESTRUCT)
+        robot5.inventory.addItem(AttackItemType.BOMBARDMENT)
+
+        val commands = listOf(
+            AttackItemUsageCommand(player1Id, robot1.id, AttackItemType.ROCKET, robot1.id, UUID.randomUUID()),
+            AttackItemUsageCommand(player1Id, robot2.id, AttackItemType.NUKE, planet2.planetId, UUID.randomUUID()),
+            AttackItemUsageCommand(player1Id, robot3.id, AttackItemType.ROCKET, robot4.id, UUID.randomUUID()),
+            AttackItemUsageCommand(player2Id, robot4.id, AttackItemType.SELF_DESTRUCT, robot4.id, UUID.randomUUID()),
+            AttackItemUsageCommand(
+                player2Id, robot5.id, AttackItemType.BOMBARDMENT,
+                robot6.planet.planetId, UUID.randomUUID()
+            )
+        )
+
+        // when
+        robotApplicationService.useAttackItems(commands)
+
+        // then
+        verify(exactly = 0) { exceptionConverter.handle(any(), any()) }
+        assertAll(
+            {
+                assert(robot1.health == robot1.maxHealth - 5 - 20 - 10)
+            },
+            {
+                assert(robot2.health < 0)
+                assert(!robot2.alive)
+            },
+            {
+                assert(robot3.health < 0)
+                assert(!robot3.alive)
+            },
+            {
+                assert(robot4.health < 0)
+                assert(!robot4.alive)
+            },
+            {
+                assert(robot5.health < 0)
+                assert(!robot5.alive)
+            },
+            {
+                assert(robot6.health < 0)
+                assert(!robot6.alive)
+            }
+        )
+    }
+
+    @Test
+    fun `UseAttackitems distributes remaining resources`() {
+        // given
+        every { robotRepository.save(any()) } returns robot1
+        every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf()
+        every { robotRepository.findAllByPlanet_PlanetId(planet2.planetId) } returns listOf(robot2, robot5)
+        every { robotRepository.findAllByPlanet_PlanetId(planet1.planetId) } returnsMany
+            listOf(
+                listOf(robot1, robot3, robot4, robot6),
+                listOf(robot1, robot3, robot4, robot6),
+                listOf(robot1)
+            )
+        every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(planet2.planetId) } returns
+            listOf(robot2, robot5)
+        every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(planet1.planetId) } returns
+            listOf(robot3, robot4, robot6)
+        justRun { robotRepository.delete(any()) }
+
+        for (i in 1..5) robot1.upgrade(UpgradeType.HEALTH, i)
+        robot1.repair() // TODO fill health on health level upgrade?
+
+        robot1.inventory.addItem(AttackItemType.ROCKET)
+        robot2.inventory.addItem(AttackItemType.NUKE)
+        robot3.inventory.addItem(AttackItemType.ROCKET)
+        robot4.inventory.addItem(AttackItemType.SELF_DESTRUCT)
+        robot5.inventory.addItem(AttackItemType.BOMBARDMENT)
+
+        robot3.inventory.addResource(ResourceType.GOLD, 5)
+        robot4.inventory.addResource(ResourceType.PLATIN, 10)
+        robot6.inventory.addResource(ResourceType.COAL, 10)
+
+        val commands = listOf(
+            AttackItemUsageCommand(player1Id, robot1.id, AttackItemType.ROCKET, robot1.id, UUID.randomUUID()),
+            AttackItemUsageCommand(player1Id, robot2.id, AttackItemType.NUKE, planet2.planetId, UUID.randomUUID()),
+            AttackItemUsageCommand(player1Id, robot3.id, AttackItemType.ROCKET, robot4.id, UUID.randomUUID()),
+            AttackItemUsageCommand(player2Id, robot4.id, AttackItemType.SELF_DESTRUCT, robot4.id, UUID.randomUUID()),
+            AttackItemUsageCommand(
+                player2Id, robot5.id, AttackItemType.BOMBARDMENT,
+                robot6.planet.planetId, UUID.randomUUID()
+            )
+        )
+
+        // when
+        robotApplicationService.useAttackItems(commands)
+
+        // then
+        assertAll(
+            {
+                assert(robot1.inventory.getStorageUsageForResource(ResourceType.COAL) == 5)
+            },
+            {
+                assert(robot1.inventory.getStorageUsageForResource(ResourceType.PLATIN) == 10)
+            },
+            {
+                assert(robot1.inventory.getStorageUsageForResource(ResourceType.GOLD) == 5)
+            }
+        )
     }
 }

@@ -163,9 +163,8 @@ class RobotApplicationService(
             try {
                 val attacker = robotDomainService.getRobot(it.robotUUID)
                 val target = robotDomainService.getRobot(it.targetRobotUUID)
-                robotDomainService.checkRobotBelongsToPlayer(attacker, it.playerUUID)
 
-                robotDomainService.fight(attacker, target)
+                robotDomainService.fight(attacker, target, it.playerUUID)
                 battleFields.add(attacker.planet.planetId)
             } catch (re: RuntimeException) {
                 exceptionConverter.handle(re, it.transactionUUID)
@@ -184,6 +183,29 @@ class RobotApplicationService(
      */
     fun useReparationItem(command: ReparationItemUsageCommand) {
         robotDomainService.useReparationItem(command.playerUUID, command.robotUUID, command.itemType)
+    }
+
+    /**
+     * Execute all [AttackItemUsageCommands][AttackItemUsageCommand]. The failure of one command execution does not
+     * impair the other command executions. After all commands have been executed, the battlefields get cleaned up,
+     * i.e. all dead robots get removed and their resources distributed between the remaining robots on the planet.
+     *
+     * @param usageCommands: The AttackItemUsageCommands that should be executed
+     */
+    fun useAttackItems(usageCommands: List<AttackItemUsageCommand>) {
+        val battleFields = mutableSetOf<UUID>()
+        usageCommands.forEach {
+            try {
+                val battlefield = robotDomainService.useAttackItem(it.robotUUID, it.targetUUID, it.playerUUID, it.itemType)
+                battleFields.add(battlefield)
+            } catch (re: RuntimeException) {
+                exceptionConverter.handle(re, it.transactionUUID)
+            }
+        }
+
+        battleFields.forEach { planetId ->
+            robotDomainService.postFightCleanup(planetId)
+        }
     }
 
     /**
