@@ -24,6 +24,6 @@ class CommandController(
     fun receiveCommand(@RequestBody commandDto: CommandDTO): ResponseEntity<Any> {
         val commands = commandService.parseCommandsFromStrings(commandDto.commands)
         robotService.executeCommands(commands)
-        return ResponseEntity.ok("Command batch accepted")
+        return ResponseEntity.accepted().body("Command batch accepted")
     }
 }
