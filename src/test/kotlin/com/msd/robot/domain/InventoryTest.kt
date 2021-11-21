@@ -1,6 +1,9 @@
 package com.msd.robot.domain
 
 import com.msd.domain.ResourceType
+import com.msd.item.domain.AttackItemType
+import com.msd.item.domain.MovementItemType
+import com.msd.item.domain.ReparationItemType
 import com.msd.planet.domain.Planet
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -105,7 +108,7 @@ class InventoryTest {
     @Test
     fun `Upgrading storage allows robot to hold more resources`() {
         // given
-        robot1.upgrade(UpgradeType.STORAGE)
+        robot1.upgrade(UpgradeType.STORAGE, 1)
         // when
         robot1.inventory.addResource(ResourceType.IRON, 25)
         // then
@@ -132,12 +135,94 @@ class InventoryTest {
     }
 
     @Test
-    fun `Mining correctly adds resources to inventory`() {
-        //given
-        assertEquals(0, robot1.inventory.getStorageUsageForResource(ResourceType.IRON))
-        //when
-        robot1.mine(ResourceType.IRON, robot1.miningSpeed)
-        //then
-        assertEquals(robot1.miningSpeed, robot1.inventory.getStorageUsageForResource(ResourceType.IRON))
+    fun `adding an item correctly increases its count`() {
+        // when
+        robot1.inventory.addItem(MovementItemType.WORMHOLE)
+        robot1.inventory.addItem(ReparationItemType.REPARATION_SWARM)
+        robot1.inventory.addItem(AttackItemType.ROCKET)
+        robot1.inventory.addItem(AttackItemType.LONG_RANGE_BOMBARDMENT)
+        robot1.inventory.addItem(AttackItemType.SELF_DESTRUCTION)
+        robot1.inventory.addItem(AttackItemType.NUKE)
+        // then
+        assertEquals(1, robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
+        assertEquals(1, robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM))
+        assertEquals(1, robot1.inventory.getItemAmountByType(AttackItemType.ROCKET))
+        assertEquals(1, robot1.inventory.getItemAmountByType(AttackItemType.LONG_RANGE_BOMBARDMENT))
+        assertEquals(1, robot1.inventory.getItemAmountByType(AttackItemType.SELF_DESTRUCTION))
+        assertEquals(1, robot1.inventory.getItemAmountByType(AttackItemType.NUKE))
     }
+
+    @Test
+    fun `removing an item correctly decreases its count`() {
+        // given
+        robot1.inventory.addItem(MovementItemType.WORMHOLE)
+        robot1.inventory.addItem(ReparationItemType.REPARATION_SWARM)
+        robot1.inventory.addItem(AttackItemType.ROCKET)
+        robot1.inventory.addItem(AttackItemType.LONG_RANGE_BOMBARDMENT)
+        robot1.inventory.addItem(AttackItemType.SELF_DESTRUCTION)
+        robot1.inventory.addItem(AttackItemType.NUKE)
+
+        // when
+        robot1.inventory.removeItem(MovementItemType.WORMHOLE)
+        robot1.inventory.removeItem(ReparationItemType.REPARATION_SWARM)
+        robot1.inventory.removeItem(AttackItemType.ROCKET)
+        robot1.inventory.removeItem(AttackItemType.LONG_RANGE_BOMBARDMENT)
+        robot1.inventory.removeItem(AttackItemType.SELF_DESTRUCTION)
+        robot1.inventory.removeItem(AttackItemType.NUKE)
+        // then
+        assertEquals(0, robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
+        assertEquals(0, robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM))
+        assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.ROCKET))
+        assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.LONG_RANGE_BOMBARDMENT))
+        assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.SELF_DESTRUCTION))
+        assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.NUKE))
+    }
+
+    @Test
+    fun `Can't remove items when item amount is 0`() {
+        // then
+        assertAll(
+            "all item amounts can't fall below 0",
+            {
+                assertThrows<IllegalArgumentException> {
+                    assertEquals(0, robot1.inventory.removeItem(MovementItemType.WORMHOLE))
+                }
+            },
+            {
+                assertThrows<IllegalArgumentException> {
+                    assertEquals(0, robot1.inventory.removeItem(ReparationItemType.REPARATION_SWARM))
+                }
+            },
+            {
+                assertThrows<IllegalArgumentException> {
+                    assertEquals(0, robot1.inventory.removeItem(AttackItemType.ROCKET))
+                }
+            },
+            {
+                assertThrows<IllegalArgumentException> {
+                    assertEquals(0, robot1.inventory.removeItem(AttackItemType.LONG_RANGE_BOMBARDMENT))
+                }
+            },
+            {
+                assertThrows<IllegalArgumentException> {
+                    assertEquals(0, robot1.inventory.removeItem(AttackItemType.SELF_DESTRUCTION))
+                }
+            },
+            {
+                assertThrows<IllegalArgumentException> {
+                    assertEquals(0, robot1.inventory.removeItem(AttackItemType.NUKE))
+                }
+            }
+        )
+    }
+
+//    @Test
+//    fun `Mining correctly adds resources to inventory`() {
+//        // given
+//        assertEquals(0, robot1.inventory.getStorageUsageForResource(ResourceType.IRON))
+//        // when
+//        robot1.mine(ResourceType.IRON, robot1.miningSpeed)
+//        // then
+//        assertEquals(robot1.miningSpeed, robot1.inventory.getStorageUsageForResource(ResourceType.IRON))
+//    }
 }

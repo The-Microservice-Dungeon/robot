@@ -1,0 +1,402 @@
+---
+openapi: 3.0.1
+info:
+  title: Robot Service API
+  description: This is REST documentation for the Robot Service
+  version: v2
+components:
+  schemas:
+    robot:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player:
+          type: string
+          format: uuid
+        planet:
+          type: string
+          format: uuid
+        alive:
+          type: boolean
+          example: true
+        maxHealth:
+          type: integer
+          example: 100
+        maxEnergy:
+          type: integer
+          example: 60
+        energyRegen:
+          type: integer
+          example: 8
+        attackDamage:
+          type: integer
+          example: 5
+        miningSpeed:
+          type: integer
+          example: 10
+        health:
+          type: integer
+          example: 75
+        energy:
+          type: integer
+          example: 43
+        healthLevel:
+          type: integer
+          minimum: 0
+          maximum: 5
+        damageLevel:
+          type: integer
+          minimum: 0
+          maximum: 5
+        miningSpeedLevel:
+          type: integer
+          minimum: 0
+          maximum: 5
+        miningLevel:
+          type: integer
+          minimum: 0
+          maximum: 5
+        energyLevel:
+          type: integer
+          minimum: 0
+          maximum: 5
+        energyRegenLevel:
+          type: integer
+          minimum: 0
+          maximum: 5
+        storageLevel:
+          type: integer
+          minimum: 0
+          maximum: 5
+        inventory:
+          type: object
+          properties:
+            maxStorage:
+              type: integer
+              example: 20
+            usedStorage:
+              type: integer
+              example: 5
+            storedCoal:
+              type: integer
+              example: 3
+            storedIron:
+              type: integer
+              example: 2
+            storedGem:
+              type: integer
+              example: 0
+            storedGold:
+              type: integer
+              example: 0
+            storedPlatin:
+              type: integer
+              example: 0
+        items:
+          type: object
+          properties:
+            rocket:
+              type: integer
+              example: 0
+            wormhole:
+              type: integer
+              example: 2
+            longRangeBombardement:
+              type: integer
+              example: 0
+            selfDestruction:
+              type: integer
+              example: 1
+            repairSwarm:
+              type: integer
+              example: 0
+            nuke:
+              type: integer
+              example: 3
+            
+    commands:
+      type: object
+      properties:
+        commands:
+          type: array
+          items:
+            type: string
+            example: move [playerUUID] [robotUUID] [targetPlanetUUID] [transactionUUID]
+paths:
+  "/robots":
+    post:
+      summary: Spawns a robot
+      tags:
+      - robot
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/robot"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Request could not be accepted
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transaction_id:
+                  type: string
+                  format: uuid
+                player:
+                  type: string
+                  format: uuid
+                planet:
+                  type: string
+                  format: uuid
+              required:
+              - transaction_id
+              - player
+              - planet
+    get:
+      summary: Reveice data about all robots belonging to a specified player
+      tags:
+      - robot
+      responses: #TODO POST verbieten in bestimmten Faellen
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/robot"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Request could not be accepted
+      parameters:
+      - name: player-id
+        in: query
+        schema:
+          type: string
+          format: uuid
+      
+        
+  "/robots/{robot-uuid}":
+    get:
+      summary: Receive robot data
+      tags:
+      - robot
+      parameters:
+      - name: robot-uuid
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200': #response für ungültige ID und kein Zugriff erlaubt
+          description: Return data of requested robot
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/robot"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Request could not be accepted
+  "/robots/{robot-uuid}/upgrades":
+    post:
+      summary: Upgrade a robot
+      tags:
+      - trading
+      parameters:
+      - name: robot-uuid
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200': #upgrade ist erlaubt
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Energy capacity of robot 3fa85f64-5717-4562-b3fc-2c963f66afa6 has been upgraded to lvl3."
+        '409': #upgrade nicht erlaubt
+          description: Upgrade not possible
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Upgrade of robot 3fa85f64-5717-4562-b3fc-2c963f66afa6 rejected. Current lvl of Energy capacity is 5."
+        '400': #sonstiger Fehler
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Request could not be accepted"
+        '404': #robot existiert nicht
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Robot not fount"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transaction_id:
+                  type: string
+                  format: uuid
+                upgrade-type: 
+                  type: string
+                  enum: [STORAGE, HEALTH, DAMAGE, MINING_SPEED, MINING, MAX_ENERGY, ENERGY_REGEN]
+                target-lvl:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+              required:
+              - upgrade-type
+              - target-lvl
+
+  #"/robots/{robot-uuid}/move":
+  "/robots/{robot-uuid}/inventory/items":
+    post:
+      summary: Add new item to robot
+      tags:
+      - trading
+      parameters:
+      - name: robot-uuid
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Item wormhole added to robot 3fa85f64-5717-4562-b3fc-2c963f66afa6."
+        '400': #sonstiger Fehler
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Request could not be accepted"
+        '404': #robot existiert nicht
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Robot not fount"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transaction_id:
+                  type: string
+                  format: uuid
+                item-type: 
+                  type: string
+                  enum: [ROCKET, WORMHOLE, LONG_RANGE_BOMBARDEMENT, SELF_DESTRUCTION, REPAIR_SWARM, NUKE]
+              required:
+              - item-type
+  "/robots/{robot-uuid}/inventory/clearResources":
+    post:
+        summary: Sell all resources
+        description: Using this endpoint clears all ressources and returns the state of the robot's inventory before the clear.
+        tags:
+        - trading
+        parameters:
+        - name: robot-uuid
+          in: path
+          required: true
+          schema:
+            type: string
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  "$ref": "#/components/schemas/robot/properties/inventory"
+          '400': #sonstiger Fehler
+            description: Bad Request
+            content:
+              application/json:
+                schema:
+                  type: string
+                  example: "Request could not be accepted"
+          '404': #robot existiert nicht
+            description: Not Found
+            content:
+              application/json:
+                schema:
+                  type: string
+                  example: "Robot not fount"
+  "/commands":
+    post:
+      summary: Post a batch of commands to be executed
+      description: "This endpoint allows the game service to send a batch of commands to be executed in the current phase. Each entry in the array is one command. <br><br>
+        Commands: <br>
+        block [playerUUID] [robotUUID] [transactionUUID] <br>
+        move [playerUUID] [robotUUID] [targetPlanetUUID] [transactionUUID] <br>
+        fight [playerUUID] [robotUUID] [targetRobotUUID] [transactionUUID] <br>
+        mine [playerUUID] [robotUUID] [transactionUUID] <br>
+        regenerate [playerUUID] [robotUUID] [transactionUUID] <br>
+        use-item-fighting [playerUUID] [robotUUID] [itemType] [targetUUID] [transactionUUID] <br>
+        use-item-repair [playerUUID] [robotUUID] [itemType] [targetUUID] [transactionUUID] <br>
+        use-item-movement [playerUUID] [robotUUID] [itemType] [transactionUUID] <br><br>
+        
+        [targetUUID] is either a robot or a planet, depending on the item type <br>
+        [itemType] can be rocket, wormhole, bombardment, self_destruct, reparation_swarm or nuke"
+      tags:
+      - commands
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Command batch accepted
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Request could not be accepted
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/commands"
+servers:
+- url: http://{defaultHost}
+  variables:
+    defaultHost:
+      default: localhost:8082

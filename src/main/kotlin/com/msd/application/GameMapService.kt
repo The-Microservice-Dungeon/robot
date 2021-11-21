@@ -2,18 +2,18 @@ package com.msd.application
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.msd.domain.ResourceType
 import com.msd.robot.application.TargetPlanetNotReachableException
 import io.netty.channel.ChannelOption
-import io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE
 import io.netty.handler.timeout.ReadTimeoutHandler
 import io.netty.handler.timeout.WriteTimeoutHandler
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.client.reactive.ReactorClientHttpConnector
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientRequestException
+import org.springframework.web.reactive.function.client.bodyToMono
 import reactor.netty.http.client.HttpClient
 import java.time.Duration
 import java.util.*
@@ -25,8 +25,9 @@ class GameMapService {
     private val gameMapClient: WebClient
 
     object GameMapServiceMetaData {
-        const val GAME_MAP_SERVICE_URL = "http://localhost:8080"
+        const val GAME_MAP_SERVICE_URL = "http://localhost:8080" // TODO change port in the future
         const val NEIGHBOR_CHECK_URI = "/getNeighbor"
+        const val PLANETS_URI = "/planets"
         const val NEIGHBOR_CHECK_START_PLANET_PARAM = "startPlanet"
         const val NEIGHBOR_CHECK_TARGET_PLANET_PARAM = "targetPlanet"
     }
@@ -42,7 +43,7 @@ class GameMapService {
 
         gameMapClient = WebClient.builder()
             .baseUrl(GameMapServiceMetaData.GAME_MAP_SERVICE_URL)
-            .defaultHeader(CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .clientConnector(ReactorClientHttpConnector(httpClient))
             .build()
     }
@@ -69,7 +70,7 @@ class GameMapService {
         try {
             val response = querySpec.exchangeToMono { response ->
                 if (response.statusCode() == HttpStatus.OK)
-                    response.bodyToMono(String::class.java)
+                    response.bodyToMono<String>()
 
                 // Right now we assume a 4xx being returned if the two planets are no neighbors
                 else if (response.statusCode().is4xxClientError)
@@ -87,7 +88,30 @@ class GameMapService {
         }
     }
 
-    fun createMining(planetId: UUID, resourceType: ResourceType, amount: Int): GameMapMiningDto {
-        TODO("Not yet implemented")
+    /**
+     * Retrieves all `Planets` from the GameMap Microservice.
+     *
+     * @return a `List` of [GameMapPlanetDtos] [GameMapPlanetDto] containing all `Planets`
+     * @throws ClientException  when the GameMap Microservice is down
+     */
+    fun getAllPlanets(): List<GameMapPlanetDto> {
+        val uriSpec = gameMapClient.get()
+        val querySpec = uriSpec.uri {
+            it.path(GameMapServiceMetaData.PLANETS_URI)
+                .build()
+        }
+        try {
+            val response = querySpec.exchangeToMono { response ->
+                if (response.statusCode() == HttpStatus.OK)
+                    response.bodyToMono<List<GameMapPlanetDto>>()
+                else
+                    throw ClientException(
+                        "GameMap Client returned internal error when retrieving all planets"
+                    )
+            }.block()!!
+            return response
+        } catch (wcre: WebClientRequestException) {
+            throw ClientException("Could not connect to GameMap MicroService")
+        }
     }
 }

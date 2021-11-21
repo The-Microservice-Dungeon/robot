@@ -1,6 +1,11 @@
 package com.msd.robot.domain
 
+import com.msd.application.GameMapService
 import com.msd.domain.ResourceType
+import com.msd.item.domain.AttackItemType
+import com.msd.item.domain.ItemType
+import com.msd.item.domain.MovementItemType
+import com.msd.item.domain.ReparationItemType
 import com.msd.robot.application.InvalidPlayerException
 import com.msd.robot.application.RobotNotFoundException
 import org.springframework.data.repository.findByIdOrNull
@@ -9,7 +14,8 @@ import java.util.*
 
 @Service
 class RobotDomainService(
-    val robotRepository: RobotRepository
+    val robotRepository: RobotRepository,
+    val gameMapService: GameMapService
 ) {
 
     /**
@@ -19,7 +25,9 @@ class RobotDomainService(
      * @param target        The target of the attack
      * @throws OutOfReachException If the robots are not on the same planet
      */
-    fun fight(attacker: Robot, target: Robot) {
+    fun fight(attacker: Robot, target: Robot, player: UUID) {
+        checkRobotBelongsToPlayer(attacker, player)
+
         if (attacker.planet.planetId != target.planet.planetId)
             throw OutOfReachException("The attacking robot and the defending robot are not on the same planet")
 
@@ -96,7 +104,8 @@ class RobotDomainService(
         robotsAliveOnPlanet: List<Robot>
     ) {
         while (resourcesToBeDistributed.value > 0 && getNumberOfRobotsWithUnusedStorage(robotsAliveOnPlanet) > 0) {
-            val resourcesPerRobot = resourcesToBeDistributed.value.floorDiv(getNumberOfRobotsWithUnusedStorage(robotsAliveOnPlanet))
+            val resourcesPerRobot =
+                resourcesToBeDistributed.value.floorDiv(getNumberOfRobotsWithUnusedStorage(robotsAliveOnPlanet))
 
             if (resourcesPerRobot >= 1) {
                 distributeResourcesEvenly(robotsAliveOnPlanet, resourcesToBeDistributed, resourcesPerRobot)
@@ -200,5 +209,106 @@ class RobotDomainService(
      */
     fun saveAll(robots: List<Robot>): List<Robot> {
         return robotRepository.saveAll(robots).toList()
+    }
+
+    /**
+     * Makes the specified [Robot] use an item. The function of the Item is specified via a higher order function, which
+     * is the value of the passed [ReparationItemType]. To use an item the specified `playerId` and the `Robot's`
+     * `player` must match. If the Robot doesn't own the specified item a NotEnoughItemsException
+     * is thrown.
+     *
+     * @param robotId     the `UUID` of the `Robot` which should use the item.
+     * @param playerId    the `UUID` of the player the `Robot` belongs to.
+     * @param item        the `ReparationItemType` which should be used.
+     * @throws NotEnoughItemsException when the specified `Robot` doesn't own the specified item.
+     */
+    fun useReparationItem(playerId: UUID, robotId: UUID, item: ReparationItemType) {
+        val robot = this.getRobot(robotId)
+        this.checkRobotBelongsToPlayer(robot, playerId)
+        if (robot.inventory.getItemAmountByType(item) > 0) {
+            item.func(robot, robotRepository)
+            robot.inventory.removeItem(item)
+            robotRepository.save(robot)
+        } else
+            throw NotEnoughItemsException("This Robot doesn't have the required Item", item)
+    }
+
+    /**
+     * Use the specified item. A player is allowed to use the item, if the specified robot has the item in its
+     * inventory and the player issuing the command owns the robot.
+     *
+     * @throws NotEnoughItemsException when the robot does not have the specified item
+     * @param userId: The UUID of the robot that's suppoed to use the item
+     * @param target: Either a robot or planet UUID, depending upon the AttackItemType
+     * @param item:   The kind of item to be used. The specified robot should at least have one of those in its
+     *                inventory
+     *
+     * @return the UUID of the planet on which robots could have died.
+     */
+    fun useAttackItem(userId: UUID, target: UUID, player: UUID, item: AttackItemType): UUID {
+        val user = getRobot(userId)
+        checkRobotBelongsToPlayer(user, player)
+        if (user.inventory.getItemAmountByType(item) > 0) {
+            val battlefield = item.use(user, target, robotRepository)
+            user.inventory.removeItem(item)
+            robotRepository.save(user)
+            return battlefield
+        } else
+            throw NotEnoughItemsException("This Robot doesn't have the required Item", item)
+    }
+
+    /**
+     * Makes the specified [Robot] use the specified item. To use an item the specified `playerId` and the `Robot's`
+     * `player` must match. The items function is specified via a higher order function which is the `func`value of the
+     * itemType. If the `Robot` doesn't have enough of the specified items an exception is thrown.
+     *
+     * @param playerId    the `UUID` of the player which owns the specified `Robot`
+     * @param robotId     the `UUID`of the `Robot` which should use the item.
+     * @param itemType    the [MovementItemType] of the used item.
+     * @throws NotEnoughItemsException when the `Robot` doesn't own enough of the specified `itemType`
+     */
+    fun useMovementItem(playerId: UUID, robotId: UUID, itemType: MovementItemType) {
+        val robot = this.getRobot(robotId)
+        this.checkRobotBelongsToPlayer(robot, playerId)
+        if (robot.inventory.getItemAmountByType(itemType) > 0) {
+            itemType.func(robot, robotRepository, gameMapService)
+            robot.inventory.removeItem(itemType)
+            robotRepository.save(robot)
+        } else
+            throw NotEnoughItemsException("This Robot doesn't have the required Item", itemType)
+    }
+
+    /**
+     * Returns all the robots belonging to the given player.
+     *
+     * @param playerId: The UUID of the player whose robots should be returned
+     * @return a list of the robots belonging to the player
+     */
+    fun getRobotsByPlayer(playerId: UUID): List<Robot> {
+        return robotRepository.findAllByPlayer(playerId)
+    }
+
+    /**
+     * Gives a robot a new item.
+     * @param robotId: The UUID of the robot which the item should be given to
+     * @param itemType: The [ItemType] to give the robot
+     */
+    fun addItem(robotId: UUID, itemType: ItemType) {
+        val robot = this.getRobot(robotId)
+        robot.inventory.addItem(itemType)
+        robotRepository.save(robot)
+    }
+
+    /**
+     * Clear the given robots resources.
+     *
+     * @param robotId: The UUID of the robot whose resources should be cleared.
+     * @return the taken resources
+     */
+    fun takeAllResources(robotId: UUID): Map<ResourceType, Int> {
+        val robot = this.getRobot(robotId)
+        val takenResources = robot.inventory.takeAllResources()
+        robotRepository.save(robot)
+        return takenResources
     }
 }

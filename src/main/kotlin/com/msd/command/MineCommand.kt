@@ -1,5 +1,6 @@
 package com.msd.command
 
+import com.msd.command.application.Command
 import com.msd.domain.ResourceType
 import java.util.*
 
@@ -8,6 +9,7 @@ import java.util.*
  */
 class MineCommand(
     robotUUID: UUID,
-    val playerUUID: UUID,
-    val resourceType: ResourceType
-) : Command(robotUUID)
+    playerUUID: UUID,
+    val resourceType: ResourceType,
+    transactionUUID: UUID
+) : Command(robotUUID, playerUUID, transactionUUID)

@@ -1,7 +1,7 @@
 package com.msd.robot.domain
 
 import com.msd.planet.domain.Planet
-import com.msd.planet.domain.PlanetType
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
@@ -30,8 +30,8 @@ class RobotRepositoryTest(
 
     @BeforeEach
     fun setup() {
-        planet1 = Planet(UUID.randomUUID(), PlanetType.SPACE_STATION, null)
-        planet2 = Planet(UUID.randomUUID(), PlanetType.STANDARD, null)
+        planet1 = Planet(UUID.randomUUID())
+        planet2 = Planet(UUID.randomUUID())
 
         robot1 = Robot(player1Id, planet1)
         robot2 = Robot(player1Id, planet2)
@@ -41,6 +41,15 @@ class RobotRepositoryTest(
         robot6 = Robot(player2Id, planet1)
 
         robotRepository.saveAll(arrayListOf(robot1, robot2, robot3, robot4, robot5, robot6))
+    }
+
+    @Test
+    fun `Saved Robots can be retrieved`() {
+        // when
+        robotRepository.save(robot1)
+
+        // then
+        assertEquals(robot1.id, robotRepository.findByIdOrNull(robot1.id)!!.id)
     }
 
     @Test
