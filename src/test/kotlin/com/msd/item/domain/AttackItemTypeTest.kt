@@ -2,10 +2,10 @@ package com.msd.item.domain
 
 import com.msd.domain.InvalidTargetException
 import com.msd.planet.domain.Planet
-import com.msd.robot.application.RobotNotFoundException
-import com.msd.robot.domain.OutOfReachException
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
+import com.msd.robot.domain.exceptions.OutOfReachException
+import com.msd.robot.domain.exceptions.RobotNotFoundException
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension

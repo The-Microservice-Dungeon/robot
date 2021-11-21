@@ -1,4 +1,4 @@
-package com.msd.robot.application
+package com.msd.robot.application.mappers
 
 import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.MovementItemType

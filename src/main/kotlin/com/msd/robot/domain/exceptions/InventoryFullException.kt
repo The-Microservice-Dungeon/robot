@@ -1,3 +1,3 @@
-package com.msd.robot.domain
+package com.msd.robot.domain.exceptions
 
 class InventoryFullException(s: String) : RuntimeException(s)

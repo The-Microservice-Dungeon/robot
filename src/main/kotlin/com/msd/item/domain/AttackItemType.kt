@@ -1,10 +1,10 @@
 package com.msd.item.domain
 
 import com.msd.domain.InvalidTargetException
-import com.msd.robot.application.RobotNotFoundException
-import com.msd.robot.domain.OutOfReachException
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
+import com.msd.robot.domain.exceptions.OutOfReachException
+import com.msd.robot.domain.exceptions.RobotNotFoundException
 import org.springframework.data.repository.findByIdOrNull
 import java.util.*
 

@@ -2,6 +2,9 @@ package com.msd.robot.domain
 
 import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
+import com.msd.robot.domain.exceptions.NotEnoughEnergyException
+import com.msd.robot.domain.exceptions.PlanetBlockedException
+import com.msd.robot.domain.exceptions.UpgradeException
 import java.lang.IllegalArgumentException
 import java.util.*
 import javax.persistence.*

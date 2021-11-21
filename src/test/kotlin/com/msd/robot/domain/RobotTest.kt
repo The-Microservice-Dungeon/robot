@@ -2,6 +2,9 @@ package com.msd.robot.domain
 
 import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
+import com.msd.robot.domain.exceptions.NotEnoughEnergyException
+import com.msd.robot.domain.exceptions.PlanetBlockedException
+import com.msd.robot.domain.exceptions.UpgradeException
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

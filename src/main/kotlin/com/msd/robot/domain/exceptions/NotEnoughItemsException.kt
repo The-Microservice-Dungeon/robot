@@ -1,4 +1,4 @@
-package com.msd.robot.domain
+package com.msd.robot.domain.exceptions
 
 import com.msd.item.domain.ItemType
 

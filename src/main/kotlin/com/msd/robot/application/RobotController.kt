@@ -2,6 +2,7 @@ package com.msd.robot.application
 
 import com.msd.domain.ResourceType
 import com.msd.robot.application.dtos.*
+import com.msd.robot.application.mappers.RobotMapper
 import com.msd.robot.domain.RobotDomainService
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller

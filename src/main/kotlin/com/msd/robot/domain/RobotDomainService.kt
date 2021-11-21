@@ -6,8 +6,10 @@ import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.ItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.ReparationItemType
-import com.msd.robot.application.InvalidPlayerException
-import com.msd.robot.application.RobotNotFoundException
+import com.msd.robot.domain.exceptions.InvalidPlayerException
+import com.msd.robot.domain.exceptions.NotEnoughItemsException
+import com.msd.robot.domain.exceptions.OutOfReachException
+import com.msd.robot.domain.exceptions.RobotNotFoundException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.util.*
