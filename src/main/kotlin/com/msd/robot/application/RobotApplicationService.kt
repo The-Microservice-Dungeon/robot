@@ -2,10 +2,8 @@ package com.msd.robot.application
 
 import com.msd.application.CustomExceptionHandler
 import com.msd.application.GameMapService
-import com.msd.command.AttackCommand
-import com.msd.command.BlockCommand
-import com.msd.command.MovementCommand
-import com.msd.command.RegenCommand
+import com.msd.command.*
+import com.msd.robot.domain.LevelTooLowException
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
 import org.springframework.stereotype.Service
@@ -108,5 +106,44 @@ class RobotApplicationService(
 
         robot.repair()
         robotDomainService.saveRobot(robot)
+    }
+
+    /**
+     * Executes all mining commands.
+     *
+     * @param mineCommands          a list of MineCommands that need to be executed.
+     */
+    fun executeMinings(mineCommands: List<MineCommand>) {
+        mineCommands.forEach {
+            try {
+                val robotId = it.robotId
+                val playerId = it.playerUUID
+
+                val robot = robotDomainService.getRobot(robotId)
+
+                robotDomainService.checkRobotBelongsToPlayer(robot, playerId)
+
+                if (!robot.canMine(it.resourceType)) throw LevelTooLowException("Mining level too low to mine ${it.resourceType}!")
+
+                // add up mining requests by planet & resourceType
+
+            } catch (re: RuntimeException) {
+                exceptionHandler.handle(re, it.transactionUUID)
+            }
+        }
+
+        val miningDto = gameMapService.createMining(planetId, resourceType, amount)
+
+        // resource isn't available on the planet
+        if (miningDto.amountMined == 0) {
+
+        }
+
+        // resource has been depleted. Distribute resources fairly
+        if (miningDto.amountMined != miningDto.amountRequested) {
+
+        }
+
+        // enough resources were available. Every robot gets what he asked for.
     }
 }

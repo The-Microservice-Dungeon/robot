@@ -4,10 +4,7 @@ import com.msd.application.ClientException
 import com.msd.application.CustomExceptionHandler
 import com.msd.application.GameMapPlanetDto
 import com.msd.application.GameMapService
-import com.msd.command.AttackCommand
-import com.msd.command.BlockCommand
-import com.msd.command.MovementCommand
-import com.msd.command.RegenCommand
+import com.msd.command.*
 import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
 import com.msd.planet.domain.PlanetType
@@ -577,5 +574,64 @@ class RobotApplicationServiceTest {
                 )
             }
         )
+    }
+
+    @Test
+    fun `All MineCommands ran successfully`() {
+        // given
+        every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns
+                listOf(robot1, robot2)
+
+        val mineCommands = listOf(
+            MineCommand(robot1.id, player1Id, ResourceType.IRON),
+            MineCommand(robot2.id, player1Id, ResourceType.IRON),
+        )
+
+        // when
+        robotApplicationService.executeMinings(mineCommands)
+        // then
+        assertEquals(robot1.miningSpeed, robot1.inventory.getStorageUsageForResource(ResourceType.IRON))
+        assertEquals(robot2.miningSpeed, robot2.inventory.getStorageUsageForResource(ResourceType.IRON))
+    }
+
+    @Test
+    fun `Mining doesn't work because resource isn't available on the robots planet`() {
+        // given
+        every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns
+                listOf(robot1, robot2)
+
+        val mineCommands = listOf(
+            MineCommand(robot1.id, player1Id, ResourceType.IRON),
+            MineCommand(robot2.id, player1Id, ResourceType.COAL),
+        )
+
+        //when
+        robotApplicationService.executeMinings(mineCommands)
+
+        //then
+        verify(exactly = 1) {
+            exceptionHandler.handle(any(), any())
+        }
+    }
+
+    @Test
+    fun `Resources get distributed evenly because planet ran out of resources`() {
+        // given
+        every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns
+                listOf(robot1, robot2, robot3)
+
+        val mineCommands = listOf(
+            MineCommand(robot1.id, player1Id, ResourceType.IRON),
+            MineCommand(robot2.id, player1Id, ResourceType.IRON),
+            MineCommand(robot3.id, player1Id, ResourceType.IRON),
+        )
+
+        //when
+        robotApplicationService.executeMinings(mineCommands)
+
+        //then
+        assertEquals(1, robot1.inventory.getStorageUsageForResource(ResourceType.IRON))
+        assertEquals(1, robot2.inventory.getStorageUsageForResource(ResourceType.IRON))
+        assertEquals(1, robot3.inventory.getStorageUsageForResource(ResourceType.IRON))
     }
 }
