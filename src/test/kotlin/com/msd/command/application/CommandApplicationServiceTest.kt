@@ -26,7 +26,7 @@ class CommandApplicationServiceTest {
             "Use-Item-Fighting $randomUUID  $randomUUID self_destruction $randomUUID  $randomUUID ",
             "Use-Item-Fighting $randomUUID  $randomUUID NuKe $randomUUID  $randomUUID",
             "use-item-movement $randomUUID  $randomUUID wormhole $randomUUID",
-            "use-item-reparation $randomUUID  $randomUUID REPARATION_SWARM $randomUUID"
+            "use-item-repair $randomUUID  $randomUUID REPAIR_SWARM $randomUUID"
         )
 
         // when
@@ -56,7 +56,7 @@ class CommandApplicationServiceTest {
                 assert(commands.count { it is MovementItemsUsageCommand } == 1)
             },
             {
-                assert(commands.count { it is ReparationItemUsageCommand } == 1)
+                assert(commands.count { it is RepairItemUsageCommand } == 1)
             }
         )
     }
@@ -68,7 +68,7 @@ class CommandApplicationServiceTest {
         val unknownCommandType = "black $randomUUID $randomUUID $randomUUID"
         val tooManyUUIDs = "regenerate $randomUUID $randomUUID $randomUUID $randomUUID"
         val unknownMovementItemType = "use-item-movement $randomUUID $randomUUID sheep $randomUUID"
-        val unknownReparationItemType = "use-item-reparation $randomUUID $randomUUID sheep $randomUUID"
+        val unknownRepairItemType = "use-item-repair $randomUUID $randomUUID sheep $randomUUID"
         val unknownFightingItemType = "use-item-fighting $randomUUID $randomUUID sheep $randomUUID $randomUUID"
         val invalidUUID = "use-item-fighting 1235 $randomUUID rocket $randomUUID $randomUUID"
 
@@ -77,7 +77,7 @@ class CommandApplicationServiceTest {
         assertThrows<CommandParsingException> { commandApplicationService.parseCommand(unknownCommandType) }
         assertThrows<CommandParsingException> { commandApplicationService.parseCommand(tooManyUUIDs) }
         assertThrows<CommandParsingException> { commandApplicationService.parseCommand(unknownMovementItemType) }
-        assertThrows<CommandParsingException> { commandApplicationService.parseCommand(unknownReparationItemType) }
+        assertThrows<CommandParsingException> { commandApplicationService.parseCommand(unknownRepairItemType) }
         assertThrows<CommandParsingException> { commandApplicationService.parseCommand(unknownFightingItemType) }
         assertThrows<CommandParsingException> { commandApplicationService.parseCommand(invalidUUID) }
     }

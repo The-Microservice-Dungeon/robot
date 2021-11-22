@@ -49,7 +49,7 @@ class RobotApplicationService(
                     is MovementCommand -> move(it)
                     is BlockCommand -> block(it)
                     is EnergyRegenCommand -> regenerateEnergy(it)
-                    is ReparationItemUsageCommand -> useReparationItem(it)
+                    is RepairItemUsageCommand -> useRepairItem(it)
                     is MovementItemsUsageCommand -> useMovementItem(it)
                     // TODO Add remaining CommandTypes as soon as their methods are implemented
                 }
@@ -177,12 +177,12 @@ class RobotApplicationService(
     }
 
     /**
-     * Makes the specified [Robot] use the specified [ReparationItem][ReparationItemType].
+     * Makes the specified [Robot] use the specified [ReparationItem][RepairItemType].
      *
-     * @param command the [ReparationItemUsageCommand] which specifies which `Robot` should use which item
+     * @param command the [RepairItemUsageCommand] which specifies which `Robot` should use which item
      */
-    fun useReparationItem(command: ReparationItemUsageCommand) {
-        robotDomainService.useReparationItem(command.playerUUID, command.robotUUID, command.itemType)
+    fun useRepairItem(command: RepairItemUsageCommand) {
+        robotDomainService.useRepairItem(command.playerUUID, command.robotUUID, command.itemType)
     }
 
     /**

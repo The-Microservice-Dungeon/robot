@@ -1,12 +1,12 @@
 package com.msd.command.application
 
-import com.msd.item.domain.ReparationItemType
+import com.msd.item.domain.RepairItemType
 import java.util.*
 
-class ReparationItemUsageCommand(
+class RepairItemUsageCommand(
     playerUUID: UUID,
     robotUUID: UUID,
-    val itemType: ReparationItemType,
+    val itemType: RepairItemType,
     transactionUUID: UUID
 ) :
     Command(playerUUID, robotUUID, transactionUUID)

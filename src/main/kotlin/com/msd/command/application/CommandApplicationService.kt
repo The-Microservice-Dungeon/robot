@@ -2,7 +2,7 @@ package com.msd.command.application
 
 import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.MovementItemType
-import com.msd.item.domain.ReparationItemType
+import com.msd.item.domain.RepairItemType
 import org.springframework.stereotype.Service
 import java.lang.IllegalArgumentException
 import java.lang.RuntimeException
@@ -19,7 +19,7 @@ class CommandApplicationService {
         CommandVerbs.REGENERATE.verb to 3,
         CommandVerbs.USE_ITEM_FIGHTING.verb to 5,
         CommandVerbs.USE_ITEM_MOVEMENT.verb to 4,
-        CommandVerbs.USE_ITEM_REPARATION.verb to 4
+        CommandVerbs.USE_ITEM_REPAIR.verb to 4
     )
 
     /**
@@ -104,10 +104,10 @@ class CommandApplicationService {
                 MovementItemType.valueOf(args[2].uppercase()),
                 UUID.fromString(args[3])
             )
-            CommandVerbs.USE_ITEM_REPARATION.verb -> return ReparationItemUsageCommand(
+            CommandVerbs.USE_ITEM_REPAIR.verb -> return RepairItemUsageCommand(
                 UUID.fromString(args[0]),
                 UUID.fromString(args[1]),
-                ReparationItemType.valueOf(args[2].uppercase()),
+                RepairItemType.valueOf(args[2].uppercase()),
                 UUID.fromString(args[3])
             )
             else -> throw RuntimeException("Internal Error")

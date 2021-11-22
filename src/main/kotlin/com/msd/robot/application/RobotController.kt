@@ -3,6 +3,7 @@ package com.msd.robot.application
 import com.msd.domain.ResourceType
 import com.msd.robot.application.dtos.*
 import com.msd.robot.domain.RobotDomainService
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.*
@@ -25,7 +26,17 @@ class RobotController(
     @PostMapping
     fun spawnRobot(@RequestBody spawnDto: RobotSpawnDto): ResponseEntity<RobotDto> {
         val robot = robotApplicationService.spawn(spawnDto.player, spawnDto.planet)
-        return ResponseEntity.ok(robotMapper.robotToRobotDto(robot))
+        return ResponseEntity.status(HttpStatus.CREATED).body(robotMapper.robotToRobotDto(robot))
+    }
+
+    @PostMapping
+    fun spawnRobots(@RequestBody spawnDtos: List<RobotSpawnDto>): ResponseEntity<List<RobotDto>> {
+        val robots = mutableListOf<RobotDto>()
+        spawnDtos.forEach {
+            val robot = robotApplicationService.spawn(it.player, it.planet)
+            robots.add(robotMapper.robotToRobotDto(robot))
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(robots)
     }
 
     /**

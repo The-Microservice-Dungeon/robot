@@ -5,7 +5,7 @@ import com.msd.application.GameMapService
 import com.msd.domain.ResourceType
 import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.MovementItemType
-import com.msd.item.domain.ReparationItemType
+import com.msd.item.domain.RepairItemType
 import com.msd.planet.domain.Planet
 import com.msd.robot.application.InvalidPlayerException
 import io.mockk.every
@@ -187,7 +187,7 @@ internal class RobotDomainServiceTest {
     fun `using repair swarm heals all robots of the player owning the robot`() {
         // given
         robot3.move(planet2, 0)
-        robot1.inventory.addItem(ReparationItemType.REPARATION_SWARM)
+        robot1.inventory.addItem(RepairItemType.REPAIR_SWARM)
         val player1Robots = listOf(robot1, robot2, robot3)
         player1Robots.forEach {
             it.upgrade(UpgradeType.HEALTH, 1)
@@ -206,14 +206,14 @@ internal class RobotDomainServiceTest {
         every { robotRepository.save(robot1) } returns robot1
 
         // when
-        robotDomainService.useReparationItem(robot1.player, robot1.id, ReparationItemType.REPARATION_SWARM)
+        robotDomainService.useRepairItem(robot1.player, robot1.id, RepairItemType.REPAIR_SWARM)
 
         // then
         assertAll(
             "all robots of player1 healed for 20 health",
             robots.filter { it.player == player1Id }.map { { assertEquals(24, it.health) } }
         )
-        assertEquals(0, robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM))
+        assertEquals(0, robot1.inventory.getItemAmountByType(RepairItemType.REPAIR_SWARM))
     }
 
     @Test
@@ -230,7 +230,7 @@ internal class RobotDomainServiceTest {
             },
             {
                 assertThrows<InvalidPlayerException> {
-                    robotDomainService.useReparationItem(robot4.player, robot1.id, ReparationItemType.REPARATION_SWARM)
+                    robotDomainService.useRepairItem(robot4.player, robot1.id, RepairItemType.REPAIR_SWARM)
                 }
             },
             {
@@ -270,7 +270,7 @@ internal class RobotDomainServiceTest {
             },
             {
                 assertThrows<NotEnoughItemsException> {
-                    robotDomainService.useReparationItem(robot1.player, robot1.id, ReparationItemType.REPARATION_SWARM)
+                    robotDomainService.useRepairItem(robot1.player, robot1.id, RepairItemType.REPAIR_SWARM)
                 }
             },
             {
@@ -315,20 +315,20 @@ internal class RobotDomainServiceTest {
             robot1.inventory.addItem(it)
         }
         robot1.inventory.addItem(MovementItemType.WORMHOLE)
-        robot1.inventory.addItem(ReparationItemType.REPARATION_SWARM)
+        robot1.inventory.addItem(RepairItemType.REPAIR_SWARM)
 
         // when
         robotDomainService.useAttackItem(robot1.id, robot2.id, robot1.player, AttackItemType.ROCKET)
         robotDomainService.useAttackItem(robot1.id, robot2.planet.planetId, robot1.player, AttackItemType.LONG_RANGE_BOMBARDMENT)
         robotDomainService.useAttackItem(robot1.id, robot1.id, robot1.player, AttackItemType.SELF_DESTRUCTION)
         robotDomainService.useAttackItem(robot1.id, robot2.planet.planetId, robot1.player, AttackItemType.NUKE)
-        robotDomainService.useReparationItem(robot1.player, robot1.id, ReparationItemType.REPARATION_SWARM)
+        robotDomainService.useRepairItem(robot1.player, robot1.id, RepairItemType.REPAIR_SWARM)
         robotDomainService.useMovementItem(robot1.player, robot1.id, MovementItemType.WORMHOLE)
 
         // then
         assertAll(
             {
-                assert(robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM) == 0)
+                assert(robot1.inventory.getItemAmountByType(RepairItemType.REPAIR_SWARM) == 0)
             },
             {
                 assert(robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE) == 0)
@@ -537,7 +537,7 @@ internal class RobotDomainServiceTest {
         robotDomainService.addItem(robot1.id, AttackItemType.LONG_RANGE_BOMBARDMENT)
         robotDomainService.addItem(robot1.id, AttackItemType.SELF_DESTRUCTION)
         robotDomainService.addItem(robot1.id, MovementItemType.WORMHOLE)
-        robotDomainService.addItem(robot1.id, ReparationItemType.REPARATION_SWARM)
+        robotDomainService.addItem(robot1.id, RepairItemType.REPAIR_SWARM)
 
         // then
         assertAll(
@@ -557,7 +557,7 @@ internal class RobotDomainServiceTest {
                 assert(robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE) == 1)
             },
             {
-                assert(robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM) == 1)
+                assert(robot1.inventory.getItemAmountByType(RepairItemType.REPAIR_SWARM) == 1)
             }
         )
     }

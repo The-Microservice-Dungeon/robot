@@ -8,5 +8,5 @@ enum class CommandVerbs(val verb: String) {
     REGENERATE("regenerate"),
     USE_ITEM_FIGHTING("use-item-fighting"),
     USE_ITEM_MOVEMENT("use-item-movement"),
-    USE_ITEM_REPARATION("use-item-reparation")
+    USE_ITEM_REPAIR("use-item-repair")
 }

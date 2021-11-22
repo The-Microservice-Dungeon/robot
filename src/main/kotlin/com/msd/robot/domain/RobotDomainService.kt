@@ -5,7 +5,7 @@ import com.msd.domain.ResourceType
 import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.ItemType
 import com.msd.item.domain.MovementItemType
-import com.msd.item.domain.ReparationItemType
+import com.msd.item.domain.RepairItemType
 import com.msd.robot.application.InvalidPlayerException
 import com.msd.robot.application.RobotNotFoundException
 import org.springframework.data.repository.findByIdOrNull
@@ -213,16 +213,16 @@ class RobotDomainService(
 
     /**
      * Makes the specified [Robot] use an item. The function of the Item is specified via a higher order function, which
-     * is the value of the passed [ReparationItemType]. To use an item the specified `playerId` and the `Robot's`
+     * is the value of the passed [RepairItemType]. To use an item the specified `playerId` and the `Robot's`
      * `player` must match. If the Robot doesn't own the specified item a NotEnoughItemsException
      * is thrown.
      *
      * @param robotId     the `UUID` of the `Robot` which should use the item.
      * @param playerId    the `UUID` of the player the `Robot` belongs to.
-     * @param item        the `ReparationItemType` which should be used.
+     * @param item        the `RepairItemType` which should be used.
      * @throws NotEnoughItemsException when the specified `Robot` doesn't own the specified item.
      */
-    fun useReparationItem(playerId: UUID, robotId: UUID, item: ReparationItemType) {
+    fun useRepairItem(playerId: UUID, robotId: UUID, item: RepairItemType) {
         val robot = this.getRobot(robotId)
         this.checkRobotBelongsToPlayer(robot, playerId)
         if (robot.inventory.getItemAmountByType(item) > 0) {
