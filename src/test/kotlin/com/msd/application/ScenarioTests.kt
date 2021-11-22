@@ -115,11 +115,11 @@ class ScenarioTests(
         )
 
         val moveCommands = listOf(
-            "move $player1 ${robot1.id} $planet3 ${UUID.randomUUID()}",
-            "move $player1 ${robot2.id} $planet3 ${UUID.randomUUID()}",
-            "move $player1 ${robot3.id} $planet3 ${UUID.randomUUID()}",
-            "move $player2 ${robot4.id} $planet3 ${UUID.randomUUID()}",
-            "move $player2 ${robot5.id} $planet3 ${UUID.randomUUID()}"
+            "move ${robot1.id} $planet3 ${UUID.randomUUID()}",
+            "move ${robot2.id} $planet3 ${UUID.randomUUID()}",
+            "move ${robot3.id} $planet3 ${UUID.randomUUID()}",
+            "move ${robot4.id} $planet3 ${UUID.randomUUID()}",
+            "move ${robot5.id} $planet3 ${UUID.randomUUID()}"
         )
         val commandDto = CommandDTO(moveCommands)
         mockMvc.post("/commands") {
