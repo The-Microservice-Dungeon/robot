@@ -42,7 +42,7 @@ class ScenarioTests(
         @BeforeAll
         @JvmStatic
         internal fun setUp() {
-            mockGameServiceWebClient.start(port = 8081)
+            mockGameServiceWebClient.start(port = 8080)
             println("started server on port 8080")
         }
 

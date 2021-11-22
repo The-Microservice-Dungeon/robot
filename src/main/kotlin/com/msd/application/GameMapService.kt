@@ -24,7 +24,7 @@ class GameMapService {
     private val gameMapClient: WebClient
 
     object GameMapServiceMetaData {
-        const val GAME_MAP_SERVICE_URL = "http://localhost:8081" // TODO change port in the future
+        const val GAME_MAP_SERVICE_URL = "http://localhost:8080" // TODO change port in the future
         const val NEIGHBOR_CHECK_URI = "/getNeighbor"
         const val PLANETS_URI = "/planets"
         const val NEIGHBOR_CHECK_START_PLANET_PARAM = "startPlanet"
