@@ -2,7 +2,7 @@ package com.msd.application
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.msd.command.application.CommandControllerTest
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.msd.command.application.CommandDTO
 import com.msd.robot.application.dtos.RobotDto
 import com.msd.robot.application.dtos.RobotSpawnDto
@@ -17,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import java.util.*
 
@@ -41,7 +42,8 @@ class ScenarioTests(
         @BeforeAll
         @JvmStatic
         internal fun setUp() {
-            mockGameServiceWebClient.start(port = 8080)
+            mockGameServiceWebClient.start(port = 8081)
+            println("started server on port 8080")
         }
 
         @AfterAll
@@ -110,9 +112,10 @@ class ScenarioTests(
         // //////////////////// 2. Move the robots to the same planet /////////////////////////
         // All robots move to the same planet, planet3
         val targetPlanetDto = GameMapPlanetDto(planet3, 3)
-        CommandControllerTest.mockGameServiceWebClient.enqueue(
-            MockResponse().setResponseCode(200).setBody(jacksonObjectMapper().writeValueAsString(targetPlanetDto))
-        )
+        for (i in 1..5)
+            mockGameServiceWebClient.enqueue(
+                MockResponse().setResponseCode(200).setBody(jacksonObjectMapper().writeValueAsString(targetPlanetDto))
+            )
 
         val moveCommands = listOf(
             "move ${robot1.id} $planet3 ${UUID.randomUUID()}",
@@ -121,14 +124,51 @@ class ScenarioTests(
             "move ${robot4.id} $planet3 ${UUID.randomUUID()}",
             "move ${robot5.id} $planet3 ${UUID.randomUUID()}"
         )
-        val commandDto = CommandDTO(moveCommands)
+        var commandDto = CommandDTO(moveCommands)
         mockMvc.post("/commands") {
             contentType = MediaType.APPLICATION_JSON
             content = mapper.writeValueAsString(commandDto)
         }
 
-        // 3. Fight
+        // ///////////////////// 3. Fight ////////////////////////
+        var fightCommands = listOf(
+            "fight ${robot1.id} ${robot4.id} ${UUID.randomUUID()}",
+            "fight ${robot2.id} ${robot4.id} ${UUID.randomUUID()}",
+            "fight ${robot4.id} ${robot1.id} ${UUID.randomUUID()}",
+            "fight ${robot5.id} ${robot2.id} ${UUID.randomUUID()}"
+        )
+        commandDto = CommandDTO(fightCommands)
+        for (i in 1..5)
+            mockMvc.post("/commands") {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(commandDto)
+            }
+        // robot 4 ist dead now
+        fightCommands = listOf(
+            "fight ${robot1.id} ${robot5.id} ${UUID.randomUUID()}",
+            "fight ${robot2.id} ${robot5.id} ${UUID.randomUUID()}",
+            "fight ${robot5.id} ${robot1.id} ${UUID.randomUUID()}"
+        )
+        commandDto = CommandDTO(fightCommands)
+        for (i in 1..5)
+            mockMvc.post("/commands") {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(commandDto)
+            }
 
         // 4. Retrieve and check robot status
+        val player1Robots: List<RobotDto> = mapper.readValue(
+            mockMvc.get("/robots?player-id=$player1") {
+                contentType = MediaType.APPLICATION_JSON
+            }.andReturn().response.contentAsString
+        )
+        val player2Robots: List<RobotDto> = mapper.readValue(
+            mockMvc.get("/robots?player-id=$player2") {
+                contentType = MediaType.APPLICATION_JSON
+            }.andReturn().response.contentAsString
+        )
+
+        assert(player1Robots.map { it.id }.containsAll(listOf(robot2.id, robot3.id)))
+        assert(player2Robots.map { it.id }.isEmpty())
     }
 }

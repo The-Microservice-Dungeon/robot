@@ -18,7 +18,7 @@ class GameMapServiceTest {
         @BeforeAll
         @JvmStatic
         internal fun setUp() {
-            mockGameServiceWebClient.start(port = 8080)
+            mockGameServiceWebClient.start(port = 8081)
         }
 
         @AfterAll
