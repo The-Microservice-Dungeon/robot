@@ -290,7 +290,7 @@ paths:
         use-item-movement [playerUUID] [robotUUID] [itemType] [transactionUUID] <br><br>
         
         [targetUUID] is either a robot or a planet, depending on the item type <br>
-        [itemType] can be rocket, wormhole, bombardment, self_destruct, reparation_swarm or nuke"
+        [itemType] can be rocket, wormhole, bombardment, self_destruct, repair_swarm or nuke"
       tags:
       - commands
       responses:
