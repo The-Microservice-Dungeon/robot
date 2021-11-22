@@ -72,7 +72,10 @@ class RobotController(
     @PostMapping("/{id}/upgrades")
     fun upgradeRobot(@PathVariable("id") robotId: UUID, @RequestBody upgradeDto: UpgradeDto): ResponseEntity<String> {
         robotApplicationService.upgrade(robotId, upgradeDto.upgradeType, upgradeDto.targetLevel)
-        return ResponseEntity.ok("") // TODO remove target-level and return new level in DTO
+        return ResponseEntity.ok(
+            "${upgradeDto.upgradeType} of robot $robotId has been updated to " +
+                "LVL${upgradeDto.targetLevel}"
+        )
     }
 
     /**

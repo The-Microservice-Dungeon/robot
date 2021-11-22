@@ -190,7 +190,6 @@ internal class RobotDomainServiceTest {
         val player1Robots = listOf(robot1, robot2, robot3)
         player1Robots.forEach {
             it.upgrade(UpgradeType.HEALTH, 1)
-            it.repair()
             it.receiveDamage(21)
         }
 

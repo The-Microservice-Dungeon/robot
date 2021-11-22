@@ -292,8 +292,6 @@ class CommandControllerTest(
         val command = "use-item-repair ${robot1.id} ${RepairItemType.REPAIR_SWARM} ${UUID.randomUUID()}"
         robot1.upgrade(UpgradeType.HEALTH, 1)
         robot2.upgrade(UpgradeType.HEALTH, 1)
-        robot1.repair()
-        robot2.repair()
         robot1.receiveDamage(21)
         robot2.receiveDamage(10)
         robot1.inventory.addItem(RepairItemType.REPAIR_SWARM)
