@@ -78,7 +78,9 @@ class Robot(
                 )
             else if (value <= healthLevel)
                 throw UpgradeException("Cannot downgrade Robot. Tried to go from level $healthLevel to level $value")
+            val diff = value - field
             field = value
+            health += diff
         }
 
     /**
@@ -147,7 +149,9 @@ class Robot(
                 )
             else if (value <= energyLevel)
                 throw UpgradeException("Cannot downgrade Robot. Tried to go from level $energyLevel to level $value")
+            val diff = value - field
             field = value
+            energy += diff
         }
 
     /**
