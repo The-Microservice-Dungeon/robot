@@ -3,6 +3,7 @@ package com.msd.command.application
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.application.GameMapPlanetDto
+import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.ReparationItemType
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.Robot
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
@@ -169,7 +171,7 @@ class CommandControllerTest(
     @Test
     fun `destroyed robots get deleted after combat attacks are executed`() {
         // given
-        for (i in 1..3) robot1.upgrade(UpgradeType.DAMAGE)
+        for (i in 1..3) robot1.upgrade(UpgradeType.DAMAGE, i)
         assertEquals(10, robot1.attackDamage)
         robotRepository.save(robot1)
         val command = "fight ${robot1.player} ${robot1.id} ${robot5.id} ${UUID.randomUUID()}"
@@ -288,8 +290,8 @@ class CommandControllerTest(
     fun `all robots correctly regenerate health when using repair swarm`() {
         // given
         val command = "use-item-reparation ${robot1.player} ${robot1.id} ${ReparationItemType.REPARATION_SWARM} ${UUID.randomUUID()}"
-        robot1.upgrade(UpgradeType.HEALTH)
-        robot2.upgrade(UpgradeType.HEALTH)
+        robot1.upgrade(UpgradeType.HEALTH, 1)
+        robot2.upgrade(UpgradeType.HEALTH, 1)
         robot1.repair()
         robot2.repair()
         robot1.receiveDamage(21)
@@ -317,5 +319,37 @@ class CommandControllerTest(
                 assertEquals(25, robotRepository.findByIdOrNull(robot2.id)!!.health)
             }
         )
+    }
+
+    @Test
+    fun `robot moves to a random planet after using a wormhole`() {
+        // given
+        val command = "use-item-movement ${robot1.player} ${robot1.id} ${MovementItemType.WORMHOLE} ${UUID.randomUUID()}"
+        robot1.inventory.addItem(MovementItemType.WORMHOLE)
+        robotRepository.save(robot1)
+
+        val planetDto1 = GameMapPlanetDto(UUID.randomUUID(), 3)
+        val planetDto2 = GameMapPlanetDto(UUID.randomUUID(), 3)
+        val planetDto3 = GameMapPlanetDto(UUID.randomUUID(), 3)
+        val planetDto4 = GameMapPlanetDto(UUID.randomUUID(), 3)
+        val planetDTOs = listOf(planetDto1, planetDto2, planetDto3, planetDto4)
+
+        mockGameServiceWebClient.enqueue(
+            MockResponse()
+                .setResponseCode(200).setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                .setBody(jacksonObjectMapper().writeValueAsString(planetDTOs))
+        )
+        // then
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(listOf(command)))
+        }.andExpect {
+            status { isOk() }
+            content { string("Command batch accepted") }
+        }.andDo { print() }
+
+        // then
+        assertNotEquals(planet1Id, robotRepository.findByIdOrNull(robot1.id)!!.planet.planetId)
+        assertEquals(0, robotRepository.findByIdOrNull(robot1.id)!!.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
     }
 }

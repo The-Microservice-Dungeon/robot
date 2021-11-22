@@ -1,12 +1,18 @@
 package com.msd.robot.domain
 
+import com.msd.application.GameMapPlanetDto
+import com.msd.application.GameMapService
 import com.msd.domain.ResourceType
+import com.msd.item.domain.AttackItemType
+import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.ReparationItemType
 import com.msd.planet.domain.Planet
+import com.msd.robot.application.InvalidPlayerException
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.justRun
+import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -15,6 +21,8 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.data.repository.findByIdOrNull
 import java.util.*
+import kotlin.reflect.full.declaredMemberFunctions
+import kotlin.reflect.jvm.isAccessible
 
 @ExtendWith(MockKExtension::class)
 internal class RobotDomainServiceTest {
@@ -37,11 +45,14 @@ internal class RobotDomainServiceTest {
     @MockK
     lateinit var robotRepository: RobotRepository
 
+    @MockK
+    lateinit var gameMapService: GameMapService
+
     lateinit var robotDomainService: RobotDomainService
 
     @BeforeEach
     fun setup() {
-        robotDomainService = RobotDomainService(robotRepository)
+        robotDomainService = RobotDomainService(robotRepository, gameMapService)
         player1Id = UUID.randomUUID()
         player2Id = UUID.randomUUID()
 
@@ -64,7 +75,7 @@ internal class RobotDomainServiceTest {
 
         // when
         assertThrows<OutOfReachException>("Robots must be on the same Planet to attack each other") {
-            robotDomainService.fight(robot1, robot6)
+            robotDomainService.fight(robot1, robot6, robot1.player)
         }
         // then
         assertEquals(10, robot6.health)
@@ -79,13 +90,13 @@ internal class RobotDomainServiceTest {
         every { robotRepository.save(robot2) } returns robot2
         every { robotRepository.save(robot4) } returns robot4
 
-        for (i in 1..5) robotDomainService.fight(robot1, robot4)
-        for (i in 1..5) robotDomainService.fight(robot2, robot4)
+        for (i in 1..5) robotDomainService.fight(robot1, robot4, robot1.player)
+        for (i in 1..5) robotDomainService.fight(robot2, robot4, robot2.player)
         assert(!robot4.alive)
 
         // when
-        robotDomainService.fight(robot1, robot4)
-        robotDomainService.fight(robot2, robot4)
+        robotDomainService.fight(robot1, robot4, robot1.player)
+        robotDomainService.fight(robot2, robot4, robot2.player)
         // then
         assertEquals(-2, robot4.health)
         assertAll(
@@ -105,11 +116,11 @@ internal class RobotDomainServiceTest {
         every { robotRepository.save(robot1) } returns robot1
         every { robotRepository.save(robot4) } returns robot4
 
-        for (i in 1..10) robotDomainService.fight(robot1, robot4)
+        for (i in 1..10) robotDomainService.fight(robot1, robot4, robot1.player)
         assert(!robot4.alive)
 
         // when
-        robotDomainService.fight(robot4, robot1)
+        robotDomainService.fight(robot4, robot1, robot4.player)
         // then
         assertEquals(9, robot1.health)
         assertEquals(19, robot4.energy)
@@ -123,7 +134,7 @@ internal class RobotDomainServiceTest {
 
         // when
         assertThrows<NotEnoughEnergyException> {
-            robotDomainService.fight(robot1, robot6)
+            robotDomainService.fight(robot1, robot6, robot1.player)
         }
         // then
         assertEquals(10, robot6.health)
@@ -179,7 +190,7 @@ internal class RobotDomainServiceTest {
         robot1.inventory.addItem(ReparationItemType.REPARATION_SWARM)
         val player1Robots = listOf(robot1, robot2, robot3)
         player1Robots.forEach {
-            it.upgrade(UpgradeType.HEALTH)
+            it.upgrade(UpgradeType.HEALTH, 1)
             it.repair()
             it.receiveDamage(21)
         }
@@ -192,9 +203,10 @@ internal class RobotDomainServiceTest {
             )
         } returns player1Robots
         every { robotRepository.saveAll(player1Robots) } returns player1Robots
+        every { robotRepository.save(robot1) } returns robot1
 
         // when
-        robotDomainService.useReparationItem(robot1.id, robot1.player, ReparationItemType.REPARATION_SWARM)
+        robotDomainService.useReparationItem(robot1.player, robot1.id, ReparationItemType.REPARATION_SWARM)
 
         // then
         assertAll(
@@ -202,5 +214,351 @@ internal class RobotDomainServiceTest {
             robots.filter { it.player == player1Id }.map { { assertEquals(24, it.health) } }
         )
         assertEquals(0, robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM))
+    }
+
+    @Test
+    fun `Cannot use any item if the robot doesnt belong to the player`() {
+        // given
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+
+        // then
+        assertAll(
+            {
+                assertThrows<InvalidPlayerException> {
+                    robotDomainService.useMovementItem(robot4.player, robot1.id, MovementItemType.WORMHOLE)
+                }
+            },
+            {
+                assertThrows<InvalidPlayerException> {
+                    robotDomainService.useReparationItem(robot4.player, robot1.id, ReparationItemType.REPARATION_SWARM)
+                }
+            },
+            {
+                assertThrows<InvalidPlayerException> {
+                    robotDomainService.useAttackItem(robot1.id, robot2.id, robot4.player, AttackItemType.ROCKET)
+                }
+            },
+            {
+                assertThrows<InvalidPlayerException> {
+                    robotDomainService.useAttackItem(robot1.id, robot2.id, robot4.player, AttackItemType.LONG_RANGE_BOMBARDMENT)
+                }
+            },
+            {
+                assertThrows<InvalidPlayerException> {
+                    robotDomainService.useAttackItem(robot1.id, robot1.id, robot4.player, AttackItemType.SELF_DESTRUCTION)
+                }
+            },
+            {
+                assertThrows<InvalidPlayerException> {
+                    robotDomainService.useAttackItem(robot1.id, robot2.id, robot4.player, AttackItemType.NUKE)
+                }
+            }
+        )
+    }
+
+    @Test
+    fun `Cannot use any item if the robot doesnt have the item`() {
+        // given
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+
+        // then
+        assertAll(
+            {
+                assertThrows<NotEnoughItemsException> {
+                    robotDomainService.useMovementItem(robot1.player, robot1.id, MovementItemType.WORMHOLE)
+                }
+            },
+            {
+                assertThrows<NotEnoughItemsException> {
+                    robotDomainService.useReparationItem(robot1.player, robot1.id, ReparationItemType.REPARATION_SWARM)
+                }
+            },
+            {
+                assertThrows<NotEnoughItemsException> {
+                    robotDomainService.useAttackItem(robot1.id, robot2.id, robot1.player, AttackItemType.ROCKET)
+                }
+            },
+            {
+                assertThrows<NotEnoughItemsException> {
+                    robotDomainService.useAttackItem(robot1.id, robot2.id, robot1.player, AttackItemType.LONG_RANGE_BOMBARDMENT)
+                }
+            },
+            {
+                assertThrows<NotEnoughItemsException> {
+                    robotDomainService.useAttackItem(robot1.id, robot1.id, robot1.player, AttackItemType.SELF_DESTRUCTION)
+                }
+            },
+            {
+                assertThrows<NotEnoughItemsException> {
+                    robotDomainService.useAttackItem(robot1.id, robot2.id, robot1.player, AttackItemType.NUKE)
+                }
+            }
+        )
+    }
+
+    @Test
+    fun `Using an item removes the item from the robots inventory`() {
+        // given
+        val planetDTO = GameMapPlanetDto(UUID.randomUUID(), 3)
+
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+        every { robotRepository.findByIdOrNull(robot2.id) } returns robot2
+        every { robotRepository.save(any()) } returns robot1
+        every { robotRepository.findAllByPlanet_PlanetId(robot2.planet.planetId) } returns
+            listOf(robot1, robot2, robot4, robot6)
+        every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf()
+        every { robotRepository.findAllByPlayerAndPlanet_PlanetId(robot1.player, robot1.planet.planetId) } returns
+            listOf()
+        every { gameMapService.getAllPlanets() } returns listOf(planetDTO)
+
+        AttackItemType.values().forEach {
+            robot1.inventory.addItem(it)
+        }
+        robot1.inventory.addItem(MovementItemType.WORMHOLE)
+        robot1.inventory.addItem(ReparationItemType.REPARATION_SWARM)
+
+        // when
+        robotDomainService.useAttackItem(robot1.id, robot2.id, robot1.player, AttackItemType.ROCKET)
+        robotDomainService.useAttackItem(robot1.id, robot2.planet.planetId, robot1.player, AttackItemType.LONG_RANGE_BOMBARDMENT)
+        robotDomainService.useAttackItem(robot1.id, robot1.id, robot1.player, AttackItemType.SELF_DESTRUCTION)
+        robotDomainService.useAttackItem(robot1.id, robot2.planet.planetId, robot1.player, AttackItemType.NUKE)
+        robotDomainService.useReparationItem(robot1.player, robot1.id, ReparationItemType.REPARATION_SWARM)
+        robotDomainService.useMovementItem(robot1.player, robot1.id, MovementItemType.WORMHOLE)
+
+        // then
+        assertAll(
+            {
+                assert(robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM) == 0)
+            },
+            {
+                assert(robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE) == 0)
+            },
+            {
+                assert(robot1.inventory.getItemAmountByType(AttackItemType.NUKE) == 0)
+            },
+            {
+                assert(robot1.inventory.getItemAmountByType(AttackItemType.SELF_DESTRUCTION) == 0)
+            },
+            {
+                assert(robot1.inventory.getItemAmountByType(AttackItemType.ROCKET) == 0)
+            },
+            {
+                assert(robot1.inventory.getItemAmountByType(AttackItemType.LONG_RANGE_BOMBARDMENT) == 0)
+            },
+        )
+    }
+
+    @Test
+    fun `distributeResourcesEvenly correctly distributes resources`() {
+        // given
+        val robots = listOf(robot1, robot2, robot3)
+        val resourcesToBeDistributed = mutableMapOf(
+            ResourceType.COAL to 9
+        )
+
+        // when
+        val distributeResourcesEvenly = robotDomainService::class.declaredMemberFunctions.find { it.name == "distributeResourcesEvenly" }!!
+        distributeResourcesEvenly.isAccessible = true
+        distributeResourcesEvenly.call(
+            robotDomainService, robots,
+            resourcesToBeDistributed.entries.find { it.key == ResourceType.COAL }!!, 3
+        )
+
+        // then
+        assertAll(
+            {
+                assert(robot1.inventory.getStorageUsageForResource(ResourceType.COAL) == 3)
+            },
+            {
+                assert(robot2.inventory.getStorageUsageForResource(ResourceType.COAL) == 3)
+            },
+            {
+                assert(robot3.inventory.getStorageUsageForResource(ResourceType.COAL) == 3)
+            }
+        )
+    }
+
+    @Test
+    fun `distributeResourcesShuffled distributes all resources`() {
+        // given
+        val robots = listOf(robot1, robot2, robot3)
+        val resourcesToBeDistributed = mutableMapOf(
+            ResourceType.COAL to 2
+        )
+        val distributeResourcesShuffled = robotDomainService::class.declaredMemberFunctions
+            .find { it.name == "distributeResourcesShuffled" }!!
+        distributeResourcesShuffled.isAccessible = true
+
+        // when
+        distributeResourcesShuffled.call(
+            robotDomainService, robots,
+            resourcesToBeDistributed.entries.find { it.key == ResourceType.COAL }!!
+        )
+
+        // then
+        assert(robots.fold(0) { acc, robot -> acc + robot.inventory.getStorageUsageForResource(ResourceType.COAL) } == 2)
+    }
+
+    @Test
+    fun `deleteDeadRobots returns the correct amount of dropped resources`() {
+        // given
+        every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(planet1.planetId) } returns
+            listOf(robot1, robot2, robot4)
+        justRun { robotRepository.delete(any()) }
+
+        robot1.inventory.addResource(ResourceType.COAL, 10)
+        robot1.inventory.addResource(ResourceType.GOLD, 10)
+        robot2.inventory.addResource(ResourceType.IRON, 5)
+        robot2.inventory.addResource(ResourceType.GEM, 15)
+        robot4.inventory.addResource(ResourceType.PLATIN, 7)
+        robot4.inventory.addResource(ResourceType.GOLD, 8)
+
+        val deleteDeadRobots = robotDomainService::class.declaredMemberFunctions.find { it.name == "deleteDeadRobots" }!!
+        deleteDeadRobots.isAccessible = true
+
+        // when
+        val resources: MutableMap<ResourceType, Int> = deleteDeadRobots.call(robotDomainService, planet1.planetId) as MutableMap<ResourceType, Int>
+
+        // then
+        assertAll(
+            {
+                assert(resources.get(ResourceType.COAL) == 10)
+            },
+            {
+                assert(resources.get(ResourceType.IRON) == 5)
+            },
+            {
+                assert(resources.get(ResourceType.GEM) == 15)
+            },
+            {
+                assert(resources.get(ResourceType.GOLD) == 18)
+            },
+            {
+                assert(resources.get(ResourceType.PLATIN) == 7)
+            }
+        )
+    }
+
+    @Test
+    fun `deleteDeadRobots deletes all dead robots`() {
+        // given
+        every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(planet1.planetId) } returns
+            listOf(robot1, robot2, robot4)
+        justRun { robotRepository.delete(any()) }
+
+        robot1.inventory.addResource(ResourceType.COAL, 10)
+        robot1.inventory.addResource(ResourceType.GOLD, 10)
+        robot2.inventory.addResource(ResourceType.IRON, 5)
+        robot2.inventory.addResource(ResourceType.GEM, 15)
+        robot4.inventory.addResource(ResourceType.PLATIN, 7)
+        robot4.inventory.addResource(ResourceType.GOLD, 8)
+
+        robot1.alive = false
+        robot2.alive = false
+        robot4.alive = false
+
+        val deleteDeadRobots = robotDomainService::class.declaredMemberFunctions.find { it.name == "deleteDeadRobots" }!!
+        deleteDeadRobots.isAccessible = true
+
+        // when
+        deleteDeadRobots.call(robotDomainService, planet1.planetId)
+        verify(exactly = 1) { robotRepository.delete(robot1) }
+        verify(exactly = 1) { robotRepository.delete(robot2) }
+        verify(exactly = 1) { robotRepository.delete(robot4) }
+    }
+
+    @Test
+    fun `using a wormhole moves a robot`() {
+        // given
+        val planetDTO = GameMapPlanetDto(UUID.randomUUID(), 3)
+
+        robot1.inventory.addItem(MovementItemType.WORMHOLE)
+
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+        every { robotRepository.save(robot1) } returns robot1
+
+        every { gameMapService.getAllPlanets() } returns listOf(planetDTO)
+
+        // when
+        robotDomainService.useMovementItem(robot1.player, robot1.id, MovementItemType.WORMHOLE)
+
+        // then
+        assertEquals(planetDTO.id, robot1.planet.planetId)
+        assertEquals(0, robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
+    }
+
+    @Test
+    fun `takeAllResources empties the inventory of the robot of its resources and returns the correct amount`() {
+        // given
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+        every { robotRepository.save(any()) } returns robot1
+
+        robot1.inventory.addResource(ResourceType.COAL, 4)
+        robot1.inventory.addResource(ResourceType.IRON, 4)
+        robot1.inventory.addResource(ResourceType.GEM, 4)
+        robot1.inventory.addResource(ResourceType.GOLD, 4)
+        robot1.inventory.addResource(ResourceType.PLATIN, 4)
+
+        // when
+        val resources = robotDomainService.takeAllResources(robot1.id)
+
+        // then
+        assertAll(
+            {
+                assert(robot1.inventory.usedStorage == 0)
+            },
+            {
+                assert(resources[ResourceType.COAL] == 4)
+            },
+            {
+                assert(resources[ResourceType.IRON] == 4)
+            },
+            {
+                assert(resources[ResourceType.GEM] == 4)
+            },
+            {
+                assert(resources[ResourceType.GOLD] == 4)
+            },
+            {
+                assert(resources[ResourceType.PLATIN] == 4)
+            }
+        )
+    }
+
+    @Test
+    fun `Adding an item to a robot increases the corresponding item amount in its inventory`() {
+        // given
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+        every { robotRepository.save(any()) } returns robot1
+
+        // when
+        robotDomainService.addItem(robot1.id, AttackItemType.ROCKET)
+        robotDomainService.addItem(robot1.id, AttackItemType.NUKE)
+        robotDomainService.addItem(robot1.id, AttackItemType.LONG_RANGE_BOMBARDMENT)
+        robotDomainService.addItem(robot1.id, AttackItemType.SELF_DESTRUCTION)
+        robotDomainService.addItem(robot1.id, MovementItemType.WORMHOLE)
+        robotDomainService.addItem(robot1.id, ReparationItemType.REPARATION_SWARM)
+
+        // then
+        assertAll(
+            {
+                assert(robot1.inventory.getItemAmountByType(AttackItemType.ROCKET) == 1)
+            },
+            {
+                assert(robot1.inventory.getItemAmountByType(AttackItemType.SELF_DESTRUCTION) == 1)
+            },
+            {
+                assert(robot1.inventory.getItemAmountByType(AttackItemType.LONG_RANGE_BOMBARDMENT) == 1)
+            },
+            {
+                assert(robot1.inventory.getItemAmountByType(AttackItemType.NUKE) == 1)
+            },
+            {
+                assert(robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE) == 1)
+            },
+            {
+                assert(robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM) == 1)
+            }
+        )
     }
 }

@@ -108,7 +108,7 @@ class InventoryTest {
     @Test
     fun `Upgrading storage allows robot to hold more resources`() {
         // given
-        robot1.upgrade(UpgradeType.STORAGE)
+        robot1.upgrade(UpgradeType.STORAGE, 1)
         // when
         robot1.inventory.addResource(ResourceType.IRON, 25)
         // then
@@ -140,15 +140,15 @@ class InventoryTest {
         robot1.inventory.addItem(MovementItemType.WORMHOLE)
         robot1.inventory.addItem(ReparationItemType.REPARATION_SWARM)
         robot1.inventory.addItem(AttackItemType.ROCKET)
-        robot1.inventory.addItem(AttackItemType.BOMBARDMENT)
-        robot1.inventory.addItem(AttackItemType.SELF_DESTRUCT)
+        robot1.inventory.addItem(AttackItemType.LONG_RANGE_BOMBARDMENT)
+        robot1.inventory.addItem(AttackItemType.SELF_DESTRUCTION)
         robot1.inventory.addItem(AttackItemType.NUKE)
         // then
         assertEquals(1, robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
         assertEquals(1, robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM))
         assertEquals(1, robot1.inventory.getItemAmountByType(AttackItemType.ROCKET))
-        assertEquals(1, robot1.inventory.getItemAmountByType(AttackItemType.BOMBARDMENT))
-        assertEquals(1, robot1.inventory.getItemAmountByType(AttackItemType.SELF_DESTRUCT))
+        assertEquals(1, robot1.inventory.getItemAmountByType(AttackItemType.LONG_RANGE_BOMBARDMENT))
+        assertEquals(1, robot1.inventory.getItemAmountByType(AttackItemType.SELF_DESTRUCTION))
         assertEquals(1, robot1.inventory.getItemAmountByType(AttackItemType.NUKE))
     }
 
@@ -158,23 +158,23 @@ class InventoryTest {
         robot1.inventory.addItem(MovementItemType.WORMHOLE)
         robot1.inventory.addItem(ReparationItemType.REPARATION_SWARM)
         robot1.inventory.addItem(AttackItemType.ROCKET)
-        robot1.inventory.addItem(AttackItemType.BOMBARDMENT)
-        robot1.inventory.addItem(AttackItemType.SELF_DESTRUCT)
+        robot1.inventory.addItem(AttackItemType.LONG_RANGE_BOMBARDMENT)
+        robot1.inventory.addItem(AttackItemType.SELF_DESTRUCTION)
         robot1.inventory.addItem(AttackItemType.NUKE)
 
         // when
         robot1.inventory.removeItem(MovementItemType.WORMHOLE)
         robot1.inventory.removeItem(ReparationItemType.REPARATION_SWARM)
         robot1.inventory.removeItem(AttackItemType.ROCKET)
-        robot1.inventory.removeItem(AttackItemType.BOMBARDMENT)
-        robot1.inventory.removeItem(AttackItemType.SELF_DESTRUCT)
+        robot1.inventory.removeItem(AttackItemType.LONG_RANGE_BOMBARDMENT)
+        robot1.inventory.removeItem(AttackItemType.SELF_DESTRUCTION)
         robot1.inventory.removeItem(AttackItemType.NUKE)
         // then
         assertEquals(0, robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
         assertEquals(0, robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM))
         assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.ROCKET))
-        assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.BOMBARDMENT))
-        assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.SELF_DESTRUCT))
+        assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.LONG_RANGE_BOMBARDMENT))
+        assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.SELF_DESTRUCTION))
         assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.NUKE))
     }
 
@@ -200,12 +200,12 @@ class InventoryTest {
             },
             {
                 assertThrows<IllegalArgumentException> {
-                    assertEquals(0, robot1.inventory.removeItem(AttackItemType.BOMBARDMENT))
+                    assertEquals(0, robot1.inventory.removeItem(AttackItemType.LONG_RANGE_BOMBARDMENT))
                 }
             },
             {
                 assertThrows<IllegalArgumentException> {
-                    assertEquals(0, robot1.inventory.removeItem(AttackItemType.SELF_DESTRUCT))
+                    assertEquals(0, robot1.inventory.removeItem(AttackItemType.SELF_DESTRUCTION))
                 }
             },
             {

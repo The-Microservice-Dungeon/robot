@@ -10,4 +10,6 @@ interface RobotRepository : CrudRepository<Robot, UUID> {
     fun findAllByPlanet_PlanetId(planetId: UUID): List<Robot>
 
     fun findAllByPlayerAndPlanet_PlanetId(playerId: UUID, planetId: UUID): List<Robot>
+
+    fun findAllByPlayer(playerId: UUID): List<Robot>
 }
