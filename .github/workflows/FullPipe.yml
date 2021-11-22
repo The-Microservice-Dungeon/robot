@@ -43,7 +43,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build docker image to github registry
-        run: ./gradlew jib --image=ghcr.io/instantregrets/robottest --parallel --build-cache
+        run: ./gradlew jib --image=ghcr.io/the-microservice-dungeon/robot/robotservice --parallel --build-cache
 
       - name: Cleanup Gradle Cache
         # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
