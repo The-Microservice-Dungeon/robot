@@ -6,7 +6,6 @@ import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.ItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
-import com.msd.robot.application.InvalidPlayerException
 import com.msd.robot.application.RobotNotFoundException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -25,9 +24,7 @@ class RobotDomainService(
      * @param target        The target of the attack
      * @throws OutOfReachException If the robots are not on the same planet
      */
-    fun fight(attacker: Robot, target: Robot, player: UUID) {
-        checkRobotBelongsToPlayer(attacker, player)
-
+    fun fight(attacker: Robot, target: Robot) {
         if (attacker.planet.planetId != target.planet.planetId)
             throw OutOfReachException("The attacking robot and the defending robot are not on the same planet")
 
@@ -169,17 +166,6 @@ class RobotDomainService(
     }
 
     /**
-     * Checks if the specified `playerId` is the owner of the specified [Robot].
-     *
-     * @param robot      the `Robot` whose ownership will be checked
-     * @param playerId   the `playerUUID` which should be checked against the `Robot`
-     * @throws InvalidPlayerException if the Robot's ID doesn't match the specified ID
-     */
-    fun checkRobotBelongsToPlayer(robot: Robot, playerId: UUID) {
-        if (robot.player != playerId) throw InvalidPlayerException("Specified player doesn't match player specified in robot")
-    }
-
-    /**
      * Gets the specified [Robot].
      *
      * @param robotId the `UUID` of the robot which should be returned
@@ -222,9 +208,8 @@ class RobotDomainService(
      * @param item        the `RepairItemType` which should be used.
      * @throws NotEnoughItemsException when the specified `Robot` doesn't own the specified item.
      */
-    fun useRepairItem(playerId: UUID, robotId: UUID, item: RepairItemType) {
+    fun useRepairItem(robotId: UUID, item: RepairItemType) {
         val robot = this.getRobot(robotId)
-        this.checkRobotBelongsToPlayer(robot, playerId)
         if (robot.inventory.getItemAmountByType(item) > 0) {
             item.func(robot, robotRepository)
             robot.inventory.removeItem(item)
@@ -245,9 +230,8 @@ class RobotDomainService(
      *
      * @return the UUID of the planet on which robots could have died.
      */
-    fun useAttackItem(userId: UUID, target: UUID, player: UUID, item: AttackItemType): UUID {
+    fun useAttackItem(userId: UUID, target: UUID, item: AttackItemType): UUID {
         val user = getRobot(userId)
-        checkRobotBelongsToPlayer(user, player)
         if (user.inventory.getItemAmountByType(item) > 0) {
             val battlefield = item.use(user, target, robotRepository)
             user.inventory.removeItem(item)
@@ -267,9 +251,8 @@ class RobotDomainService(
      * @param itemType    the [MovementItemType] of the used item.
      * @throws NotEnoughItemsException when the `Robot` doesn't own enough of the specified `itemType`
      */
-    fun useMovementItem(playerId: UUID, robotId: UUID, itemType: MovementItemType) {
+    fun useMovementItem(robotId: UUID, itemType: MovementItemType) {
         val robot = this.getRobot(robotId)
-        this.checkRobotBelongsToPlayer(robot, playerId)
         if (robot.inventory.getItemAmountByType(itemType) > 0) {
             itemType.func(robot, robotRepository, gameMapService)
             robot.inventory.removeItem(itemType)

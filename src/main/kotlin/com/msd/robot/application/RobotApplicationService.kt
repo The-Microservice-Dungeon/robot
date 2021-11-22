@@ -66,7 +66,7 @@ class RobotApplicationService(
      * @param command   the `MovementItemsUsageCommand` specifying which `Robot` should use which `item`
      */
     private fun useMovementItem(command: MovementItemsUsageCommand) {
-        robotDomainService.useMovementItem(command.playerUUID, command.robotUUID, command.itemType)
+        robotDomainService.useMovementItem(command.robotUUID, command.itemType)
     }
 
     /**
@@ -89,11 +89,9 @@ class RobotApplicationService(
      */
     fun move(moveCommand: MovementCommand) {
         val robotId = moveCommand.robotUUID
-        val playerId = moveCommand.playerUUID
 
         val robot = robotDomainService.getRobot(robotId)
 
-        robotDomainService.checkRobotBelongsToPlayer(robot, playerId)
         val planetDto =
             gameMapService.retrieveTargetPlanetIfRobotCanReach(robot.planet.planetId, moveCommand.targetPlanetUUID)
         val cost = planetDto.movementCost
@@ -111,7 +109,6 @@ class RobotApplicationService(
      */
     fun block(blockCommand: BlockCommand) {
         val robot = robotDomainService.getRobot(blockCommand.robotUUID)
-        robotDomainService.checkRobotBelongsToPlayer(robot, blockCommand.playerUUID)
         robot.block()
         robotDomainService.saveRobot(robot)
     }
@@ -126,8 +123,6 @@ class RobotApplicationService(
      */
     fun regenerateEnergy(energyRegenCommand: EnergyRegenCommand) {
         val robot = robotDomainService.getRobot(energyRegenCommand.robotUUID)
-
-        robotDomainService.checkRobotBelongsToPlayer(robot, energyRegenCommand.playerUUID)
         robot.regenerateEnergy()
         robotDomainService.saveRobot(robot)
     }
@@ -164,7 +159,7 @@ class RobotApplicationService(
                 val attacker = robotDomainService.getRobot(it.robotUUID)
                 val target = robotDomainService.getRobot(it.targetRobotUUID)
 
-                robotDomainService.fight(attacker, target, it.playerUUID)
+                robotDomainService.fight(attacker, target)
                 battleFields.add(attacker.planet.planetId)
             } catch (re: RuntimeException) {
                 exceptionConverter.handle(re, it.transactionUUID)
@@ -182,7 +177,7 @@ class RobotApplicationService(
      * @param command the [RepairItemUsageCommand] which specifies which `Robot` should use which item
      */
     fun useRepairItem(command: RepairItemUsageCommand) {
-        robotDomainService.useRepairItem(command.playerUUID, command.robotUUID, command.itemType)
+        robotDomainService.useRepairItem(command.robotUUID, command.itemType)
     }
 
     /**
@@ -196,7 +191,7 @@ class RobotApplicationService(
         val battleFields = mutableSetOf<UUID>()
         usageCommands.forEach {
             try {
-                val battlefield = robotDomainService.useAttackItem(it.robotUUID, it.targetUUID, it.playerUUID, it.itemType)
+                val battlefield = robotDomainService.useAttackItem(it.robotUUID, it.targetUUID, it.itemType)
                 battleFields.add(battlefield)
             } catch (re: RuntimeException) {
                 exceptionConverter.handle(re, it.transactionUUID)

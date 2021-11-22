@@ -7,7 +7,6 @@ import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
 import com.msd.planet.domain.Planet
-import com.msd.robot.application.InvalidPlayerException
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
@@ -75,7 +74,7 @@ internal class RobotDomainServiceTest {
 
         // when
         assertThrows<OutOfReachException>("Robots must be on the same Planet to attack each other") {
-            robotDomainService.fight(robot1, robot6, robot1.player)
+            robotDomainService.fight(robot1, robot6)
         }
         // then
         assertEquals(10, robot6.health)
@@ -90,13 +89,13 @@ internal class RobotDomainServiceTest {
         every { robotRepository.save(robot2) } returns robot2
         every { robotRepository.save(robot4) } returns robot4
 
-        for (i in 1..5) robotDomainService.fight(robot1, robot4, robot1.player)
-        for (i in 1..5) robotDomainService.fight(robot2, robot4, robot2.player)
+        for (i in 1..5) robotDomainService.fight(robot1, robot4)
+        for (i in 1..5) robotDomainService.fight(robot2, robot4)
         assert(!robot4.alive)
 
         // when
-        robotDomainService.fight(robot1, robot4, robot1.player)
-        robotDomainService.fight(robot2, robot4, robot2.player)
+        robotDomainService.fight(robot1, robot4)
+        robotDomainService.fight(robot2, robot4)
         // then
         assertEquals(-2, robot4.health)
         assertAll(
@@ -116,11 +115,11 @@ internal class RobotDomainServiceTest {
         every { robotRepository.save(robot1) } returns robot1
         every { robotRepository.save(robot4) } returns robot4
 
-        for (i in 1..10) robotDomainService.fight(robot1, robot4, robot1.player)
+        for (i in 1..10) robotDomainService.fight(robot1, robot4)
         assert(!robot4.alive)
 
         // when
-        robotDomainService.fight(robot4, robot1, robot4.player)
+        robotDomainService.fight(robot4, robot1)
         // then
         assertEquals(9, robot1.health)
         assertEquals(19, robot4.energy)
@@ -134,7 +133,7 @@ internal class RobotDomainServiceTest {
 
         // when
         assertThrows<NotEnoughEnergyException> {
-            robotDomainService.fight(robot1, robot6, robot1.player)
+            robotDomainService.fight(robot1, robot6)
         }
         // then
         assertEquals(10, robot6.health)
@@ -206,7 +205,7 @@ internal class RobotDomainServiceTest {
         every { robotRepository.save(robot1) } returns robot1
 
         // when
-        robotDomainService.useRepairItem(robot1.player, robot1.id, RepairItemType.REPAIR_SWARM)
+        robotDomainService.useRepairItem(robot1.id, RepairItemType.REPAIR_SWARM)
 
         // then
         assertAll(
@@ -214,46 +213,6 @@ internal class RobotDomainServiceTest {
             robots.filter { it.player == player1Id }.map { { assertEquals(24, it.health) } }
         )
         assertEquals(0, robot1.inventory.getItemAmountByType(RepairItemType.REPAIR_SWARM))
-    }
-
-    @Test
-    fun `Cannot use any item if the robot doesnt belong to the player`() {
-        // given
-        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
-
-        // then
-        assertAll(
-            {
-                assertThrows<InvalidPlayerException> {
-                    robotDomainService.useMovementItem(robot4.player, robot1.id, MovementItemType.WORMHOLE)
-                }
-            },
-            {
-                assertThrows<InvalidPlayerException> {
-                    robotDomainService.useRepairItem(robot4.player, robot1.id, RepairItemType.REPAIR_SWARM)
-                }
-            },
-            {
-                assertThrows<InvalidPlayerException> {
-                    robotDomainService.useAttackItem(robot1.id, robot2.id, robot4.player, AttackItemType.ROCKET)
-                }
-            },
-            {
-                assertThrows<InvalidPlayerException> {
-                    robotDomainService.useAttackItem(robot1.id, robot2.id, robot4.player, AttackItemType.LONG_RANGE_BOMBARDMENT)
-                }
-            },
-            {
-                assertThrows<InvalidPlayerException> {
-                    robotDomainService.useAttackItem(robot1.id, robot1.id, robot4.player, AttackItemType.SELF_DESTRUCTION)
-                }
-            },
-            {
-                assertThrows<InvalidPlayerException> {
-                    robotDomainService.useAttackItem(robot1.id, robot2.id, robot4.player, AttackItemType.NUKE)
-                }
-            }
-        )
     }
 
     @Test
@@ -265,32 +224,32 @@ internal class RobotDomainServiceTest {
         assertAll(
             {
                 assertThrows<NotEnoughItemsException> {
-                    robotDomainService.useMovementItem(robot1.player, robot1.id, MovementItemType.WORMHOLE)
+                    robotDomainService.useMovementItem(robot1.id, MovementItemType.WORMHOLE)
                 }
             },
             {
                 assertThrows<NotEnoughItemsException> {
-                    robotDomainService.useRepairItem(robot1.player, robot1.id, RepairItemType.REPAIR_SWARM)
+                    robotDomainService.useRepairItem(robot1.id, RepairItemType.REPAIR_SWARM)
                 }
             },
             {
                 assertThrows<NotEnoughItemsException> {
-                    robotDomainService.useAttackItem(robot1.id, robot2.id, robot1.player, AttackItemType.ROCKET)
+                    robotDomainService.useAttackItem(robot1.id, robot2.id, AttackItemType.ROCKET)
                 }
             },
             {
                 assertThrows<NotEnoughItemsException> {
-                    robotDomainService.useAttackItem(robot1.id, robot2.id, robot1.player, AttackItemType.LONG_RANGE_BOMBARDMENT)
+                    robotDomainService.useAttackItem(robot1.id, robot2.id, AttackItemType.LONG_RANGE_BOMBARDMENT)
                 }
             },
             {
                 assertThrows<NotEnoughItemsException> {
-                    robotDomainService.useAttackItem(robot1.id, robot1.id, robot1.player, AttackItemType.SELF_DESTRUCTION)
+                    robotDomainService.useAttackItem(robot1.id, robot1.id, AttackItemType.SELF_DESTRUCTION)
                 }
             },
             {
                 assertThrows<NotEnoughItemsException> {
-                    robotDomainService.useAttackItem(robot1.id, robot2.id, robot1.player, AttackItemType.NUKE)
+                    robotDomainService.useAttackItem(robot1.id, robot2.id, AttackItemType.NUKE)
                 }
             }
         )
@@ -318,12 +277,12 @@ internal class RobotDomainServiceTest {
         robot1.inventory.addItem(RepairItemType.REPAIR_SWARM)
 
         // when
-        robotDomainService.useAttackItem(robot1.id, robot2.id, robot1.player, AttackItemType.ROCKET)
-        robotDomainService.useAttackItem(robot1.id, robot2.planet.planetId, robot1.player, AttackItemType.LONG_RANGE_BOMBARDMENT)
-        robotDomainService.useAttackItem(robot1.id, robot1.id, robot1.player, AttackItemType.SELF_DESTRUCTION)
-        robotDomainService.useAttackItem(robot1.id, robot2.planet.planetId, robot1.player, AttackItemType.NUKE)
-        robotDomainService.useRepairItem(robot1.player, robot1.id, RepairItemType.REPAIR_SWARM)
-        robotDomainService.useMovementItem(robot1.player, robot1.id, MovementItemType.WORMHOLE)
+        robotDomainService.useAttackItem(robot1.id, robot2.id, AttackItemType.ROCKET)
+        robotDomainService.useAttackItem(robot1.id, robot2.planet.planetId, AttackItemType.LONG_RANGE_BOMBARDMENT)
+        robotDomainService.useAttackItem(robot1.id, robot1.id, AttackItemType.SELF_DESTRUCTION)
+        robotDomainService.useAttackItem(robot1.id, robot2.planet.planetId, AttackItemType.NUKE)
+        robotDomainService.useRepairItem(robot1.id, RepairItemType.REPAIR_SWARM)
+        robotDomainService.useMovementItem(robot1.id, MovementItemType.WORMHOLE)
 
         // then
         assertAll(
@@ -480,7 +439,7 @@ internal class RobotDomainServiceTest {
         every { gameMapService.getAllPlanets() } returns listOf(planetDTO)
 
         // when
-        robotDomainService.useMovementItem(robot1.player, robot1.id, MovementItemType.WORMHOLE)
+        robotDomainService.useMovementItem(robot1.id, MovementItemType.WORMHOLE)
 
         // then
         assertEquals(planetDTO.id, robot1.planet.planetId)

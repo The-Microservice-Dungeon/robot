@@ -12,14 +12,14 @@ import java.util.*
 class CommandApplicationService {
 
     val commandTypeKeywordsAndNumArgs = mapOf(
-        CommandVerbs.BLOCK.verb to 3,
-        CommandVerbs.MOVE.verb to 4,
-        CommandVerbs.FIGHT.verb to 4,
-        CommandVerbs.MINE.verb to 3,
-        CommandVerbs.REGENERATE.verb to 3,
-        CommandVerbs.USE_ITEM_FIGHTING.verb to 5,
-        CommandVerbs.USE_ITEM_MOVEMENT.verb to 4,
-        CommandVerbs.USE_ITEM_REPAIR.verb to 4
+        CommandVerbs.BLOCK.verb to 2,
+        CommandVerbs.MOVE.verb to 3,
+        CommandVerbs.FIGHT.verb to 3,
+        CommandVerbs.MINE.verb to 2,
+        CommandVerbs.REGENERATE.verb to 2,
+        CommandVerbs.USE_ITEM_FIGHTING.verb to 4,
+        CommandVerbs.USE_ITEM_MOVEMENT.verb to 3,
+        CommandVerbs.USE_ITEM_REPAIR.verb to 3
     )
 
     /**
@@ -93,22 +93,19 @@ class CommandApplicationService {
         when (verb) {
             CommandVerbs.USE_ITEM_FIGHTING.verb -> return AttackItemUsageCommand(
                 UUID.fromString(args[0]),
-                UUID.fromString(args[1]),
-                AttackItemType.valueOf(args[2].uppercase()),
-                UUID.fromString(args[3]),
-                UUID.fromString(args[4])
+                AttackItemType.valueOf(args[1].uppercase()),
+                UUID.fromString(args[2]),
+                UUID.fromString(args[3])
             )
             CommandVerbs.USE_ITEM_MOVEMENT.verb -> return MovementItemsUsageCommand(
                 UUID.fromString(args[0]),
-                UUID.fromString(args[1]),
-                MovementItemType.valueOf(args[2].uppercase()),
-                UUID.fromString(args[3])
+                MovementItemType.valueOf(args[1].uppercase()),
+                UUID.fromString(args[2])
             )
             CommandVerbs.USE_ITEM_REPAIR.verb -> return RepairItemUsageCommand(
                 UUID.fromString(args[0]),
-                UUID.fromString(args[1]),
-                RepairItemType.valueOf(args[2].uppercase()),
-                UUID.fromString(args[3])
+                RepairItemType.valueOf(args[1].uppercase()),
+                UUID.fromString(args[2])
             )
             else -> throw RuntimeException("Internal Error")
         }
@@ -124,16 +121,14 @@ class CommandApplicationService {
         return when (verb) {
             CommandVerbs.BLOCK.verb,
             CommandVerbs.MINE.verb,
-            CommandVerbs.REGENERATE.verb -> get3PartConstructorByVerb(verb)(
+            CommandVerbs.REGENERATE.verb -> get2PartConstructorByVerb(verb)(
+                UUID.fromString(args[0]),
+                UUID.fromString(args[1])
+            )
+            CommandVerbs.MOVE.verb, CommandVerbs.FIGHT.verb -> get3PartConstructorByVerb(verb)(
                 UUID.fromString(args[0]),
                 UUID.fromString(args[1]),
                 UUID.fromString(args[2])
-            )
-            CommandVerbs.MOVE.verb, CommandVerbs.FIGHT.verb -> get4PartConstructorByVerb(verb)(
-                UUID.fromString(args[0]),
-                UUID.fromString(args[1]),
-                UUID.fromString(args[2]),
-                UUID.fromString(args[3])
             )
             else -> throw RuntimeException("Internal Error")
         }
@@ -145,7 +140,7 @@ class CommandApplicationService {
      * @param verb  the verb corresponding with a specific command type
      * @return The Constructor for the Command
      */
-    fun get3PartConstructorByVerb(verb: String): (UUID, UUID, UUID) -> Command {
+    fun get2PartConstructorByVerb(verb: String): (UUID, UUID) -> Command {
         return when (verb) {
             CommandVerbs.BLOCK.verb -> ::BlockCommand
             CommandVerbs.MINE.verb -> ::MiningCommand
@@ -160,7 +155,7 @@ class CommandApplicationService {
      * @param verb  the verb corresponding with a specific command type
      * @return The Constructor for the Command
      */
-    fun get4PartConstructorByVerb(verb: String): (UUID, UUID, UUID, UUID) -> Command {
+    fun get3PartConstructorByVerb(verb: String): (UUID, UUID, UUID) -> Command {
         return when (verb) {
             CommandVerbs.MOVE.verb -> ::MovementCommand
             CommandVerbs.FIGHT.verb -> ::AttackCommand

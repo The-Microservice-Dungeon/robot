@@ -16,17 +16,17 @@ class CommandApplicationServiceTest {
         // given
         // intended weird upper and lowercase styles and double whitespaces, give the caller some slack
         val commandStrings = arrayListOf(
-            "block $randomUUID  $randomUUID  $randomUUID",
-            "movE $randomUUID  $randomUUID  $randomUUID $randomUUID",
-            "fight $randomUUID  $randomUUID  $randomUUID $randomUUID",
-            "MINE $randomUUID  $randomUUID  $randomUUID",
-            "regenerate $randomUUID  $randomUUID  $randomUUID",
-            "Use-Item-Fighting $randomUUID  $randomUUID Rocket $randomUUID  $randomUUID ",
-            "Use-Item-Fighting $randomUUID  $randomUUID long_range_bombardment $randomUUID  $randomUUID ",
-            "Use-Item-Fighting $randomUUID  $randomUUID self_destruction $randomUUID  $randomUUID ",
-            "Use-Item-Fighting $randomUUID  $randomUUID NuKe $randomUUID  $randomUUID",
-            "use-item-movement $randomUUID  $randomUUID wormhole $randomUUID",
-            "use-item-repair $randomUUID  $randomUUID REPAIR_SWARM $randomUUID"
+            "block $randomUUID  $randomUUID",
+            "movE $randomUUID  $randomUUID $randomUUID",
+            "fight $randomUUID  $randomUUID $randomUUID",
+            "MINE $randomUUID  $randomUUID",
+            "regenerate $randomUUID  $randomUUID",
+            "Use-Item-Fighting $randomUUID Rocket $randomUUID  $randomUUID ",
+            "Use-Item-Fighting $randomUUID long_range_bombardment $randomUUID  $randomUUID ",
+            "Use-Item-Fighting $randomUUID self_destruction $randomUUID  $randomUUID ",
+            "Use-Item-Fighting $randomUUID NuKe $randomUUID  $randomUUID",
+            "use-item-movement $randomUUID wormhole $randomUUID",
+            "use-item-repair $randomUUID REPAIR_SWARM $randomUUID"
         )
 
         // when
@@ -64,13 +64,13 @@ class CommandApplicationServiceTest {
     @Test
     fun `Throws CommandParsingException when command cannot be parsed`() {
         // given
-        val missingUUID = "block $randomUUID $randomUUID"
-        val unknownCommandType = "black $randomUUID $randomUUID $randomUUID"
-        val tooManyUUIDs = "regenerate $randomUUID $randomUUID $randomUUID $randomUUID"
-        val unknownMovementItemType = "use-item-movement $randomUUID $randomUUID sheep $randomUUID"
-        val unknownRepairItemType = "use-item-repair $randomUUID $randomUUID sheep $randomUUID"
+        val missingUUID = "block $randomUUID"
+        val unknownCommandType = "black $randomUUID $randomUUID"
+        val tooManyUUIDs = "regenerate $randomUUID $randomUUID $randomUUID"
+        val unknownMovementItemType = "use-item-movement $randomUUID sheep $randomUUID"
+        val unknownRepairItemType = "use-item-repair $randomUUID sheep $randomUUID"
         val unknownFightingItemType = "use-item-fighting $randomUUID $randomUUID sheep $randomUUID $randomUUID"
-        val invalidUUID = "use-item-fighting 1235 $randomUUID rocket $randomUUID $randomUUID"
+        val invalidUUID = "use-item-fighting 1235 rocket $randomUUID $randomUUID"
 
         // then
         assertThrows<CommandParsingException> { commandApplicationService.parseCommand(missingUUID) }
@@ -86,13 +86,13 @@ class CommandApplicationServiceTest {
     fun `Rejects heterogeneous Attack and AttackItemUsage Commands`() {
         // given
         val attackCommandAndMineCommand = arrayListOf(
-            "fight $randomUUID  $randomUUID  $randomUUID $randomUUID",
-            "MINE $randomUUID  $randomUUID  $randomUUID"
+            "fight $randomUUID  $randomUUID $randomUUID",
+            "MINE $randomUUID  $randomUUID"
         )
 
         val attackItemUsageCommandAndMovementItemUsageCommand = arrayListOf(
-            "Use-Item-Fighting $randomUUID  $randomUUID NuKe $randomUUID  $randomUUID",
-            "use-item-movement $randomUUID  $randomUUID wormhole $randomUUID",
+            "Use-Item-Fighting $randomUUID NuKe $randomUUID  $randomUUID",
+            "use-item-movement $randomUUID wormhole $randomUUID",
         )
 
         // then
