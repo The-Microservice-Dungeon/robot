@@ -6,6 +6,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.allopen") version "1.5.31"
     id("org.jetbrains.kotlin.plugin.noarg") version "1.5.31"
     id("org.jlleitschuh.gradle.ktlint") version "10.2.0"
+    id("com.google.cloud.tools.jib") version "3.1.4"
     id("org.jetbrains.dokka") version "1.5.31"
     jacoco
     kotlin("jvm") version "1.5.31"
