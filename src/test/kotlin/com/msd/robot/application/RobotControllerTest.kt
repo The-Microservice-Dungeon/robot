@@ -96,7 +96,7 @@ class RobotControllerTest(
             contentType = MediaType.APPLICATION_JSON
             content = spawnDto
         }.andExpect {
-            status { isOk() }
+            status { isCreated() }
         }.andReturn()
 
         val resultRobot = mapper.readValue(result.response.contentAsString, RobotDto::class.java)

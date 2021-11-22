@@ -4,7 +4,7 @@ import com.msd.domain.ResourceType
 import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.ItemType
 import com.msd.item.domain.MovementItemType
-import com.msd.item.domain.ReparationItemType
+import com.msd.item.domain.RepairItemType
 import com.msd.robot.domain.exceptions.InventoryFullException
 import com.msd.robot.domain.exceptions.NotEnoughResourcesException
 import com.msd.robot.domain.exceptions.UpgradeException
@@ -160,7 +160,7 @@ class Inventory {
     fun addItem(item: ItemType) {
         when (item) {
             MovementItemType.WORMHOLE -> wormholeAmount++
-            ReparationItemType.REPARATION_SWARM -> repairSwarmAmount++
+            RepairItemType.REPAIR_SWARM -> repairSwarmAmount++
             AttackItemType.ROCKET -> rocketAmount++
             AttackItemType.LONG_RANGE_BOMBARDMENT -> bombardmentAmount++
             AttackItemType.SELF_DESTRUCTION -> selfDestructAmount++
@@ -178,7 +178,7 @@ class Inventory {
     fun removeItem(item: ItemType) {
         when (item) {
             MovementItemType.WORMHOLE -> wormholeAmount--
-            ReparationItemType.REPARATION_SWARM -> repairSwarmAmount--
+            RepairItemType.REPAIR_SWARM -> repairSwarmAmount--
             AttackItemType.ROCKET -> rocketAmount--
             AttackItemType.LONG_RANGE_BOMBARDMENT -> bombardmentAmount--
             AttackItemType.SELF_DESTRUCTION -> selfDestructAmount--
@@ -197,7 +197,7 @@ class Inventory {
     fun getItemAmountByType(item: ItemType): Int {
         return when (item) {
             MovementItemType.WORMHOLE -> wormholeAmount
-            ReparationItemType.REPARATION_SWARM -> repairSwarmAmount
+            RepairItemType.REPAIR_SWARM -> repairSwarmAmount
             AttackItemType.ROCKET -> rocketAmount
             AttackItemType.LONG_RANGE_BOMBARDMENT -> bombardmentAmount
             AttackItemType.SELF_DESTRUCTION -> selfDestructAmount

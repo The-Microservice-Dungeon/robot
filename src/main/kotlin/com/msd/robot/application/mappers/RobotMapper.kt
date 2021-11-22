@@ -2,7 +2,7 @@ package com.msd.robot.application.mappers
 
 import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.MovementItemType
-import com.msd.item.domain.ReparationItemType
+import com.msd.item.domain.RepairItemType
 import com.msd.robot.application.dtos.ItemsDto
 import com.msd.robot.application.dtos.RobotDto
 import com.msd.robot.domain.Inventory
@@ -29,7 +29,7 @@ abstract class RobotMapper {
             inventory.getItemAmountByType(MovementItemType.WORMHOLE),
             inventory.getItemAmountByType(AttackItemType.LONG_RANGE_BOMBARDMENT),
             inventory.getItemAmountByType(AttackItemType.SELF_DESTRUCTION),
-            inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM),
+            inventory.getItemAmountByType(RepairItemType.REPAIR_SWARM),
             inventory.getItemAmountByType(AttackItemType.NUKE),
         )
     }
