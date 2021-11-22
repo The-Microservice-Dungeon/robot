@@ -2,6 +2,7 @@ package com.msd.application
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.msd.domain.ResourceType
 import com.msd.robot.application.TargetPlanetNotReachableException
 import io.netty.channel.ChannelOption
 import io.netty.handler.timeout.ReadTimeoutHandler
@@ -113,5 +114,28 @@ class GameMapService {
         } catch (wcre: WebClientRequestException) {
             throw ClientException("Could not connect to GameMap MicroService")
         }
+    }
+
+    fun getResourceOnPlanet(planetId: UUID): ResourceType {
+        val uriSpec = gameMapClient.get()
+        val querySpec = uriSpec.uri {
+            it.path(GameMapServiceMetaData.PLANETS_URI + "/$planetId/resources").build()
+        }
+        try {
+            val response = querySpec.exchangeToMono { response ->
+                if (response.statusCode() == HttpStatus.OK)
+                    response.bodyToMono<String>() // TODO this doesnt work yet, it returns an resource_type_id
+                else
+                    throw ClientException(
+                        "GameMap Client returned internal error when retrieving all planets"
+                    )
+            }.block() ?: throw ClientException("GameMap Client returned unknown ResourceType")
+            return response
+        } catch (wcre: WebClientRequestException) {
+            throw ClientException("Could not connect to GameMap MicroService")
+        }
+    }
+
+    fun mine(planetId: UUID, amount: Int): Int {
     }
 }

@@ -10,6 +10,5 @@ import java.util.*
 class MineCommand(
     robotUUID: UUID,
     playerUUID: UUID,
-    val resourceType: ResourceType,
     transactionUUID: UUID
 ) : Command(robotUUID, playerUUID, transactionUUID)

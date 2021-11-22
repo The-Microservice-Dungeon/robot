@@ -35,6 +35,8 @@ class RobotApplicationService(
             executeAttacks(commands as List<AttackCommand>)
         else if (commands[0] is AttackItemUsageCommand)
             useAttackItems(commands as List<AttackItemUsageCommand>)
+        else if (commands[0] is MineCommand)
+            executeMining(commands as List<MineCommand>)
         else
             executeHeterogeneousCommands(commands)
     }
@@ -53,7 +55,6 @@ class RobotApplicationService(
                     is EnergyRegenCommand -> regenerateEnergy(it)
                     is ReparationItemUsageCommand -> useReparationItem(it)
                     is MovementItemsUsageCommand -> useMovementItem(it)
-                    // TODO Add remaining CommandTypes as soon as their methods are implemented
                 }
             } catch (re: RuntimeException) {
                 exceptionConverter.handle(re, it.transactionUUID)
@@ -79,7 +80,9 @@ class RobotApplicationService(
      */
     fun spawn(player: UUID, planet: UUID): Robot {
         val robot = Robot(player, Planet(planet))
-        return robotDomainService.saveRobot(robot)
+        if (gameMapService.getAllPlanets().map { it.id }.contains(planet))
+            return robotDomainService.saveRobot(robot)
+        else throw InvalidPlanetException(planet)
     }
 
     /**
@@ -227,22 +230,61 @@ class RobotApplicationService(
      *
      * @param mineCommands          a list of MineCommands that need to be executed.
      */
-    fun executeMinings(mineCommands: List<MineCommand>) {
+    fun executeMining(mineCommands: List<MineCommand>) {
         mineCommands.forEach {
             try {
-                val robotId = it.robotUUID
-                val playerId = it.playerUUID
-
-                val robot = robotDomainService.getRobot(robotId)
-
-                robotDomainService.checkRobotBelongsToPlayer(robot, playerId)
-
-                if (!robot.canMine(it.resourceType)) throw LevelTooLowException("Mining level too low to mine ${it.resourceType}!")
-
-                // add up mining requests by planet & resourceType
+                val robot = robotDomainService.getRobot(it.robotUUID)
+                robotDomainService.checkRobotBelongsToPlayer(robot, it.playerUUID)
             } catch (re: RuntimeException) {
                 exceptionConverter.handle(re, it.transactionUUID)
             }
+        }
+
+        val planetsToResources = mineCommands
+            .map { robotDomainService.getRobot(it.robotUUID).planet.planetId }
+            .distinct()
+            .map {
+                val resource = try {
+                    gameMapService.getResourceOnPlanet(it)
+                } catch (re: RuntimeException) {
+                    // we got the planetUUID from the robot, so the planet should exist
+                    // If the gameMapService returned an unknown resource, we cannot handle it here
+                    // TODO add error log here for unknown resource from gamemapclient
+                    null
+                }
+                it to resource
+            }
+            .filter { it.second != null }
+            .toMap()
+
+        val validMineCommands = mineCommands.filter {
+            val robot = robotDomainService.getRobot(it.robotUUID)
+            val resource = planetsToResources[robot.planet.planetId]!!
+            val canMine = robot.canMine(resource)
+            if (!canMine)
+                exceptionConverter.handle(
+                    LevelTooLowException(
+                        "The mining level of the robot is too low to mine the resource " +
+                            "$resource"
+                    ),
+                    it.transactionUUID
+                )
+            true
+        }
+
+        val amountAndRobotByPlanet = mutableMapOf<UUID, Pair<Int, MutableList<Robot>>>()
+        validMineCommands.forEach {
+            val robot = robotDomainService.getRobot(it.robotUUID)
+            val newRequestedAmount =
+                (amountAndRobotByPlanet[robot.planet.planetId]?.first ?: 0) + robot.miningSpeed
+            val requestingRobots =
+                amountAndRobotByPlanet[robot.planet.planetId]?.second ?: mutableListOf()
+            requestingRobots.add(robot)
+            amountAndRobotByPlanet[robot.planet.planetId] = newRequestedAmount to requestingRobots
+        }
+
+        amountAndRobotByPlanet.forEach {
+            gameMapService.mine()
         }
 
         // resource isn't available on the planet

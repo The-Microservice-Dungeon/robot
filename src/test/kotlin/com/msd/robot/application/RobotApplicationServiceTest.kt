@@ -660,7 +660,7 @@ class RobotApplicationServiceTest {
         )
 
         // when
-        robotApplicationService.executeMinings(mineCommands)
+        robotApplicationService.executeMining(mineCommands)
         // then
         assertEquals(robot1.miningSpeed, robot1.inventory.getStorageUsageForResource(ResourceType.IRON))
         assertEquals(robot2.miningSpeed, robot2.inventory.getStorageUsageForResource(ResourceType.IRON))
@@ -678,7 +678,7 @@ class RobotApplicationServiceTest {
         )
 
         // when
-        robotApplicationService.executeMinings(mineCommands)
+        robotApplicationService.executeMining(mineCommands)
 
         // then
         verify(exactly = 1) {
@@ -699,7 +699,7 @@ class RobotApplicationServiceTest {
         )
 
         // when
-        robotApplicationService.executeMinings(mineCommands)
+        robotApplicationService.executeMining(mineCommands)
 
         // then
         assertEquals(1, robot1.inventory.getStorageUsageForResource(ResourceType.IRON))
