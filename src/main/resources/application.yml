@@ -1,0 +1,8 @@
+spring:
+  kafka:
+    consumer:
+      auto-offset-reset: earliest
+    groupId: robot
+    bootstrapAddress: localhost:9092
+    roundTopic: gameServiceRound
+    robotTopic: robotServiceRobot
