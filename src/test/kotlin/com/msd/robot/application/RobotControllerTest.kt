@@ -2,12 +2,17 @@ package com.msd.robot.application
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.msd.command.application.CommandController
+import com.msd.command.application.CommandDTO
+import com.msd.planet.domain.Planet
 import com.msd.robot.application.dtos.RobotDto
+import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
@@ -102,5 +107,49 @@ class RobotControllerTest(
         val resultRobot = mapper.readValue(result.response.contentAsString, RobotDto::class.java)
 
         assert(robotRepository.existsById(resultRobot.id))
+    }
+
+    @Test
+    fun `Sending EnergyRegen Command with invalid robot UUID returns 400`() {
+        val command = "regenerate invalidRobotId ${UUID.randomUUID()}"
+        // when
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(listOf(command)))
+        }.andExpect {
+            status { isBadRequest() }
+        }
+    }
+
+    @Test
+    fun `Sending EnergyRegen Command with invalid transaction UUID returns 400`() {
+        val command = "regenerate ${UUID.randomUUID()} invalidTransactionId"
+        // when
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(listOf(command)))
+        }.andExpect {
+            status { isBadRequest() }
+        }
+    }
+
+    @Test
+    fun `Sending an EnergyRegen command leads to a robot's health being increased`() {
+
+        val robot1 = robotRepository.save(Robot(player1, Planet(UUID.randomUUID())))
+        // given
+        robot1.move(Planet(UUID.randomUUID()), 10)
+        robotRepository.save(robot1)
+
+        val command = "regenerate ${robot1.id} ${UUID.randomUUID()}"
+        // when
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(listOf(command)))
+        }.andExpect {
+            status { isAccepted() }
+        }
+        // then
+        Assertions.assertEquals(14, robotRepository.findByIdOrNull(robot1.id)!!.energy)
     }
 }
