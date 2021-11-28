@@ -145,7 +145,7 @@ class RobotApplicationServiceTest {
             robot1.block()
         planet1.blocked = false
         val command = MovementCommand(robot1.player, robot1.id, planet2.planetId, UUID.randomUUID())
-        val planetDto = GameMapPlanetDto(planet2.planetId, 3)
+        val planetDto = GameMapPlanetDto(planet2.planetId, 3, null)
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { gameMapMockService.retrieveTargetPlanetIfRobotCanReach(any(), any()) } returns planetDto
 
@@ -164,7 +164,7 @@ class RobotApplicationServiceTest {
         robot1.block()
 
         val command = MovementCommand(robot3.player, robot3.id, planet2.planetId, UUID.randomUUID())
-        val planetDto = GameMapPlanetDto(planet2.planetId, 3)
+        val planetDto = GameMapPlanetDto(planet2.planetId, 3, null)
         every { robotRepository.findByIdOrNull(robot3.id) } returns robot3
         every { gameMapMockService.retrieveTargetPlanetIfRobotCanReach(any(), any()) } returns planetDto
 
@@ -181,7 +181,7 @@ class RobotApplicationServiceTest {
     fun `Robot moves if there are no problems`() {
         // given
         val command = MovementCommand(robot1.player, robot1.id, planet2.planetId, UUID.randomUUID())
-        val planetDto = GameMapPlanetDto(planet2.planetId, 3)
+        val planetDto = GameMapPlanetDto(planet2.planetId, 3, null)
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { robotRepository.save(any()) } returns robot1
         every { gameMapMockService.retrieveTargetPlanetIfRobotCanReach(any(), any()) } returns planetDto

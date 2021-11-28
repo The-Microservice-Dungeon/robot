@@ -5,7 +5,8 @@ import java.util.*
 
 class GameMapPlanetDto(
     val id: UUID,
-    val movementCost: Int
+    val movement_difficulty: Int,
+    val resource: ResourceDto?
 ) {
 
     fun toPlanet(): Planet {
