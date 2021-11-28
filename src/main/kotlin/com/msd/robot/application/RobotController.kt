@@ -105,6 +105,12 @@ class RobotController(
         return ResponseEntity.ok(takenResources)
     }
 
+    /**
+     * Either restores a [Robot's][Robot] `energy` or `health`.
+     *
+     * @see <a href="https://the-microservice-dungeon.github.io/docs/openapi/robot/#tag/trading/paths/~1robots~1%7Brobot-uuid%7D~1instant-restore/post"></a>
+     * @return a String with a success or failure message
+     */
     @PostMapping("/{robotId}/instant-restore")
     fun restoreARobot(@PathVariable robotId: UUID, @RequestBody restorationDTO: RestorationDTO): ResponseEntity<String> {
         robotDomainService.restoreRobot(robotId, restorationDTO.restorationType)

@@ -296,6 +296,13 @@ class RobotDomainService(
         return takenResources
     }
 
+    /**
+     * Restore either the `energy` or `health` of a [Robot] fully. The type restored depends on the [RestorationType] passed.
+     *
+     * @param robotId         the id of the `Robot` that will be restored
+     * @param restorationType the type that should be restored
+     * @throws RobotNotFoundException  when the id doesn't match any `Robot`
+     */
     fun restoreRobot(robotId: UUID, restorationType: RestorationType) {
         val robot = this.getRobot(robotId)
         when (restorationType) {
