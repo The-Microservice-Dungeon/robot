@@ -6,6 +6,7 @@ import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.ItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
+import com.msd.robot.application.RestorationType
 import com.msd.robot.application.RobotNotFoundException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -174,7 +175,7 @@ class RobotDomainService(
      */
     fun getRobot(robotId: UUID): Robot {
         return robotRepository.findByIdOrNull(robotId)
-            ?: throw RobotNotFoundException("Can't find robot with id $robotId")
+            ?: throw RobotNotFoundException("Robot with ID $robotId not found")
     }
 
     /**
@@ -293,5 +294,14 @@ class RobotDomainService(
         val takenResources = robot.inventory.takeAllResources()
         robotRepository.save(robot)
         return takenResources
+    }
+
+    fun restoreRobot(robotId: UUID, restorationType: RestorationType) {
+        val robot = this.getRobot(robotId)
+        when (restorationType) {
+            RestorationType.HEALTH -> robot.repair()
+            RestorationType.ENERGY -> robot.restoreEnergy()
+        }
+        robotRepository.save(robot)
     }
 }

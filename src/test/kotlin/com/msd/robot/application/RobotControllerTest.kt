@@ -1,6 +1,7 @@
 package com.msd.robot.application
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.planet.domain.Planet
 import com.msd.robot.application.dtos.RestorationDTO
 import com.msd.robot.application.dtos.RobotDto
@@ -117,8 +118,10 @@ class RobotControllerTest(
                 "restoration-type": "HEALTH"
             }
         """.trimIndent()
+        val robotId = UUID.randomUUID()
         // when
-        val response = mockMvc.post("/robots/${UUID.randomUUID()}") {
+        val result = mockMvc.post("/robots/$robotId/instant-restore") {
+            contentType = MediaType.APPLICATION_JSON
             content = restorationDTO
         }.andExpect {
             status { HttpStatus.NOT_FOUND }
@@ -127,7 +130,7 @@ class RobotControllerTest(
         }.andReturn()
 
         // then
-        assertEquals("Robot not Found", response)
+        assertEquals("Robot with ID $robotId not found", result.response.contentAsString)
     }
 
     @Test
@@ -142,7 +145,8 @@ class RobotControllerTest(
         val robot1 = Robot(player1Id, Planet(planet1Id))
         robotRepository.save(robot1)
         // when
-        val response = mockMvc.post("/robots/${robot1.id}") {
+        val result = mockMvc.post("/robots/${robot1.id}/instant-restore") {
+            contentType = MediaType.APPLICATION_JSON
             content = restorationDTO
         }.andExpect {
             status { HttpStatus.BAD_REQUEST }
@@ -151,7 +155,7 @@ class RobotControllerTest(
         }.andReturn()
 
         // then
-        assertEquals("Request could not be accepted", response)
+        assertEquals("Request could not be accepted", result.response.contentAsString)
     }
 
     @Test
@@ -162,14 +166,16 @@ class RobotControllerTest(
         robot1.move(Planet(UUID.randomUUID()), 10)
         robot1.receiveDamage(5)
         robotRepository.save(robot1)
+
         // when
-        mockMvc.post("/robots/${robot1.id}") {
-            content = restorationDTO
+        mockMvc.post("/robots/${robot1.id}/instant-restore") {
+            contentType = MediaType.APPLICATION_JSON
+            content = jacksonObjectMapper().writeValueAsString(restorationDTO)
         }.andExpect {
             status { HttpStatus.OK }
         }.andDo {
             print()
-        }.andReturn()
+        }
 
         // then
         robot1 = robotRepository.findByIdOrNull(robot1.id)!!
@@ -180,19 +186,20 @@ class RobotControllerTest(
     @Test
     fun `Passing ENERGY RestorationType only restores ENERGY to full`() {
         // given
-        val restorationDTO = RestorationDTO(UUID.randomUUID(), RestorationType.HEALTH)
+        val restorationDTO = RestorationDTO(UUID.randomUUID(), RestorationType.ENERGY)
         var robot1 = Robot(player1Id, Planet(planet1Id))
         robot1.move(Planet(UUID.randomUUID()), 10)
         robot1.receiveDamage(5)
         robotRepository.save(robot1)
         // when
-        mockMvc.post("/robots/${robot1.id}") {
-            content = restorationDTO
+        mockMvc.post("/robots/${robot1.id}/instant-restore") {
+            contentType = MediaType.APPLICATION_JSON
+            content = jacksonObjectMapper().writeValueAsString(restorationDTO)
         }.andExpect {
             status { HttpStatus.OK }
         }.andDo {
             print()
-        }.andReturn()
+        }
 
         // then
         robot1 = robotRepository.findByIdOrNull(robot1.id)!!

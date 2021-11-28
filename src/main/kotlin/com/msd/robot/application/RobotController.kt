@@ -104,4 +104,10 @@ class RobotController(
         val takenResources = robotDomainService.takeAllResources(robotId)
         return ResponseEntity.ok(takenResources)
     }
+
+    @PostMapping("/{robotId}/instant-restore")
+    fun restoreARobot(@PathVariable robotId: UUID, @RequestBody restorationDTO: RestorationDTO): ResponseEntity<String> {
+        robotDomainService.restoreRobot(robotId, restorationDTO.restorationType)
+        return ResponseEntity.ok("robot $robotId ${restorationDTO.restorationType.name.lowercase()} restored")
+    }
 }
