@@ -139,6 +139,7 @@ class RobotControllerTest(
         val robot1 = robotRepository.save(Robot(player1, Planet(UUID.randomUUID())))
         // given
         robot1.move(Planet(UUID.randomUUID()), 10)
+        Assertions.assertEquals(10, robot1.energy)
         robotRepository.save(robot1)
 
         val command = "regenerate ${robot1.id} ${UUID.randomUUID()}"
