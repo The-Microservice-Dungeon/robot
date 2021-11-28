@@ -1,9 +1,6 @@
 package com.msd.robot.application
 
-import com.msd.application.ClientException
-import com.msd.application.ExceptionConverter
-import com.msd.application.GameMapPlanetDto
-import com.msd.application.GameMapService
+import com.msd.application.*
 import com.msd.command.*
 import com.msd.command.application.*
 import com.msd.domain.ResourceType
@@ -614,30 +611,45 @@ class RobotApplicationServiceTest {
     @Test
     fun `All MineCommands ran successfully`() {
         // given
-        every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns
-            listOf(robot1, robot2)
+        every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf()
+
+        every { gameMapMockService.getResourceOnPlanet(robot1.planet.planetId) } returns ResourceType.COAL
+        every { gameMapMockService.getResourceOnPlanet(robot2.planet.planetId) } returns ResourceType.IRON
+
+        every { gameMapMockService.mine(robot1.planet.planetId, robot1.miningSpeed) } returns robot1.miningSpeed
+        every { gameMapMockService.mine(robot2.planet.planetId, robot2.miningSpeed) } returns robot2.miningSpeed
+
+        robot2.upgrade(UpgradeType.MINING, 1)
 
         val mineCommands = listOf(
-            MineCommand(robot1.id, player1Id, ResourceType.IRON, UUID.randomUUID()),
-            MineCommand(robot2.id, player1Id, ResourceType.IRON, UUID.randomUUID()),
+            MineCommand(robot1.id, UUID.randomUUID()),
+            MineCommand(robot2.id, UUID.randomUUID()),
         )
 
         // when
         robotApplicationService.executeMining(mineCommands)
         // then
-        assertEquals(robot1.miningSpeed, robot1.inventory.getStorageUsageForResource(ResourceType.IRON))
+        assertEquals(robot1.miningSpeed, robot1.inventory.getStorageUsageForResource(ResourceType.COAL))
         assertEquals(robot2.miningSpeed, robot2.inventory.getStorageUsageForResource(ResourceType.IRON))
     }
 
     @Test
-    fun `Mining doesn't work because resource isn't available on the robots planet`() {
+    fun `Mining doesn't work for robot2 because no resource is available on the planet`() {
         // given
-        every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns
-            listOf(robot1, robot2)
+        every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf()
+
+        every { gameMapMockService.getResourceOnPlanet(robot1.planet.planetId) } returns ResourceType.COAL
+        every { gameMapMockService.getResourceOnPlanet(robot2.planet.planetId) } throws
+            NoResourceOnPlanetException(robot2.planet.planetId)
+
+        every { gameMapMockService.mine(robot1.planet.planetId, robot1.miningSpeed) } returns robot1.miningSpeed
+        every { gameMapMockService.mine(robot2.planet.planetId, robot2.miningSpeed) } returns robot2.miningSpeed
+
+        justRun { exceptionConverter.handle(any(), any()) }
 
         val mineCommands = listOf(
-            MineCommand(robot1.id, player1Id, ResourceType.IRON, UUID.randomUUID()),
-            MineCommand(robot2.id, player1Id, ResourceType.COAL, UUID.randomUUID()),
+            MineCommand(robot1.id, UUID.randomUUID()),
+            MineCommand(robot2.id, UUID.randomUUID()),
         )
 
         // when
@@ -647,27 +659,81 @@ class RobotApplicationServiceTest {
         verify(exactly = 1) {
             exceptionConverter.handle(any(), any())
         }
+        assertEquals(robot1.miningSpeed, robot1.inventory.getStorageUsageForResource(ResourceType.COAL))
     }
 
     @Test
     fun `Resources get distributed evenly because planet ran out of resources`() {
         // given
-        every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns
-            listOf(robot1, robot2, robot3)
+        // given
+        every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf()
+
+        every { gameMapMockService.getResourceOnPlanet(robot1.planet.planetId) } returns ResourceType.COAL
+
+        robot1.upgrade(UpgradeType.MINING_SPEED, 1)
+        robot1.upgrade(UpgradeType.MINING_SPEED, 2) // corresponds to 10
+        robot3.upgrade(UpgradeType.MINING_SPEED, 1)
+        robot3.upgrade(UpgradeType.MINING_SPEED, 2)
+        robot3.upgrade(UpgradeType.MINING_SPEED, 3) // corresponds to 15
+        robot4.upgrade(UpgradeType.MINING_SPEED, 1)
+        robot4.upgrade(UpgradeType.MINING_SPEED, 2)
+        robot4.upgrade(UpgradeType.MINING_SPEED, 3)
+        robot4.upgrade(UpgradeType.MINING_SPEED, 4) // corresponds to 20
+
+        val amount = robot1.miningSpeed + robot3.miningSpeed + robot4.miningSpeed
+        assertEquals(45, amount) // make sure upgrading isn't the problem
+        every { gameMapMockService.mine(robot1.planet.planetId, amount) } returns 18
 
         val mineCommands = listOf(
-            MineCommand(robot1.id, player1Id, ResourceType.IRON, UUID.randomUUID()),
-            MineCommand(robot2.id, player1Id, ResourceType.IRON, UUID.randomUUID()),
-            MineCommand(robot3.id, player1Id, ResourceType.IRON, UUID.randomUUID()),
+            MineCommand(robot1.id, UUID.randomUUID()),
+            MineCommand(robot3.id, UUID.randomUUID()),
+            MineCommand(robot4.id, UUID.randomUUID()),
         )
 
         // when
         robotApplicationService.executeMining(mineCommands)
 
         // then
-        assertEquals(1, robot1.inventory.getStorageUsageForResource(ResourceType.IRON))
-        assertEquals(1, robot2.inventory.getStorageUsageForResource(ResourceType.IRON))
-        assertEquals(1, robot3.inventory.getStorageUsageForResource(ResourceType.IRON))
+        assertEquals(4, robot1.inventory.getStorageUsageForResource(ResourceType.COAL))
+        assertEquals(6, robot3.inventory.getStorageUsageForResource(ResourceType.COAL))
+        assertEquals(8, robot4.inventory.getStorageUsageForResource(ResourceType.COAL))
+    }
+
+    @Test
+    fun `Resources get distributed as fairly as possible after mining`() {
+        // given
+        // given
+        every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf()
+
+        every { gameMapMockService.getResourceOnPlanet(robot1.planet.planetId) } returns ResourceType.COAL
+
+        robot1.upgrade(UpgradeType.MINING_SPEED, 1)
+        robot1.upgrade(UpgradeType.MINING_SPEED, 2) // corresponds to 10
+        robot3.upgrade(UpgradeType.MINING_SPEED, 1)
+        robot3.upgrade(UpgradeType.MINING_SPEED, 2)
+        robot3.upgrade(UpgradeType.MINING_SPEED, 3) // corresponds to 15
+        robot4.upgrade(UpgradeType.MINING_SPEED, 1)
+        robot4.upgrade(UpgradeType.MINING_SPEED, 2)
+        robot4.upgrade(UpgradeType.MINING_SPEED, 3)
+        robot4.upgrade(UpgradeType.MINING_SPEED, 4) // corresponds to 20
+
+        val amount = robot1.miningSpeed + robot3.miningSpeed + robot4.miningSpeed
+        assertEquals(45, amount) // make sure upgrading isn't the problem
+        every { gameMapMockService.mine(robot1.planet.planetId, amount) } returns 22
+
+        val mineCommands = listOf(
+            MineCommand(robot1.id, UUID.randomUUID()),
+            MineCommand(robot3.id, UUID.randomUUID()),
+            MineCommand(robot4.id, UUID.randomUUID()),
+        )
+
+        // when
+        robotApplicationService.executeMining(mineCommands)
+
+        // then
+        assertEquals(6, robot1.inventory.getStorageUsageForResource(ResourceType.COAL))
+        assertEquals(7, robot3.inventory.getStorageUsageForResource(ResourceType.COAL))
+        assertEquals(9, robot4.inventory.getStorageUsageForResource(ResourceType.COAL))
     }
 
     @Test

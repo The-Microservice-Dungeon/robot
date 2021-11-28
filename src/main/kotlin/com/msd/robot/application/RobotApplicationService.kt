@@ -83,9 +83,7 @@ class RobotApplicationService(
      */
     fun spawn(player: UUID, planet: UUID): Robot {
         val robot = Robot(player, Planet(planet))
-        if (gameMapService.getAllPlanets().map { it.id }.contains(planet))
-            return robotDomainService.saveRobot(robot)
-        else throw InvalidPlanetException(planet)
+        return robotDomainService.saveRobot(robot)
     }
 
     /**
@@ -229,43 +227,57 @@ class RobotApplicationService(
      * @param mineCommands          a list of MineCommands that need to be executed.
      */
     fun executeMining(mineCommands: List<MineCommand>) {
-        val planetsToResources = getResourcesOnPlanets(mineCommands)
+        val resourcesByPlanets = getResourcesOnPlanets(mineCommands)
 
-        val extendedMineCommands = createMineProcessData(mineCommands, planetsToResources)
+        val validMineCommands = replaceIdsByObjectsInValidMineCommands(mineCommands, resourcesByPlanets)
 
-        val amountsByGroupedPlanet = resourceAmountRequestedOnPlanet(extendedMineCommands)
+        val amountsByGroupedPlanet = resourceAmountRequestedPerPlanet(validMineCommands)
 
         amountsByGroupedPlanet.forEach { (planet, amount) ->
-            val miningProcessDataForPlanet = extendedMineCommands.filter { it.planet == planet }
-            val miningRobotsOnPlanet = miningProcessDataForPlanet.map { it.robot }
-            val resource = miningProcessDataForPlanet[0].resource
-            val minedAmount = gameMapService.mine(planet, amount)
-            distributeMinedResources(miningRobotsOnPlanet, minedAmount, resource)
+            mineResourcesOnPlanet(validMineCommands, planet, amount)
         }
     }
 
     /**
-     * There is no completely fair way to share those resources, but we try to get close.
+     *
+     */
+    private fun mineResourcesOnPlanet(
+        validMineCommands: MutableList<ValidMineCommand>,
+        planet: UUID,
+        amount: Int
+    ) {
+        val miningsOnPlanet = validMineCommands.filter { it.planet == planet }
+        val miningRobotsOnPlanet = miningsOnPlanet.map { it.robot }
+        val resource = miningsOnPlanet[0].resource
+        try {
+            val minedAmount = gameMapService.mine(planet, amount)
+            distributeMinedResources(miningRobotsOnPlanet, minedAmount, resource)
+        } catch (re: RuntimeException) {
+            exceptionConverter.handleAll(re, validMineCommands.map { it.transactionId })
+        }
+    }
+
+    /**
+     * There is no perfectly fair way to share those resources, but we try to get close. The current method favors
+     * robots with a higher miningSpeed.
      */
     private fun distributeMinedResources(robots: List<Robot>, amount: Int, resource: ResourceType) {
-        val pair = distributeByMiningSpeed(robots, amount, resource)
-        val amountDistributed = pair.first
-        val robotsRemainder = pair.second
+        val (amountDistributed, robotsDecimalPlaces) = distributeByMiningSpeed(robots, amount, resource)
 
-        distributeRemainingByDecimalPlaces(robotsRemainder, amount - amountDistributed, resource)
+        distributeRemainingByDecimalPlaces(robotsDecimalPlaces, amount - amountDistributed, resource)
 
         robotDomainService.saveAll(robots)
     }
 
     private fun distributeRemainingByDecimalPlaces(
         robotsDecimalPlaces: MutableMap<Robot, Double>,
-        amount: Int,
+        remainingAmount: Int,
         resource: ResourceType
     ) {
         var amountDistributed = 0
-        val sortedDecimalPlaces = robotsDecimalPlaces.entries.sortedBy { it.value }
+        val sortedDecimalPlaces = robotsDecimalPlaces.entries.sortedBy { it.value }.reversed()
         val index = 0
-        while (amountDistributed < amount) {
+        while (amountDistributed < remainingAmount) {
             sortedDecimalPlaces[index].key.inventory.addResource(resource, 1)
             amountDistributed += 1
         }
@@ -290,8 +302,16 @@ class RobotApplicationService(
         return Pair(amountDistributed, robotsRemainder)
     }
 
-    private fun resourceAmountRequestedOnPlanet(extendedMineCommands: MutableList<MiningProcessData>): Map<UUID, Int> {
-        val amountsByGroupedPlanet = extendedMineCommands.groupingBy { it.planet }.fold(
+    /**
+     * Return the accumulated amount of requested resources for each distinct planet in the mineCommands.
+     * This is achieved by grouping the commands by their planet and then accumulating the requested amount of each
+     * planet.
+     *
+     * @Param mineCommands: A list of ValidMineCommands, each containing a requested amount and a planet.
+     * @return A map connecting the distinct planets to the amount of resources requested from their resource.
+     */
+    private fun resourceAmountRequestedPerPlanet(mineCommands: MutableList<ValidMineCommand>): Map<UUID, Int> {
+        val amountsByGroupedPlanet = mineCommands.groupingBy { it.planet }.fold(
             { _, _ -> 0 },
             { _, acc, element ->
                 acc + element.amountRequested
@@ -300,45 +320,51 @@ class RobotApplicationService(
         return amountsByGroupedPlanet
     }
 
-    private fun createMineProcessData(
+    /**
+     *
+     */
+    private fun replaceIdsByObjectsInValidMineCommands(
         mineCommands: List<MineCommand>,
         planetsToResources: Map<UUID, ResourceType?>
-    ): MutableList<MiningProcessData> {
-        val extendedMineCommands = mutableListOf<MiningProcessData>()
+    ): MutableList<ValidMineCommand> {
+        val validMineCommands = mutableListOf<ValidMineCommand>()
 
         for (mineCommand in mineCommands) {
             try {
                 val robot = robotDomainService.getRobot(mineCommand.robotUUID)
                 val resource = planetsToResources[robot.planet.planetId]
                     ?: throw NoResourceOnPlanetException(robot.planet.planetId)
-                val extendedMineCommand = MiningProcessData(
+                val extendedMineCommand = ValidMineCommand(
                     robot, robot.planet.planetId,
                     mineCommand.transactionUUID, resource, robot.miningSpeed
                 )
-                if (robot.canMine(resource))
-                    extendedMineCommands.add(extendedMineCommand)
-                else throw LevelTooLowException(
-                    "The mining level of the robot is too low to mine " +
-                        "the resource $resource"
-                )
+                if (!robot.canMine(resource))
+                    throw LevelTooLowException("The mining level of the robot is too low to mine the resource $resource")
+                validMineCommands.add(extendedMineCommand)
             } catch (re: RuntimeException) {
                 exceptionConverter.handle(re, mineCommand.transactionUUID)
             }
         }
-        return extendedMineCommands
+        return validMineCommands
     }
 
+    /**
+     * Create a map of planets and the resources they offer. Each planet either has a single resource or none,
+     * represented with a null value.
+     *
+     * @param mineCommands: A list of commands, for which the resources should be fetched.
+     * @return a map assigning each planet a resource
+     */
     private fun getResourcesOnPlanets(mineCommands: List<MineCommand>) = mineCommands
         .map { robotDomainService.getRobot(it.robotUUID).planet.planetId }
         .distinct()
         .map {
-            val resource = try {
+            it to try {
                 gameMapService.getResourceOnPlanet(it)
             } catch (re: RuntimeException) {
-                // if there was any problem we just return null, this will cause an exception to be thrown later on
+                // if there was any problem we just put null, this will cause an exception to be thrown later on
                 null
             }
-            it to resource
         }
         .filter { it.second != null }
         .toMap()

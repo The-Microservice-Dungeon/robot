@@ -9,6 +9,5 @@ import java.util.*
  */
 class MineCommand(
     robotUUID: UUID,
-    playerUUID: UUID,
     transactionUUID: UUID
-) : Command(robotUUID, playerUUID, transactionUUID)
+) : Command(robotUUID, transactionUUID)

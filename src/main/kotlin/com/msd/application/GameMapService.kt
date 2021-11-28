@@ -128,7 +128,7 @@ class GameMapService {
                 if (response.statusCode() == HttpStatus.OK)
                     response.bodyToMono<GameMapPlanetDto>()
                 else if (response.statusCode().is4xxClientError)
-                    throw TargetPlanetNotReachableException("The planet with the ID $planetId does not exist")
+                    throw UnknownPlanetException(planetId)
                 else
                     throw ClientException(
                         "GameMap Client returned internal error when retrieving resource on planet $planetId"

@@ -4,7 +4,7 @@ import com.msd.domain.ResourceType
 import com.msd.robot.domain.Robot
 import java.util.*
 
-class MiningProcessData(
+class ValidMineCommand(
     val robot: Robot,
     val planet: UUID,
     val transactionId: UUID,
