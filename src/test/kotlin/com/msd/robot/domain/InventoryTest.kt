@@ -3,7 +3,7 @@ package com.msd.robot.domain
 import com.msd.domain.ResourceType
 import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.MovementItemType
-import com.msd.item.domain.ReparationItemType
+import com.msd.item.domain.RepairItemType
 import com.msd.planet.domain.Planet
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -138,14 +138,14 @@ class InventoryTest {
     fun `adding an item correctly increases its count`() {
         // when
         robot1.inventory.addItem(MovementItemType.WORMHOLE)
-        robot1.inventory.addItem(ReparationItemType.REPARATION_SWARM)
+        robot1.inventory.addItem(RepairItemType.REPAIR_SWARM)
         robot1.inventory.addItem(AttackItemType.ROCKET)
         robot1.inventory.addItem(AttackItemType.LONG_RANGE_BOMBARDMENT)
         robot1.inventory.addItem(AttackItemType.SELF_DESTRUCTION)
         robot1.inventory.addItem(AttackItemType.NUKE)
         // then
         assertEquals(1, robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
-        assertEquals(1, robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM))
+        assertEquals(1, robot1.inventory.getItemAmountByType(RepairItemType.REPAIR_SWARM))
         assertEquals(1, robot1.inventory.getItemAmountByType(AttackItemType.ROCKET))
         assertEquals(1, robot1.inventory.getItemAmountByType(AttackItemType.LONG_RANGE_BOMBARDMENT))
         assertEquals(1, robot1.inventory.getItemAmountByType(AttackItemType.SELF_DESTRUCTION))
@@ -156,7 +156,7 @@ class InventoryTest {
     fun `removing an item correctly decreases its count`() {
         // given
         robot1.inventory.addItem(MovementItemType.WORMHOLE)
-        robot1.inventory.addItem(ReparationItemType.REPARATION_SWARM)
+        robot1.inventory.addItem(RepairItemType.REPAIR_SWARM)
         robot1.inventory.addItem(AttackItemType.ROCKET)
         robot1.inventory.addItem(AttackItemType.LONG_RANGE_BOMBARDMENT)
         robot1.inventory.addItem(AttackItemType.SELF_DESTRUCTION)
@@ -164,14 +164,14 @@ class InventoryTest {
 
         // when
         robot1.inventory.removeItem(MovementItemType.WORMHOLE)
-        robot1.inventory.removeItem(ReparationItemType.REPARATION_SWARM)
+        robot1.inventory.removeItem(RepairItemType.REPAIR_SWARM)
         robot1.inventory.removeItem(AttackItemType.ROCKET)
         robot1.inventory.removeItem(AttackItemType.LONG_RANGE_BOMBARDMENT)
         robot1.inventory.removeItem(AttackItemType.SELF_DESTRUCTION)
         robot1.inventory.removeItem(AttackItemType.NUKE)
         // then
         assertEquals(0, robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
-        assertEquals(0, robot1.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM))
+        assertEquals(0, robot1.inventory.getItemAmountByType(RepairItemType.REPAIR_SWARM))
         assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.ROCKET))
         assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.LONG_RANGE_BOMBARDMENT))
         assertEquals(0, robot1.inventory.getItemAmountByType(AttackItemType.SELF_DESTRUCTION))
@@ -190,7 +190,7 @@ class InventoryTest {
             },
             {
                 assertThrows<IllegalArgumentException> {
-                    assertEquals(0, robot1.inventory.removeItem(ReparationItemType.REPARATION_SWARM))
+                    assertEquals(0, robot1.inventory.removeItem(RepairItemType.REPAIR_SWARM))
                 }
             },
             {

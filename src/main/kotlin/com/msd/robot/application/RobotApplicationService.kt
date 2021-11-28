@@ -56,7 +56,7 @@ class RobotApplicationService(
                     is MovementCommand -> move(it)
                     is BlockCommand -> block(it)
                     is EnergyRegenCommand -> regenerateEnergy(it)
-                    is ReparationItemUsageCommand -> useReparationItem(it)
+                    is RepairItemUsageCommand -> useRepairItem(it)
                     is MovementItemsUsageCommand -> useMovementItem(it)
                 }
             } catch (re: RuntimeException) {
@@ -72,7 +72,7 @@ class RobotApplicationService(
      * @param command   the `MovementItemsUsageCommand` specifying which `Robot` should use which `item`
      */
     private fun useMovementItem(command: MovementItemsUsageCommand) {
-        robotDomainService.useMovementItem(command.playerUUID, command.robotUUID, command.itemType)
+        robotDomainService.useMovementItem(command.robotUUID, command.itemType)
     }
 
     /**
@@ -97,11 +97,9 @@ class RobotApplicationService(
      */
     fun move(moveCommand: MovementCommand) {
         val robotId = moveCommand.robotUUID
-        val playerId = moveCommand.playerUUID
 
         val robot = robotDomainService.getRobot(robotId)
 
-        robotDomainService.checkRobotBelongsToPlayer(robot, playerId)
         val planetDto =
             gameMapService.retrieveTargetPlanetIfRobotCanReach(robot.planet.planetId, moveCommand.targetPlanetUUID)
         val cost = planetDto.movement_difficulty
@@ -119,7 +117,6 @@ class RobotApplicationService(
      */
     fun block(blockCommand: BlockCommand) {
         val robot = robotDomainService.getRobot(blockCommand.robotUUID)
-        robotDomainService.checkRobotBelongsToPlayer(robot, blockCommand.playerUUID)
         robot.block()
         robotDomainService.saveRobot(robot)
     }
@@ -134,8 +131,6 @@ class RobotApplicationService(
      */
     fun regenerateEnergy(energyRegenCommand: EnergyRegenCommand) {
         val robot = robotDomainService.getRobot(energyRegenCommand.robotUUID)
-
-        robotDomainService.checkRobotBelongsToPlayer(robot, energyRegenCommand.playerUUID)
         robot.regenerateEnergy()
         robotDomainService.saveRobot(robot)
     }
@@ -172,7 +167,7 @@ class RobotApplicationService(
                 val attacker = robotDomainService.getRobot(it.robotUUID)
                 val target = robotDomainService.getRobot(it.targetRobotUUID)
 
-                robotDomainService.fight(attacker, target, it.playerUUID)
+                robotDomainService.fight(attacker, target)
                 battleFields.add(attacker.planet.planetId)
             } catch (re: RuntimeException) {
                 exceptionConverter.handle(re, it.transactionUUID)
@@ -185,12 +180,12 @@ class RobotApplicationService(
     }
 
     /**
-     * Makes the specified [Robot] use the specified [ReparationItem][ReparationItemType].
+     * Makes the specified [Robot] use the specified [ReparationItem][RepairItemType].
      *
-     * @param command the [ReparationItemUsageCommand] which specifies which `Robot` should use which item
+     * @param command the [RepairItemUsageCommand] which specifies which `Robot` should use which item
      */
-    fun useReparationItem(command: ReparationItemUsageCommand) {
-        robotDomainService.useReparationItem(command.playerUUID, command.robotUUID, command.itemType)
+    fun useRepairItem(command: RepairItemUsageCommand) {
+        robotDomainService.useRepairItem(command.robotUUID, command.itemType)
     }
 
     /**
@@ -204,8 +199,7 @@ class RobotApplicationService(
         val battleFields = mutableSetOf<UUID>()
         usageCommands.forEach {
             try {
-                val battlefield =
-                    robotDomainService.useAttackItem(it.robotUUID, it.targetUUID, it.playerUUID, it.itemType)
+                val battlefield = robotDomainService.useAttackItem(it.robotUUID, it.targetUUID, it.itemType)
                 battleFields.add(battlefield)
             } catch (re: RuntimeException) {
                 exceptionConverter.handle(re, it.transactionUUID)
