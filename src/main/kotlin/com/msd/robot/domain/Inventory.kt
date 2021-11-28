@@ -5,6 +5,9 @@ import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.ItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.ReparationItemType
+import com.msd.robot.domain.exception.InventoryFullException
+import com.msd.robot.domain.exception.NotEnoughResourcesException
+import com.msd.robot.domain.exception.UpgradeException
 import java.util.*
 import javax.persistence.ElementCollection
 import javax.persistence.Entity

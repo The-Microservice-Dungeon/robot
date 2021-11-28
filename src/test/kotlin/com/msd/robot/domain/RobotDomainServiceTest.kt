@@ -7,7 +7,10 @@ import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.ReparationItemType
 import com.msd.planet.domain.Planet
-import com.msd.robot.application.InvalidPlayerException
+import com.msd.robot.application.exception.InvalidPlayerException
+import com.msd.robot.domain.exception.NotEnoughEnergyException
+import com.msd.robot.domain.exception.NotEnoughItemsException
+import com.msd.robot.domain.exception.TargetRobotOutOfReachException
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
@@ -74,7 +77,7 @@ internal class RobotDomainServiceTest {
         every { robotRepository.findByIdOrNull(any()) } answers { robots.find { it.id == firstArg() } }
 
         // when
-        assertThrows<OutOfReachException>("Robots must be on the same Planet to attack each other") {
+        assertThrows<TargetRobotOutOfReachException>("Robots must be on the same Planet to attack each other") {
             robotDomainService.fight(robot1, robot6, robot1.player)
         }
         // then

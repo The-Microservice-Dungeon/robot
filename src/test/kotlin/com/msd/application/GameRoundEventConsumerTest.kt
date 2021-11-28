@@ -2,6 +2,7 @@ package com.msd.application
 
 import com.msd.planet.domain.Planet
 import com.msd.planet.domain.PlanetRepository
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
@@ -18,10 +19,10 @@ import java.util.*
 @SpringBootTest
 @DirtiesContext
 @EmbeddedKafka(partitions = 1, brokerProperties = ["listeners=PLAINTEXT://localhost:9092", "port=9092"])
-internal class GameRoundServiceTest(
+internal class GameRoundEventConsumerTest(
     @Autowired val kafkaTemplate: KafkaTemplate<String, String>,
     @Autowired val registry: KafkaListenerEndpointRegistry,
-    @Autowired val gameRoundService: GameRoundService,
+    @Autowired val gameRoundEventConsumer: GameRoundEventConsumer,
     @Autowired val planetRepository: PlanetRepository
 ) {
 
@@ -49,8 +50,9 @@ internal class GameRoundServiceTest(
         // given
         planets.forEach { it.blocked = true }
         planetRepository.saveAll(planets)
+        val record = ConsumerRecord("gameServiceRound", 1, 0, "", "ended")
         // when
-        gameRoundService.resetBlocks()
+        gameRoundEventConsumer.resetBlocks(record)
         // then
         assertAll(
             planetRepository.findAll().map { { assertFalse(it.blocked) } }

@@ -20,7 +20,10 @@ class KafkaProducerConfig {
         val configProps = hashMapOf<String, Any>(
             ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to bootstrapAddress,
             ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
-            ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java
+            ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
+            ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG to 1000,
+            ProducerConfig.ACKS_CONFIG to "all",
+            ProducerConfig.RETRIES_CONFIG to 2
         )
         return DefaultKafkaProducerFactory(configProps)
     }

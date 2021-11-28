@@ -6,8 +6,10 @@ import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.ItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.ReparationItemType
-import com.msd.robot.application.InvalidPlayerException
-import com.msd.robot.application.RobotNotFoundException
+import com.msd.robot.application.exception.InvalidPlayerException
+import com.msd.robot.application.exception.RobotNotFoundException
+import com.msd.robot.domain.exception.NotEnoughItemsException
+import com.msd.robot.domain.exception.TargetRobotOutOfReachException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.util.*
@@ -23,13 +25,13 @@ class RobotDomainService(
      *
      * @param attacker      The robot attacking
      * @param target        The target of the attack
-     * @throws OutOfReachException If the robots are not on the same planet
+     * @throws TargetRobotOutOfReachException If the robots are not on the same planet
      */
     fun fight(attacker: Robot, target: Robot, player: UUID) {
         checkRobotBelongsToPlayer(attacker, player)
 
         if (attacker.planet.planetId != target.planet.planetId)
-            throw OutOfReachException("The attacking robot and the defending robot are not on the same planet")
+            throw TargetRobotOutOfReachException("The attacking robot and the defending robot are not on the same planet")
 
         attacker.attack(target)
 

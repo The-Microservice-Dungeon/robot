@@ -2,7 +2,7 @@ package com.msd.application
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.msd.robot.application.TargetPlanetNotReachableException
+import com.msd.robot.application.exception.TargetPlanetNotReachableException
 import io.netty.channel.ChannelOption
 import io.netty.handler.timeout.ReadTimeoutHandler
 import io.netty.handler.timeout.WriteTimeoutHandler

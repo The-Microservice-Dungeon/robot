@@ -1,3 +1,3 @@
-package com.msd.robot.application
+package com.msd.robot.application.exception
 
 class InvalidPlayerException(s: String) : RuntimeException(s)

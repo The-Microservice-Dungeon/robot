@@ -1,10 +1,10 @@
 package com.msd.item.domain
 
 import com.msd.domain.InvalidTargetException
-import com.msd.robot.application.RobotNotFoundException
-import com.msd.robot.domain.OutOfReachException
+import com.msd.robot.application.exception.RobotNotFoundException
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
+import com.msd.robot.domain.exception.TargetRobotOutOfReachException
 import org.springframework.data.repository.findByIdOrNull
 import java.util.*
 
@@ -23,7 +23,7 @@ enum class AttackItemType(val use: (Robot, UUID, RobotRepository) -> UUID) : Ite
  * @param robotRepo: Repository for retrieving affected robots
  *
  * @throws RobotNotFoundException when the specified target UUID does not belong to any robot
- * @throws OutOfReachException when the target robot is not on the same planet as the user
+ * @throws TargetRobotOutOfReachException when the target robot is not on the same planet as the user
  *
  * @return the UUID of the planet on which the fight happened
  */
@@ -31,7 +31,7 @@ private fun useRocket(user: Robot, target: UUID, robotRepo: RobotRepository): UU
     val targetRobot = robotRepo.findByIdOrNull(target)
         ?: throw RobotNotFoundException("The rocket couldn't find a robot with that UUID")
     if (targetRobot.planet.planetId != user.planet.planetId)
-        throw OutOfReachException("The target robot is not on the same planet as the using robot")
+        throw TargetRobotOutOfReachException("The target robot is not on the same planet as the using robot")
     targetRobot.receiveDamage(5)
     robotRepo.save(targetRobot)
     return targetRobot.planet.planetId

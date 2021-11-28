@@ -1,8 +1,14 @@
 spring:
+  application:
+    name: robot
   kafka:
+    group-id: robot
+    enabled: true
+    bootstrap-servers: localhost:9092
+    topic:
+      producer:
+        robot: robotServiceRobot
+      consumer:
+        round: gameServiceRound
     consumer:
       auto-offset-reset: earliest
-    groupId: robot
-    bootstrapAddress: localhost:9092
-    roundTopic: gameServiceRound
-    robotTopic: robotServiceRobot

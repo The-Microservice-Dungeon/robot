@@ -14,10 +14,10 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory
 @Configuration
 class KafkaConsumerConfig {
 
-    @Value(value = "\${spring.kafka.bootstrapAddress}")
+    @Value(value = "\${spring.kafka.bootstrap-servers}")
     private lateinit var bootstrapAddress: String
 
-    @Value(value = "\${spring.kafka.groupId}")
+    @Value(value = "\${spring.kafka.group-id}")
     private lateinit var groupId: String
 
     @Bean
