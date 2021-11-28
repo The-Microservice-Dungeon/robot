@@ -1,7 +1,6 @@
 package com.msd.robot.application
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.msd.command.application.CommandController
 import com.msd.planet.domain.Planet
 import com.msd.robot.application.dtos.RestorationDTO
 import com.msd.robot.application.dtos.RobotDto
@@ -25,14 +24,13 @@ import java.util.*
 @ActiveProfiles(profiles = ["no-async"])
 class RobotControllerTest(
     @Autowired private var mockMvc: MockMvc,
-    @Autowired private var commandController: CommandController,
     @Autowired private var robotRepository: RobotRepository,
     @Autowired private var mapper: ObjectMapper,
 ) {
 
-    val player1Id = UUID.fromString("d43608d5-2107-47a0-bd4f-6720dfa53c4d")
+    val player1Id: UUID = UUID.fromString("d43608d5-2107-47a0-bd4f-6720dfa53c4d")
 
-    val planet1Id = UUID.fromString("8f3c39b1-c439-4646-b646-ace4839d8849")
+    val planet1Id: UUID = UUID.fromString("8f3c39b1-c439-4646-b646-ace4839d8849")
 
     @Test
     fun `Sending Spawn Command with invalid planet UUID returns 400`() {
@@ -165,7 +163,7 @@ class RobotControllerTest(
         robot1.receiveDamage(5)
         robotRepository.save(robot1)
         // when
-        val response = mockMvc.post("/robots/${robot1.id}") {
+        mockMvc.post("/robots/${robot1.id}") {
             content = restorationDTO
         }.andExpect {
             status { HttpStatus.OK }
@@ -188,7 +186,7 @@ class RobotControllerTest(
         robot1.receiveDamage(5)
         robotRepository.save(robot1)
         // when
-        val response = mockMvc.post("/robots/${robot1.id}") {
+        mockMvc.post("/robots/${robot1.id}") {
             content = restorationDTO
         }.andExpect {
             status { HttpStatus.OK }
