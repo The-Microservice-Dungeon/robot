@@ -7,7 +7,15 @@ spring:
     bootstrap-servers: localhost:9092
     topic:
       producer:
-        robot: robotServiceRobot
+        robot-movement: movement
+        robot-neighbours: neighbours
+        robot-blocked: planet-blocked
+        robot-mining: mining
+        robot-fighting: fighting
+        robot-regeneration: regeneration
+        robot-item-fighting: item-fighting
+        robot-item-repair: item-repair
+        robot-item-movement: item-movement
       consumer:
         round: gameServiceRound
     consumer:
