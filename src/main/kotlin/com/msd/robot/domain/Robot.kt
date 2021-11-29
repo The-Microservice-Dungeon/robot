@@ -271,10 +271,18 @@ class Robot(
     }
 
     /**
-     * Regenerates this [Robot's] [Robot] `energy`.
+     * Regenerates this [Robot's] [Robot] `energy`. The amount restored corresponds to the `energyRegen` value.
      */
     fun regenerateEnergy() {
         energy += energyRegen
+    }
+
+    /**
+     * Fully restores a `Robot's` `energy`. This method unlike `regenerateEnergy` is supposed to represent the energy
+     * regeneration at a space station.
+     */
+    fun restoreEnergy() {
+        energy = maxEnergy
     }
 
     /**
