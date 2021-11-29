@@ -224,7 +224,7 @@ class RobotApplicationService(
     /**
      * Executes all mining commands.
      *
-     * @param mineCommands          a list of MineCommands that need to be executed.
+     * @param mineCommands: A list of MineCommands that need to be executed.
      */
     fun executeMining(mineCommands: List<MineCommand>) {
         val resourcesByPlanets = getResourcesOnPlanets(mineCommands)
@@ -239,89 +239,38 @@ class RobotApplicationService(
     }
 
     /**
+     * Create a map of planets and the resource each offers. Each planet either has a single resource or none,
+     * represented with a null value.
      *
+     * @param mineCommands: A list of commands, for which the resources should be fetched.
+     * @return a map assigning each planet a resource or a null value
      */
-    private fun mineResourcesOnPlanet(
-        validMineCommands: MutableList<ValidMineCommand>,
-        planet: UUID,
-        amount: Int
-    ) {
-        val miningsOnPlanet = validMineCommands.filter { it.planet == planet }
-        val miningRobotsOnPlanet = miningsOnPlanet.map { it.robot }
-        val resource = miningsOnPlanet[0].resource
-        try {
-            val minedAmount = gameMapService.mine(planet, amount)
-            distributeMinedResources(miningRobotsOnPlanet, minedAmount, resource)
-        } catch (re: RuntimeException) {
-            exceptionConverter.handleAll(re, validMineCommands.map { it.transactionId })
-        }
-    }
-
-    /**
-     * There is no perfectly fair way to share those resources, but we try to get close. The current method favors
-     * robots with a higher miningSpeed.
-     */
-    private fun distributeMinedResources(robots: List<Robot>, amount: Int, resource: ResourceType) {
-        val (amountDistributed, robotsDecimalPlaces) = distributeByMiningSpeed(robots, amount, resource)
-
-        distributeRemainingByDecimalPlaces(robotsDecimalPlaces, amount - amountDistributed, resource)
-
-        robotDomainService.saveAll(robots)
-    }
-
-    private fun distributeRemainingByDecimalPlaces(
-        robotsDecimalPlaces: MutableMap<Robot, Double>,
-        remainingAmount: Int,
-        resource: ResourceType
-    ) {
-        var amountDistributed = 0
-        val sortedDecimalPlaces = robotsDecimalPlaces.entries.sortedBy { it.value }.reversed()
-        val index = 0
-        while (amountDistributed < remainingAmount) {
-            sortedDecimalPlaces[index].key.inventory.addResource(resource, 1)
-            amountDistributed += 1
-        }
-    }
-
-    private fun distributeByMiningSpeed(
-        robots: List<Robot>,
-        amount: Int,
-        resource: ResourceType
-    ): Pair<Int, MutableMap<Robot, Double>> {
-        val accumulatedMiningSpeed = robots.fold(0) { acc, robot -> acc + robot.miningSpeed }
-        var amountDistributed = 0
-        val robotsRemainder = mutableMapOf<Robot, Double>()
-
-        robots.forEach {
-            val correspondingAmount = floor((it.miningSpeed.toDouble() / accumulatedMiningSpeed) * amount).toInt()
-            val remainder = ((it.miningSpeed.toDouble() / accumulatedMiningSpeed) * amount) - correspondingAmount
-            amountDistributed += correspondingAmount
-            robotsRemainder[it] = remainder
-            it.inventory.addResource(resource, correspondingAmount)
-        }
-        return Pair(amountDistributed, robotsRemainder)
-    }
-
-    /**
-     * Return the accumulated amount of requested resources for each distinct planet in the mineCommands.
-     * This is achieved by grouping the commands by their planet and then accumulating the requested amount of each
-     * planet.
-     *
-     * @Param mineCommands: A list of ValidMineCommands, each containing a requested amount and a planet.
-     * @return A map connecting the distinct planets to the amount of resources requested from their resource.
-     */
-    private fun resourceAmountRequestedPerPlanet(mineCommands: MutableList<ValidMineCommand>): Map<UUID, Int> {
-        val amountsByGroupedPlanet = mineCommands.groupingBy { it.planet }.fold(
-            { _, _ -> 0 },
-            { _, acc, element ->
-                acc + element.amountRequested
+    private fun getResourcesOnPlanets(mineCommands: List<MineCommand>) = mineCommands
+        .map { robotDomainService.getRobot(it.robotUUID).planet.planetId }
+        .distinct()
+        .map {
+            it to try {
+                gameMapService.getResourceOnPlanet(it)
+            } catch (re: RuntimeException) {
+                // if there was any problem we just put null, this will cause an exception to be thrown later on
+                null
             }
-        )
-        return amountsByGroupedPlanet
-    }
+        }
+        .filter { it.second != null }
+        .toMap()
 
     /**
+     * Creates a list of [ValidMineCommand]s, which represent valid [MineCommand]s but using the entity objects instead
+     * of their IDs. A MineCommand is valid, if
+     * 1. the specified robot UUID corresponds to an actual robot
+     * 2. the planet on which the robot is positioned exists and has a resource patch on it
+     * 3. the robot has the necessary mining level to mine the resource on the planet
      *
+     * @param mineCommands: The list of [MineCommand]s which gets filtered for validity
+     * @param planetsToResources: A map of planets assigning each a resourceType or a null value, representing no
+     *                            resource present on the planet.
+     * @return a list of [ValidMineCommand]s, representing only the MineCommands which are valid and having replaced
+*              the IDs with the corresponding entities.
      */
     private fun replaceIdsByObjectsInValidMineCommands(
         mineCommands: List<MineCommand>,
@@ -349,23 +298,126 @@ class RobotApplicationService(
     }
 
     /**
-     * Create a map of planets and the resources they offer. Each planet either has a single resource or none,
-     * represented with a null value.
+     * Return the accumulated amount of requested resources for each distinct planet in the mineCommands.
+     * This is achieved by grouping the commands by their planet and then accumulating the requested amount of each
+     * planet.
      *
-     * @param mineCommands: A list of commands, for which the resources should be fetched.
-     * @return a map assigning each planet a resource
+     * @Param mineCommands: A list of ValidMineCommands, each containing a requested amount and a planet.
+     * @return A map connecting the distinct planets to the amount of resources requested from their resource.
      */
-    private fun getResourcesOnPlanets(mineCommands: List<MineCommand>) = mineCommands
-        .map { robotDomainService.getRobot(it.robotUUID).planet.planetId }
-        .distinct()
-        .map {
-            it to try {
-                gameMapService.getResourceOnPlanet(it)
-            } catch (re: RuntimeException) {
-                // if there was any problem we just put null, this will cause an exception to be thrown later on
-                null
+    private fun resourceAmountRequestedPerPlanet(mineCommands: MutableList<ValidMineCommand>): Map<UUID, Int> {
+        val amountsByGroupedPlanet = mineCommands.groupingBy { it.planet }.fold(
+            { _, _ -> 0 },
+            { _, acc, element ->
+                acc + element.amountRequested
             }
+        )
+        return amountsByGroupedPlanet
+    }
+
+    /**
+     * Tries to mine the specified amount of resources on the planet and distributes the actual amount between the
+     * mining robots on the planet.
+     *
+     * @param validMineCommands the list of commands specifying all minings taking place
+     * @param planet: The planetId for which to execute the MineCommands
+     * @param amount: pre-aggregated amount of resources to mine on the planet
+     */
+    private fun mineResourcesOnPlanet(
+        validMineCommands: MutableList<ValidMineCommand>,
+        planet: UUID,
+        amount: Int
+    ) {
+        val miningsOnPlanet = validMineCommands.filter { it.planet == planet }
+        val miningRobotsOnPlanet = miningsOnPlanet.map { it.robot }
+        val resource = miningsOnPlanet[0].resource
+        try {
+            val minedAmount = gameMapService.mine(planet, amount)
+            distributeMinedResources(miningRobotsOnPlanet, minedAmount, resource)
+        } catch (re: RuntimeException) {
+            exceptionConverter.handleAll(re, validMineCommands.map { it.transactionId })
         }
-        .filter { it.second != null }
-        .toMap()
+    }
+
+    /**
+     * Distribute the resources to the robots.
+     * There is no perfectly fair way to share those resources, but we try to get close. The current method favors
+     * robots with a higher miningSpeed.
+     *
+     * @param robots: The robots to which the resources get distributed.
+     * @param amount: The amount of resources to distribute.
+     * @param resource: The type of resource of which the given amount gets distributed.
+     */
+    private fun distributeMinedResources(robots: List<Robot>, amount: Int, resource: ResourceType) {
+        val (amountDistributed, robotsDecimalPlaces) = distributeByMiningSpeed(robots, amount, resource)
+
+        distributeRemainingByDecimalPlaces(robotsDecimalPlaces, amount - amountDistributed, resource)
+
+        robotDomainService.saveAll(robots)
+    }
+
+    /**
+     * Distributes the mined resources to the robots corresponding to their miningSpeed.
+     * A robot with the mining speed 10 gets double the amount of resources a robot with miningSpeed 5 gets.
+     *
+     * @return The remaining resources that could not get distributed this way, because we don't distribute partial resources
+     * (fractions of a resource), together with the decimalPlaces of the fraction the robot would have
+     * been assigned if we split the resources into partial resources.
+     *
+     * Example: Three robots with the miningSpeeds 10, 15 and 20 get distributed 22 resources. With this method
+     * we can distribute 20 resources (4, 7 and 9 respectively). If we could distribute fractions of resources robot1
+     * would have gotten 4.88, robot2 7.33 and robot3 9.77 resources. We distribute the whole resources and return
+     * the amount left (2) together with the decimal places for each robot(0.88, 0.33 and 0.77). The decimal places can
+     * be used to determine which robot(s) should get the remaining resources.
+     *
+     * @param robots: The robots to which to distribute the resources
+     * @param amount: Amount of resources to be distributed
+     * @param resource: The type of resource to be distributed
+     */
+    private fun distributeByMiningSpeed(
+        robots: List<Robot>,
+        amount: Int,
+        resource: ResourceType
+    ): Pair<Int, MutableMap<Robot, Double>> {
+        val accumulatedMiningSpeed = robots.fold(0) { acc, robot -> acc + robot.miningSpeed }
+        var amountDistributed = 0
+        val robotsDecimalPlaces = mutableMapOf<Robot, Double>()
+
+        robots.forEach {
+            val correspondingAmount = floor((it.miningSpeed.toDouble() / accumulatedMiningSpeed) * amount).toInt()
+            val remainder = ((it.miningSpeed.toDouble() / accumulatedMiningSpeed) * amount) - correspondingAmount
+            amountDistributed += correspondingAmount
+            robotsDecimalPlaces[it] = remainder
+            it.inventory.addResource(resource, correspondingAmount)
+        }
+        return Pair(amountDistributed, robotsDecimalPlaces)
+    }
+
+    /**
+     * Distributes the remainingAmount of resources to the robots, favoring the robots with the highest decimalPlaces.
+     *
+     * @param robotsDecimalPlaces: A map assigning each robot the remaining fraction of a resource it didn't get
+     *                             but deserved due to it's mining level.
+     * @param remainingAmount: The remaining amount of resources to be distributed
+     * @param resource: The type of resource to be distributed
+     *
+     * Example: The robots get the remaining resources one by one starting with the robot with the highest remaining
+     * fraction. The fractions (0.88, 0.33 and 0.77) with 2 resources to be distributed lead to a distribution of
+     *  robot1: 1
+     *  robot2: 0
+     *  robot3: 1
+     */
+    private fun distributeRemainingByDecimalPlaces(
+        robotsDecimalPlaces: MutableMap<Robot, Double>,
+        remainingAmount: Int,
+        resource: ResourceType
+    ) {
+        var amountDistributed = 0
+        val sortedDecimalPlaces = robotsDecimalPlaces.entries.sortedBy { it.value }.reversed()
+        val index = 0
+        while (amountDistributed < remainingAmount) {
+            sortedDecimalPlaces[index].key.inventory.addResource(resource, 1)
+            amountDistributed += 1
+        }
+    }
 }
