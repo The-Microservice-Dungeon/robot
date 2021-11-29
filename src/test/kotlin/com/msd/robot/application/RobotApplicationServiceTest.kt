@@ -737,6 +737,44 @@ class RobotApplicationServiceTest {
     }
 
     @Test
+    fun `Invalid MineCommands or problems with map service don't affect the valid commands, but get handled`() {
+        // given
+        val unknownPlanetId = UUID.randomUUID()
+        robot5.move(Planet(unknownPlanetId), 0)
+        val newPlanetId = UUID.randomUUID()
+        robot6.move(Planet(newPlanetId), 0)
+        val anotherPlanetId = UUID.randomUUID()
+        robot3.move(Planet(anotherPlanetId), 0)
+
+        every { robotRepository.findByIdOrNull(unknownRobotId) } returns null
+        every { gameMapMockService.getResourceOnPlanet(robot3.planet.planetId) } throws
+            NoResourceOnPlanetException(robot3.planet.planetId)
+        every { gameMapMockService.getResourceOnPlanet(robot5.planet.planetId) } throws ClientException("")
+        every { gameMapMockService.getResourceOnPlanet(robot4.planet.planetId) } returns ResourceType.PLATIN
+        every { gameMapMockService.getResourceOnPlanet(robot6.planet.planetId) } returns ResourceType.COAL
+        every { gameMapMockService.mine(robot6.planet.planetId, robot6.miningSpeed) } returns robot6.miningSpeed
+        every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf() // we dont need the return value
+        justRun { exceptionConverter.handle(any(), any()) }
+
+        val mineCommands = listOf(
+            MineCommand(unknownRobotId, UUID.fromString("11111111-1111-1111-1111-111111111111")), // unknown robot
+            MineCommand(robot3.id, UUID.fromString("33333333-3333-3333-3333-33333333333")), // planet has no resource
+            MineCommand(robot5.id, UUID.fromString("55555555-5555-5555-5555-55555555555")), // problem with map service
+            MineCommand(robot4.id, UUID.fromString("44444444-4444-4444-4444-44444444444")), // MiningLevel too low
+            MineCommand(robot6.id, UUID.fromString("66666666-6666-6666-6666-66666666666")) // valid
+        )
+
+        // when
+        robotApplicationService.executeMining(mineCommands)
+
+        // then
+        verify(exactly = 4) {
+            exceptionConverter.handle(any(), any())
+        }
+        assertEquals(robot6.miningSpeed, robot6.inventory.getStorageUsageForResource(ResourceType.COAL))
+    }
+
+    @Test
     fun `Robots spawn correctly`() {
         // given
         val slot = CapturingSlot<Robot>()

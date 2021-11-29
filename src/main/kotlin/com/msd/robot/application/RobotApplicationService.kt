@@ -246,7 +246,15 @@ class RobotApplicationService(
      * @return a map assigning each planet a resource or a null value
      */
     private fun getResourcesOnPlanets(mineCommands: List<MineCommand>) = mineCommands
-        .map { robotDomainService.getRobot(it.robotUUID).planet.planetId }
+        .map {
+            try {
+                robotDomainService.getRobot(it.robotUUID).planet.planetId
+            } catch (rnfe: RobotNotFoundException) {
+                // we will handle this later, for we are just interested in the planets
+                null
+            } 
+        }
+        .filterNotNull()
         .distinct()
         .map {
             it to try {
@@ -257,6 +265,7 @@ class RobotApplicationService(
             }
         }
         .filter { it.second != null }
+        .toList()
         .toMap()
 
     /**
