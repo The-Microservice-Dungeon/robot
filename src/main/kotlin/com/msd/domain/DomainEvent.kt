@@ -6,7 +6,7 @@ import java.util.*
 data class DomainEvent<T>(
     val payload: T,
     val type: String,
-    val key: String,
+    val transactionId: String,
     val version: Int,
     val timestamp: String,
     val id: String = UUID.randomUUID().toString(),

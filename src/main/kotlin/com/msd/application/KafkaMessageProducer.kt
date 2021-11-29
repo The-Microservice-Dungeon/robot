@@ -17,16 +17,16 @@ class KafkaMessageProducer(
     fun send(topic: String, event: DomainEvent<*>) {
         val record = ProducerRecord(topic, event.id, jacksonObjectMapper().writeValueAsString(event.payload))
         record.headers().add("eventId", event.id.toByteArray())
-        record.headers().add("transactionId", event.key.toByteArray())
+        record.headers().add("transactionId", event.transactionId.toByteArray())
         record.headers().add("version", event.version.toString().toByteArray())
         record.headers().add("timestamp", event.timestamp.toByteArray())
-        record.headers().add("type", event.id.toByteArray())
+        record.headers().add("type", event.type.toByteArray())
 
         val future = kafkaTemplate.send(record)
 
         future.addCallback(
             {
-                logger.info("Message with key {${event.key}} send successfully: ")
+                logger.info("Message with key {${event.transactionId}} send successfully: ")
             },
             {
                 logger.error("Failed to send message")

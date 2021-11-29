@@ -1,5 +1,6 @@
 package com.msd.planet.domain
 
+import com.msd.domain.ResourceType
 import java.util.*
 import javax.persistence.Entity
 import javax.persistence.Id
@@ -11,4 +12,5 @@ data class Planet(
 ) {
 
     var blocked: Boolean = false
+    var resourceType: ResourceType? = null
 }

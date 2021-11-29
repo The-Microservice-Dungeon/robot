@@ -3,6 +3,7 @@ package com.msd.robot.application
 import com.msd.application.ExceptionConverter
 import com.msd.application.GameMapService
 import com.msd.command.application.*
+import com.msd.core.FailureException
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
@@ -53,7 +54,7 @@ class RobotApplicationService(
                     is MovementItemsUsageCommand -> useMovementItem(it)
                     // TODO Add remaining CommandTypes as soon as their methods are implemented
                 }
-            } catch (re: RuntimeException) {
+            } catch (re: FailureException) {
                 exceptionConverter.handle(re, it.transactionUUID)
             }
         }
@@ -166,7 +167,7 @@ class RobotApplicationService(
 
                 robotDomainService.fight(attacker, target, it.playerUUID)
                 battleFields.add(attacker.planet.planetId)
-            } catch (re: RuntimeException) {
+            } catch (re: FailureException) {
                 exceptionConverter.handle(re, it.transactionUUID)
             }
         }
@@ -198,7 +199,7 @@ class RobotApplicationService(
             try {
                 val battlefield = robotDomainService.useAttackItem(it.robotUUID, it.targetUUID, it.playerUUID, it.itemType)
                 battleFields.add(battlefield)
-            } catch (re: RuntimeException) {
+            } catch (re: FailureException) {
                 exceptionConverter.handle(re, it.transactionUUID)
             }
         }
