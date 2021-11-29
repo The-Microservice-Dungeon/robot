@@ -10,13 +10,13 @@ import org.springframework.kafka.core.KafkaAdmin
 @Configuration
 class KafkaTopicConfig {
 
-    @Value(value = "\${spring.kafka.bootstrapAddress}")
+    @Value(value = "\${spring.kafka.bootstrap-servers}")
     private lateinit var bootstrapAddress: String
 
-    @Value(value = "\${spring.kafka.robotTopic}")
+    @Value(value = "\${spring.kafka.topic.producer.robot}")
     private lateinit var robotTopic: String
 
-    @Value(value = "\${spring.kafka.roundTopic}")
+    @Value(value = "\${spring.kafka.topic.consumer.round}")
     private lateinit var roundTopic: String
 
     @Bean
