@@ -185,9 +185,7 @@ class Robot(
     fun move(planet: Planet, cost: Int) {
         this.reduceEnergy(cost)
         if (this.planet.blocked)
-            throw PlanetBlockedException(
-                "Can't move out of a blocked planet", cost
-            )
+            throw PlanetBlockedException("Can't move out of a blocked planet")
         this.planet = planet
     }
 

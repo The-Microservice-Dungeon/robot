@@ -49,7 +49,7 @@ class RobotApplicationServiceTest {
     lateinit var gameMapMockService: GameMapService
 
     @MockK
-    lateinit var eventConverter: EventConverter
+    lateinit var exceptionConverter: ExceptionConverter
 
     lateinit var robotApplicationService: RobotApplicationService
     lateinit var robotDomainService: RobotDomainService
@@ -60,7 +60,7 @@ class RobotApplicationServiceTest {
     fun setup() {
         MockKAnnotations.init(this)
         robotDomainService = RobotDomainService(robotRepository, gameMapMockService)
-        robotApplicationService = RobotApplicationService(gameMapMockService, robotDomainService, eventConverter)
+        robotApplicationService = RobotApplicationService(gameMapMockService, robotDomainService, exceptionConverter)
 
         planet1 = Planet(UUID.randomUUID())
         planet2 = Planet(UUID.randomUUID())
@@ -413,7 +413,7 @@ class RobotApplicationServiceTest {
             AttackCommand(robot5.id, robot1.id, UUID.randomUUID()),
             AttackCommand(robot6.id, robot3.id, UUID.randomUUID()),
         )
-        justRun { eventConverter.handle(any(), any()) }
+        justRun { exceptionConverter.handle(any(), any()) }
         // when
         robotApplicationService.executeAttacks(attackCommands)
         // then
@@ -444,7 +444,7 @@ class RobotApplicationServiceTest {
             },
         )
         verify(exactly = 2) {
-            eventConverter.handle(any(), any())
+            exceptionConverter.handle(any(), any())
         }
     }
 
@@ -530,14 +530,14 @@ class RobotApplicationServiceTest {
         every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf(
             robot1, robot2, robot3, robot4, robot5, robot6
         )
-        justRun { eventConverter.handle(any(), any()) }
+        justRun { exceptionConverter.handle(any(), any()) }
 
         // when
         robotApplicationService.executeAttacks(attackCommands)
 
         // assert
         verify(exactly = 2) {
-            eventConverter.handle(any(), any())
+            exceptionConverter.handle(any(), any())
         }
     }
 
@@ -833,7 +833,7 @@ class RobotApplicationServiceTest {
         robotApplicationService.executeCommands(commands)
 
         // then
-        verify(exactly = 0) { eventConverter.handle(any(), any()) }
+        verify(exactly = 0) { exceptionConverter.handle(any(), any()) }
         assertAll(
             {
                 assert(robot1.health == robot1.maxHealth - 5 - 20 - 10)

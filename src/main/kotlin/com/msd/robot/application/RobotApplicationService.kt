@@ -1,17 +1,14 @@
 package com.msd.robot.application
 
-import com.msd.application.EventConverter
-import com.msd.application.EventType
+import com.msd.application.ExceptionConverter
 import com.msd.application.GameMapService
 import com.msd.application.NoResourceOnPlanetException
-import com.msd.application.dto.EventDTO
-import com.msd.application.dto.MovementEventDTO
 import com.msd.command.*
 import com.msd.command.application.*
 import com.msd.core.FailureException
-import com.msd.core.MovementFailureException
 import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
+import com.msd.robot.application.exception.RobotNotFoundException
 import com.msd.robot.domain.LevelTooLowException
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
@@ -25,7 +22,7 @@ import kotlin.math.floor
 class RobotApplicationService(
     val gameMapService: GameMapService,
     val robotDomainService: RobotDomainService,
-    val eventConverter: EventConverter
+    val exceptionConverter: ExceptionConverter
 ) {
 
     /**
@@ -65,20 +62,8 @@ class RobotApplicationService(
                     is MovementItemsUsageCommand -> useMovementItem(it)
                 }
             } catch (fe: FailureException) {
-                eventConverter.handle(getUnsuccessfulEventForHeterogeneousCommand(it, fe), it.transactionUUID)
+                exceptionConverter.handle(fe, it)
             }
-        }
-    }
-
-    private fun getUnsuccessfulEventForHeterogeneousCommand(command: Command, e: FailureException): EventDTO {
-        return when (command) {
-            is MovementCommand -> MovementEventDTO(false, e.message!!, EventType.MOVEMENT, (e as MovementFailureException).energyCost, null, listOf())
-//            is BlockCommand -> Planet
-//            is EnergyRegenCommand -> EventType.REGENERATION
-//            is MiningCommand -> EventType.MINING
-//            is ReparationItemUsageCommand -> EventType.ITEM_REPAIR
-//            is MovementItemsUsageCommand -> EventType.ITEM_MOVEMENT
-            else -> throw IllegalArgumentException("This is not a Heterogeneous command")
         }
     }
 
@@ -316,8 +301,8 @@ class RobotApplicationService(
                 if (!robot.canMine(resource))
                     throw LevelTooLowException("The mining level of the robot is too low to mine the resource $resource")
                 validMineCommands.add(validMineCommand)
-            } catch (re: RuntimeException) {
-                exceptionConverter.handle(re, mineCommand.transactionUUID)
+            } catch (re: FailureException) {
+                exceptionConverter.handle(re, mineCommand)
             }
         }
         return validMineCommands
@@ -360,8 +345,8 @@ class RobotApplicationService(
         try {
             val minedAmount = gameMapService.mine(planet, amount)
             distributeMinedResources(miningRobotsOnPlanet, minedAmount, resource)
-        } catch (re: RuntimeException) {
-            exceptionConverter.handleAll(re, validMineCommands.map { it.transactionId })
+        } catch (re: FailureException) {
+            exceptionConverter.handleAll(re, validMineCommands.map { MineCommand(it.robot.id, it.transactionId) })
         }
     }
 

@@ -8,7 +8,7 @@ class MovementEventDTO(
     success: Boolean,
     message: String,
     eventType: EventType,
-    val energyChangedBy: Int,
+    val remainingEnergy: Int,
     val planet: PlanetDTO?,
     val robots: List<UUID> = listOf()
 ) : EventDTO(success, message, eventType)
