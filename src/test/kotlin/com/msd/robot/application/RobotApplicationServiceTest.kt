@@ -196,7 +196,6 @@ class RobotApplicationServiceTest {
         assertThrows<RobotNotFoundException> {
             robotApplicationService.regenerateEnergy(
                 EnergyRegenCommand(
-                    UUID.randomUUID(),
                     unknownRobotId,
                     UUID.randomUUID()
                 )
@@ -214,7 +213,6 @@ class RobotApplicationServiceTest {
         assertThrows<InvalidPlayerException> {
             robotApplicationService.regenerateEnergy(
                 EnergyRegenCommand(
-                    UUID.randomUUID(),
                     robot1.id,
                     UUID.randomUUID()
                 )

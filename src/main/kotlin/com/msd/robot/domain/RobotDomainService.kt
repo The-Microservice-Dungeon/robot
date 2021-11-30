@@ -7,7 +7,6 @@ import com.msd.item.domain.ItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
 import com.msd.robot.application.RestorationType
-import com.msd.robot.application.RobotNotFoundException
 import com.msd.robot.application.exception.RobotNotFoundException
 import com.msd.robot.domain.exception.NotEnoughItemsException
 import com.msd.robot.domain.exception.TargetRobotOutOfReachException
