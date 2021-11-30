@@ -100,7 +100,7 @@ class RobotApplicationService(
 
         val planetDto =
             gameMapService.retrieveTargetPlanetIfRobotCanReach(robot.planet.planetId, moveCommand.targetPlanetUUID)
-        val cost = planetDto.movement_difficulty
+        val cost = planetDto.movementDifficulty
         val planet = planetDto.toPlanet()
         robot.move(planet, cost)
         robotDomainService.saveRobot(robot)
@@ -229,7 +229,7 @@ class RobotApplicationService(
     fun executeMining(mineCommands: List<MineCommand>) {
         val resourcesByPlanets = getResourcesOnPlanets(mineCommands)
 
-        val validMineCommands = replaceIdsByObjectsInValidMineCommands(mineCommands, resourcesByPlanets)
+        val validMineCommands = replaceIdsWithObjectsInValidMineCommands(mineCommands, resourcesByPlanets)
 
         val amountsByGroupedPlanet = resourceAmountRequestedPerPlanet(validMineCommands)
 
@@ -245,14 +245,14 @@ class RobotApplicationService(
      * @param mineCommands: A list of commands, for which the resources should be fetched.
      * @return a map assigning each planet a resource or a null value
      */
-    private fun getResourcesOnPlanets(mineCommands: List<MineCommand>) = mineCommands
+    private fun getResourcesOnPlanets(mineCommands: List<MineCommand>): Map<UUID, ResourceType?> = mineCommands
         .map {
             try {
                 robotDomainService.getRobot(it.robotUUID).planet.planetId
             } catch (rnfe: RobotNotFoundException) {
                 // we will handle this later, for we are just interested in the planets
                 null
-            } 
+            }
         }
         .filterNotNull()
         .distinct()
@@ -281,7 +281,7 @@ class RobotApplicationService(
      * @return a list of [ValidMineCommand]s, representing only the MineCommands which are valid and having replaced
 *              the IDs with the corresponding entities.
      */
-    private fun replaceIdsByObjectsInValidMineCommands(
+    private fun replaceIdsWithObjectsInValidMineCommands(
         mineCommands: List<MineCommand>,
         planetsToResources: Map<UUID, ResourceType?>
     ): MutableList<ValidMineCommand> {
@@ -292,13 +292,13 @@ class RobotApplicationService(
                 val robot = robotDomainService.getRobot(mineCommand.robotUUID)
                 val resource = planetsToResources[robot.planet.planetId]
                     ?: throw NoResourceOnPlanetException(robot.planet.planetId)
-                val extendedMineCommand = ValidMineCommand(
+                val validMineCommand = ValidMineCommand(
                     robot, robot.planet.planetId,
                     mineCommand.transactionUUID, resource, robot.miningSpeed
                 )
                 if (!robot.canMine(resource))
                     throw LevelTooLowException("The mining level of the robot is too low to mine the resource $resource")
-                validMineCommands.add(extendedMineCommand)
+                validMineCommands.add(validMineCommand)
             } catch (re: RuntimeException) {
                 exceptionConverter.handle(re, mineCommand.transactionUUID)
             }

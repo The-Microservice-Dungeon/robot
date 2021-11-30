@@ -215,14 +215,4 @@ class InventoryTest {
             }
         )
     }
-
-//    @Test
-//    fun `Mining correctly adds resources to inventory`() {
-//        // given
-//        assertEquals(0, robot1.inventory.getStorageUsageForResource(ResourceType.IRON))
-//        // when
-//        robot1.mine(ResourceType.IRON, robot1.miningSpeed)
-//        // then
-//        assertEquals(robot1.miningSpeed, robot1.inventory.getStorageUsageForResource(ResourceType.IRON))
-//    }
 }

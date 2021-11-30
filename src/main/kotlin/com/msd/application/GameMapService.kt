@@ -134,7 +134,7 @@ class GameMapService {
                         "GameMap Client returned internal error when retrieving resource on planet $planetId"
                     )
             }.block()!!
-            return response.resource?.resource_type ?: throw NoResourceOnPlanetException(planetId)
+            return response.resource?.resourceType ?: throw NoResourceOnPlanetException(planetId)
         } catch (wcre: WebClientRequestException) {
             throw ClientException("Could not connect to Map Service")
         }

@@ -1,7 +1,9 @@
 package com.msd.application
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.msd.domain.ResourceType
 
 class ResourceDto(
-    val resource_type: ResourceType
+    @JsonProperty("resource_type")
+    val resourceType: ResourceType
 )
