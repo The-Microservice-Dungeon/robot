@@ -1,3 +1,5 @@
 package com.msd.robot.domain.exception
 
-class NotEnoughEnergyException(s: String) : RuntimeException(s)
+import com.msd.core.FailureException
+
+class NotEnoughEnergyException(s: String) : FailureException(s)

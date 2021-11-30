@@ -3,9 +3,9 @@ package com.msd.application
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.application.dto.MovementEventDTO
 import com.msd.domain.DomainEvent
-import com.msd.robot.domain.exception.PlanetBlockedException
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization.StringDeserializer
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -28,8 +28,8 @@ import java.util.concurrent.TimeUnit
 @SpringBootTest
 @DirtiesContext
 @EmbeddedKafka(partitions = 1, brokerProperties = ["listeners=PLAINTEXT://\${spring.kafka.bootstrap-servers}", "port=9092"])
-internal class ExceptionConverterTest(
-    @Autowired private val exceptionConverter: ExceptionConverter,
+internal class EventConverterTest(
+    @Autowired private val eventConverter: EventConverter,
     @Autowired private val embeddedKafka: EmbeddedKafkaBroker
 ) {
 
@@ -60,16 +60,64 @@ internal class ExceptionConverterTest(
         ContainerTestUtils.waitForAssignment(container, embeddedKafka.partitionsPerTopic)
     }
 
+    @AfterEach
+    fun tearDown() {
+        container.stop()
+    }
+
     @Test
-    fun `when a PlanetBlockedException is handled a Event is thrown in the movement topic`() {
+    fun `when a MovementEvent is handled due to a Planet block an Event is thrown in the movement topic`() {
         // given
         val movementEventDTO = MovementEventDTO(
-            false, "Planet blocked", 0, null, listOf()
+            false, "Planet blocked", EventType.MOVEMENT, 3, null, listOf()
         )
-        val exception = PlanetBlockedException("Planet is blocked", movementEventDTO)
         val transactionId = UUID.randomUUID()
         // when
-        exceptionConverter.handle(exception, transactionId)
+        eventConverter.handle(movementEventDTO, transactionId)
+        // then
+        val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
+        assertNotNull(singleRecord)
+        val domainEvent = DomainEvent.build(jacksonObjectMapper().readValue(singleRecord.value(), MovementEventDTO::class.java), singleRecord.headers())
+
+        assertAll(
+            "Check header correct",
+            {
+                assertEquals(transactionId.toString(), domainEvent.transactionId)
+            },
+            {
+                assertEquals("movement", domainEvent.type)
+            }
+        )
+
+        assertAll(
+            "payload correct",
+            {
+                assertEquals(movementEventDTO.success, domainEvent.payload.success)
+            },
+            {
+                assertEquals(movementEventDTO.message, domainEvent.payload.message)
+            },
+            {
+                assertEquals(movementEventDTO.energyChangedBy, domainEvent.payload.energyChangedBy)
+            },
+            {
+                assertEquals(movementEventDTO.planet, domainEvent.payload.planet)
+            },
+            {
+                assertEquals(movementEventDTO.robots, domainEvent.payload.robots)
+            }
+        )
+    }
+
+    @Test
+    fun `When a MovementEvent is handled due to not enough energy an event is sent to the movement topic`() {
+        // given
+        val movementEventDTO = MovementEventDTO(
+            false, "Not enough Energy", EventType.MOVEMENT, 0, null, listOf()
+        )
+        val transactionId = UUID.randomUUID()
+        // when
+        eventConverter.handle(movementEventDTO, transactionId)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord)

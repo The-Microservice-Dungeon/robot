@@ -1,7 +1,7 @@
 package com.msd.application
 
 import com.msd.application.dto.EventDTO
-import com.msd.core.FailureException
+import com.msd.application.dto.MovementEventDTO
 import com.msd.domain.DomainEvent
 import com.msd.robot.domain.exception.*
 import org.springframework.beans.factory.annotation.Value
@@ -11,7 +11,7 @@ import java.time.ZoneOffset
 import java.util.*
 
 @Service
-class ExceptionConverter(
+class EventConverter(
     private val kafkaMessageProducer: KafkaMessageProducer
 ) {
     @Value(value = "\${spring.kafka.topic.producer.robot-movement}")
@@ -22,36 +22,39 @@ class ExceptionConverter(
     /**
      * Convert the Exception into a corresponding Kafka Event
      */
-    fun handle(exception: FailureException, transactionId: UUID) {
-        // TODO add data to exceptions
-        when (exception) {
-//            is NotEnoughEnergyException -> TODO()
-//            is NotEnoughItemsException -> TODO()
-//            is NotEnoughResourcesException -> TODO()
-//            is InventoryFullException -> TODO()
-            is PlanetBlockedException -> {
+    fun handle(event: EventDTO, transactionId: UUID) {
+        when (event) {
+            is MovementEventDTO -> {
                 kafkaMessageProducer.send(
-                    movementTopic,
+                    getTopicFromEventType(event.eventType),
                     buildFailureDomainEvent(
-                        exception.eventDTO, "movement", transactionId
+                        event, event.eventType, transactionId
                     )
                 )
             }
+//            is NotEnoughItemsException -> TODO()
 //            is TargetRobotOutOfReachException -> TODO()
 //            is UpgradeException -> TODO()
 //            is TargetPlanetNotReachableException -> TODO()
         }
     }
 
-    // TODO replace Any with a failureDTO superclass
+    // TODO replace eventType with enum
+    private fun getTopicFromEventType(eventType: EventType): String {
+        return when (eventType) {
+            EventType.MOVEMENT -> movementTopic
+            else -> throw IllegalArgumentException("There is not Topic for this Command")
+        }
+    }
+
     private fun buildFailureDomainEvent(
         failureEventDTO: EventDTO,
-        eventType: String,
+        eventType: EventType,
         transactionId: UUID
     ): DomainEvent<Any> {
         return DomainEvent(
             failureEventDTO,
-            eventType,
+            eventType.eventString,
             transactionId.toString(),
             eventVersion,
             OffsetDateTime.now(ZoneOffset.UTC).toString()

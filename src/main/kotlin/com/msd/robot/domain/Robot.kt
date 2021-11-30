@@ -1,8 +1,6 @@
 package com.msd.robot.domain
 
-import com.msd.application.dto.MovementEventDTO
 import com.msd.domain.ResourceType
-import com.msd.planet.application.PlanetDTO
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.exception.NotEnoughEnergyException
 import com.msd.robot.domain.exception.PlanetBlockedException
@@ -184,14 +182,7 @@ class Robot(
         this.reduceEnergy(cost)
         if (this.planet.blocked)
             throw PlanetBlockedException(
-                "Can't move out of a blocked planet",
-                MovementEventDTO(
-                    false,
-                    "Tried moving out of a blocked Planet",
-                    cost,
-                    PlanetDTO(planet.planetId, cost, planet.resourceType),
-                    listOf()
-                )
+                "Can't move out of a blocked planet", cost
             )
         this.planet = planet
     }

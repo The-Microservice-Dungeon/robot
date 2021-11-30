@@ -1,7 +1,7 @@
 package com.msd.robot.application
 
 import com.msd.application.ClientException
-import com.msd.application.ExceptionConverter
+import com.msd.application.EventConverter
 import com.msd.application.GameMapPlanetDto
 import com.msd.application.GameMapService
 import com.msd.command.application.*
@@ -52,7 +52,7 @@ class RobotApplicationServiceTest {
     lateinit var gameMapMockService: GameMapService
 
     @MockK
-    lateinit var exceptionConverter: ExceptionConverter
+    lateinit var eventConverter: EventConverter
 
     lateinit var robotApplicationService: RobotApplicationService
     lateinit var robotDomainService: RobotDomainService
@@ -63,7 +63,7 @@ class RobotApplicationServiceTest {
     fun setup() {
         MockKAnnotations.init(this)
         robotDomainService = RobotDomainService(robotRepository, gameMapMockService)
-        robotApplicationService = RobotApplicationService(gameMapMockService, robotDomainService, exceptionConverter)
+        robotApplicationService = RobotApplicationService(gameMapMockService, robotDomainService, eventConverter)
 
         planet1 = Planet(UUID.randomUUID())
         planet2 = Planet(UUID.randomUUID())
@@ -205,7 +205,13 @@ class RobotApplicationServiceTest {
         every { robotRepository.findByIdOrNull(unknownRobotId) } returns null
         // then
         assertThrows<RobotNotFoundException> {
-            robotApplicationService.regenerateEnergy(EnergyRegenCommand(UUID.randomUUID(), unknownRobotId, UUID.randomUUID()))
+            robotApplicationService.regenerateEnergy(
+                EnergyRegenCommand(
+                    UUID.randomUUID(),
+                    unknownRobotId,
+                    UUID.randomUUID()
+                )
+            )
         }
     }
 
@@ -217,7 +223,13 @@ class RobotApplicationServiceTest {
 
         // then
         assertThrows<InvalidPlayerException> {
-            robotApplicationService.regenerateEnergy(EnergyRegenCommand(UUID.randomUUID(), robot1.id, UUID.randomUUID()))
+            robotApplicationService.regenerateEnergy(
+                EnergyRegenCommand(
+                    UUID.randomUUID(),
+                    robot1.id,
+                    UUID.randomUUID()
+                )
+            )
         }
         assertEquals(10, robot1.energy)
     }
@@ -448,7 +460,7 @@ class RobotApplicationServiceTest {
             AttackCommand(player2Id, robot5.id, robot1.id, UUID.randomUUID()),
             AttackCommand(player2Id, robot6.id, robot3.id, UUID.randomUUID()),
         )
-        justRun { exceptionConverter.handle(any(), any()) }
+        justRun { eventConverter.handle(any(), any()) }
         // when
         robotApplicationService.executeAttacks(attackCommands)
         // then
@@ -479,7 +491,7 @@ class RobotApplicationServiceTest {
             },
         )
         verify(exactly = 2) {
-            exceptionConverter.handle(any(), any())
+            eventConverter.handle(any(), any())
         }
     }
 
@@ -565,14 +577,14 @@ class RobotApplicationServiceTest {
         every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf(
             robot1, robot2, robot3, robot4, robot5, robot6
         )
-        justRun { exceptionConverter.handle(any(), any()) }
+        justRun { eventConverter.handle(any(), any()) }
 
         // when
         robotApplicationService.executeAttacks(attackCommands)
 
         // assert
         verify(exactly = 2) {
-            exceptionConverter.handle(any(), any())
+            eventConverter.handle(any(), any())
         }
     }
 
@@ -703,7 +715,7 @@ class RobotApplicationServiceTest {
         robotApplicationService.executeCommands(commands)
 
         // then
-        verify(exactly = 0) { exceptionConverter.handle(any(), any()) }
+        verify(exactly = 0) { eventConverter.handle(any(), any()) }
         assertAll(
             {
                 assert(robot1.health == robot1.maxHealth - 5 - 20 - 10)

@@ -1,3 +1,5 @@
 package com.msd.application.dto
 
-open class EventDTO(val success: Boolean, val message: String)
+import com.msd.application.EventType
+
+open class EventDTO(val success: Boolean, val message: String, val eventType: EventType)

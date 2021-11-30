@@ -1,9 +1,13 @@
 package com.msd.robot.application
 
-import com.msd.application.ExceptionConverter
+import com.msd.application.EventConverter
+import com.msd.application.EventType
 import com.msd.application.GameMapService
+import com.msd.application.dto.EventDTO
+import com.msd.application.dto.MovementEventDTO
 import com.msd.command.application.*
 import com.msd.core.FailureException
+import com.msd.core.MovementFailureException
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
@@ -16,7 +20,7 @@ import java.util.*
 class RobotApplicationService(
     val gameMapService: GameMapService,
     val robotDomainService: RobotDomainService,
-    val exceptionConverter: ExceptionConverter
+    val eventConverter: EventConverter
 ) {
 
     /**
@@ -54,9 +58,21 @@ class RobotApplicationService(
                     is MovementItemsUsageCommand -> useMovementItem(it)
                     // TODO Add remaining CommandTypes as soon as their methods are implemented
                 }
-            } catch (re: FailureException) {
-                exceptionConverter.handle(re, it.transactionUUID)
+            } catch (fe: FailureException) {
+                eventConverter.handle(getUnsuccessfulEventForHeterogeneousCommand(it, fe), it.transactionUUID)
             }
+        }
+    }
+
+    private fun getUnsuccessfulEventForHeterogeneousCommand(command: Command, e: FailureException): EventDTO {
+        return when (command) {
+            is MovementCommand -> MovementEventDTO(false, e.message!!, EventType.MOVEMENT, (e as MovementFailureException).energyCost, null, listOf())
+//            is BlockCommand -> Planet
+//            is EnergyRegenCommand -> EventType.REGENERATION
+//            is MiningCommand -> EventType.MINING
+//            is ReparationItemUsageCommand -> EventType.ITEM_REPAIR
+//            is MovementItemsUsageCommand -> EventType.ITEM_MOVEMENT
+            else -> throw IllegalArgumentException("This is not a Heterogeneous command")
         }
     }
 
@@ -168,7 +184,7 @@ class RobotApplicationService(
                 robotDomainService.fight(attacker, target, it.playerUUID)
                 battleFields.add(attacker.planet.planetId)
             } catch (re: FailureException) {
-                exceptionConverter.handle(re, it.transactionUUID)
+//                eventConverter.handle(re, it.transactionUUID)
             }
         }
 
@@ -200,7 +216,7 @@ class RobotApplicationService(
                 val battlefield = robotDomainService.useAttackItem(it.robotUUID, it.targetUUID, it.playerUUID, it.itemType)
                 battleFields.add(battlefield)
             } catch (re: FailureException) {
-                exceptionConverter.handle(re, it.transactionUUID)
+//                eventConverter.handle(re, it.transactionUUID)
             }
         }
 
