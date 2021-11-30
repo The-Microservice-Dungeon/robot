@@ -8,7 +8,6 @@ import com.msd.command.application.*
 import com.msd.domain.ResourceType
 import com.msd.item.domain.AttackItemType
 import com.msd.planet.domain.Planet
-import com.msd.robot.application.exception.InvalidPlayerException
 import com.msd.robot.application.exception.RobotNotFoundException
 import com.msd.robot.application.exception.TargetPlanetNotReachableException
 import com.msd.robot.domain.*
@@ -201,24 +200,6 @@ class RobotApplicationServiceTest {
                 )
             )
         }
-    }
-
-    @Test
-    fun `playerId not matching ownerId when regenerating causes an exception to be thrown`() {
-        // given
-        robot1.move(Planet(UUID.randomUUID()), 10)
-        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
-
-        // then
-        assertThrows<InvalidPlayerException> {
-            robotApplicationService.regenerateEnergy(
-                EnergyRegenCommand(
-                    robot1.id,
-                    UUID.randomUUID()
-                )
-            )
-        }
-        assertEquals(10, robot1.energy)
     }
 
     @Test
