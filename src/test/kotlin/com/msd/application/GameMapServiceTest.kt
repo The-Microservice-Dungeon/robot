@@ -88,7 +88,7 @@ class GameMapServiceTest {
         val exception = assertThrows<ClientException> {
             gameMapService.retrieveTargetPlanetIfRobotCanReach(randomUUID(), randomUUID())
         }
-        assertEquals("Could not connect to GameMap client", exception.message)
+        assertEquals("Could not connect to Map Service", exception.message)
     }
 
     @Test
