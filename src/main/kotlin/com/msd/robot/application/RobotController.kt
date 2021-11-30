@@ -3,6 +3,7 @@ package com.msd.robot.application
 import com.msd.domain.ResourceType
 import com.msd.robot.application.dtos.*
 import com.msd.robot.domain.RobotDomainService
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.*
@@ -25,8 +26,18 @@ class RobotController(
     @PostMapping
     fun spawnRobot(@RequestBody spawnDto: RobotSpawnDto): ResponseEntity<RobotDto> {
         val robot = robotApplicationService.spawn(spawnDto.player, spawnDto.planet)
-        return ResponseEntity.ok(robotMapper.robotToRobotDto(robot))
+        return ResponseEntity.status(HttpStatus.CREATED).body(robotMapper.robotToRobotDto(robot))
     }
+
+//    @PostMapping
+//    fun spawnRobots(@RequestBody spawnDtos: List<RobotSpawnDto>): ResponseEntity<List<RobotDto>> {
+//        val robots = mutableListOf<RobotDto>()
+//        spawnDtos.forEach {
+//            val robot = robotApplicationService.spawn(it.player, it.planet)
+//            robots.add(robotMapper.robotToRobotDto(robot))
+//        }
+//        return ResponseEntity.status(HttpStatus.CREATED).body(robots)
+//    }
 
     /**
      * Get all robots of the specified player.
@@ -61,7 +72,10 @@ class RobotController(
     @PostMapping("/{id}/upgrades")
     fun upgradeRobot(@PathVariable("id") robotId: UUID, @RequestBody upgradeDto: UpgradeDto): ResponseEntity<String> {
         robotApplicationService.upgrade(robotId, upgradeDto.upgradeType, upgradeDto.targetLevel)
-        return ResponseEntity.ok("") // TODO remove target-level and return new level in DTO
+        return ResponseEntity.ok(
+            "${upgradeDto.upgradeType} of robot $robotId has been updated to " +
+                "LVL${upgradeDto.targetLevel}"
+        )
     }
 
     /**
@@ -89,5 +103,17 @@ class RobotController(
     fun clearAllResourcesOfRobot(@PathVariable("id") robotId: UUID): ResponseEntity<Map<ResourceType, Int>> {
         val takenResources = robotDomainService.takeAllResources(robotId)
         return ResponseEntity.ok(takenResources)
+    }
+
+    /**
+     * Either restores a [Robot's][Robot] `energy` or `health`.
+     *
+     * @see <a href="https://the-microservice-dungeon.github.io/docs/openapi/robot/#tag/trading/paths/~1robots~1%7Brobot-uuid%7D~1instant-restore/post"></a>
+     * @return a String with a success or failure message
+     */
+    @PostMapping("/{robotId}/instant-restore")
+    fun restoreARobot(@PathVariable robotId: UUID, @RequestBody restorationDTO: RestorationDTO): ResponseEntity<String> {
+        robotDomainService.restoreRobot(robotId, restorationDTO.restorationType)
+        return ResponseEntity.ok("robot $robotId ${restorationDTO.restorationType.name.lowercase()} restored")
     }
 }

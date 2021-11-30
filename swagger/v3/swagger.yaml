@@ -3,7 +3,7 @@ openapi: 3.0.1
 info:
   title: Robot Service API
   description: This is REST documentation for the Robot Service
-  version: v2
+  version: v3
 components:
   schemas:
     robot:
@@ -79,19 +79,19 @@ components:
             usedStorage:
               type: integer
               example: 5
-            storedCoal:
+            coal:
               type: integer
               example: 3
-            storedIron:
+            iron:
               type: integer
               example: 2
-            storedGem:
+            gem:
               type: integer
               example: 0
-            storedGold:
+            gold:
               type: integer
               example: 0
-            storedPlatin:
+            platin:
               type: integer
               example: 0
         items:
@@ -123,20 +123,23 @@ components:
           type: array
           items:
             type: string
-            example: move [playerUUID] [robotUUID] [targetPlanetUUID] [transactionUUID]
+            example: move [robotUUID] [targetPlanetUUID] [transactionUUID]
 paths:
   "/robots":
     post:
       summary: Spawns a robot
+      description: If you want spawn more than one robot at a time, you can use the attribute "quantity"
       tags:
       - robot
       responses:
-        '200':
-          description: OK
+        '201':
+          description: Created
           content:
             application/json:
               schema:
-                "$ref": "#/components/schemas/robot"
+                type: array
+                items:
+                  "$ref": "#/components/schemas/robot"
         '400':
           description: Bad Request
           content:
@@ -150,7 +153,7 @@ paths:
             schema:
               type: object
               properties:
-                transaction_id:
+                transaction-id:
                   type: string
                   format: uuid
                 player:
@@ -159,8 +162,11 @@ paths:
                 planet:
                   type: string
                   format: uuid
+                quantity:
+                  type: integer
+                  minimum: 1
               required:
-              - transaction_id
+              - transaction-id
               - player
               - planet
     get:
@@ -262,7 +268,7 @@ paths:
             schema:
               type: object
               properties:
-                transaction_id:
+                transaction-id:
                   type: string
                   format: uuid
                 upgrade-type: 
@@ -275,7 +281,56 @@ paths:
               required:
               - upgrade-type
               - target-lvl
-
+  
+  "/robots/{robot-uuid}/instant-restore":
+    post:
+      summary: Fully restore energy or health of a robot
+      tags:
+      - trading
+      parameters:
+      - name: robot-uuid
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "robot 3fa85f64-5717-4562-b3fc-2c963f66afa6 has been fully healed"
+        '400': #Falscher item-type
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Request could not be accepted"
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Robot not fount"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transaction-id:
+                  type: string
+                  format: uuid
+                restoration-type: 
+                  type: string
+                  enum: [HEALTH, ENERGY]
+              required:
+              - item-type
+                
+        
   #"/robots/{robot-uuid}/move":
   "/robots/{robot-uuid}/inventory/items":
     post:
@@ -316,7 +371,7 @@ paths:
             schema:
               type: object
               properties:
-                transaction_id:
+                transaction-id:
                   type: string
                   format: uuid
                 item-type: 
@@ -324,7 +379,7 @@ paths:
                   enum: [ROCKET, WORMHOLE, LONG_RANGE_BOMBARDEMENT, SELF_DESTRUCTION, REPAIR_SWARM, NUKE]
               required:
               - item-type
-  "/robots/{robot-uuid}/inventory/clearResources":
+  "/robots/{robot-uuid}/inventory/clear-resources":
     post:
         summary: Sell all resources
         description: Using this endpoint clears all ressources and returns the state of the robot's inventory before the clear.
@@ -342,7 +397,23 @@ paths:
             content:
               application/json:
                 schema:
-                  "$ref": "#/components/schemas/robot/properties/inventory"
+                  type: object
+                  properties:
+                    coal:
+                      type: integer
+                      example: 3
+                    iron:
+                      type: integer
+                      example: 2
+                    gem:
+                      type: integer
+                      example: 0
+                    gold:
+                      type: integer
+                      example: 0
+                    platin:
+                      type: integer
+                      example: 0
           '400': #sonstiger Fehler
             description: Bad Request
             content:
@@ -362,14 +433,14 @@ paths:
       summary: Post a batch of commands to be executed
       description: "This endpoint allows the game service to send a batch of commands to be executed in the current phase. Each entry in the array is one command. <br><br>
         Commands: <br>
-        block [playerUUID] [robotUUID] [transactionUUID] <br>
-        move [playerUUID] [robotUUID] [targetPlanetUUID] [transactionUUID] <br>
-        fight [playerUUID] [robotUUID] [targetRobotUUID] [transactionUUID] <br>
-        mine [playerUUID] [robotUUID] [transactionUUID] <br>
-        regenerate [playerUUID] [robotUUID] [transactionUUID] <br>
-        use-item-fighting [playerUUID] [robotUUID] [itemType] [targetUUID] [transactionUUID] <br>
-        use-item-repair [playerUUID] [robotUUID] [itemType] [targetUUID] [transactionUUID] <br>
-        use-item-movement [playerUUID] [robotUUID] [itemType] [transactionUUID] <br><br>
+        block [robotUUID] [transactionUUID] <br>
+        move [robotUUID] [targetPlanetUUID] [transactionUUID] <br>
+        fight [robotUUID] [targetRobotUUID] [transactionUUID] <br>
+        mine [robotUUID] [transactionUUID] <br>
+        regenerate [robotUUID] [transactionUUID] <br>
+        use-item-fighting [robotUUID] [itemType] [targetUUID] [transactionUUID] <br>
+        use-item-repair [robotUUID] [itemType] [transactionUUID] <br>
+        use-item-movement [robotUUID] [itemType] [transactionUUID] <br><br>
         
         [targetUUID] is either a robot or a planet, depending on the item type <br>
         [itemType] can be rocket, wormhole, bombardment, self_destruct, repair_swarm or nuke"

@@ -81,7 +81,9 @@ class Robot(
                 )
             else if (value <= healthLevel)
                 throw UpgradeException("Cannot downgrade Robot. Tried to go from level $healthLevel to level $value")
+            val diff = UpgradeValues.maxHealthByLevel[value] - UpgradeValues.maxHealthByLevel[field]
             field = value
+            health += diff
         }
 
     /**
@@ -150,7 +152,9 @@ class Robot(
                 )
             else if (value <= energyLevel)
                 throw UpgradeException("Cannot downgrade Robot. Tried to go from level $energyLevel to level $value")
+            val diff = UpgradeValues.maxEnergyByLevel[value] - UpgradeValues.maxEnergyByLevel[field]
             field = value
+            energy += diff
         }
 
     /**
@@ -272,10 +276,18 @@ class Robot(
     }
 
     /**
-     * Regenerates this [Robot's] [Robot] `energy`.
+     * Regenerates this [Robot's] [Robot] `energy`. The amount restored corresponds to the `energyRegen` value.
      */
     fun regenerateEnergy() {
         energy += energyRegen
+    }
+
+    /**
+     * Fully restores a `Robot's` `energy`. This method unlike `regenerateEnergy` is supposed to represent the energy
+     * regeneration at a space station.
+     */
+    fun restoreEnergy() {
+        energy = maxEnergy
     }
 
     /**

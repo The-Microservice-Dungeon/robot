@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.application.GameMapPlanetDto
 import com.msd.item.domain.MovementItemType
-import com.msd.item.domain.ReparationItemType
+import com.msd.item.domain.RepairItemType
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
@@ -90,14 +90,14 @@ class CommandControllerTest(
     @Test
     fun `incorrect commands return error code 400`() {
         // given
-        val command1 = "regenerate ${robot2.player} ${UUID.randomUUID()}"
-        val command2 = "block ${robot2.player} ${robot2.id}"
-        val command3 = "move ${robot2.player} ${robot2.id}"
-        val command4 = "mine ${robot2.player} ${robot2.id} broken"
-        val command5 = "use-item-movement ${UUID.randomUUID()} ${robot2.id} broken ${UUID.randomUUID()}"
-        val command6 = "fight ${robot6.player} ${robot6.id} noTarget ${UUID.randomUUID()}"
-        val command7 = "use-item-fighting ${UUID.randomUUID()} ${robot2.id} broken ${UUID.randomUUID()}"
-        val command8 = "nonsense ${UUID.randomUUID()} ${UUID.randomUUID()} ${UUID.randomUUID()}"
+        val command1 = "regenerate ${UUID.randomUUID()}"
+        val command2 = "block ${robot2.id}"
+        val command3 = "move ${robot2.id}"
+        val command4 = "mine ${robot2.id} broken"
+        val command5 = "use-item-movement ${robot2.id} broken ${UUID.randomUUID()}"
+        val command6 = "fight ${robot6.id} noTarget ${UUID.randomUUID()}"
+        val command7 = "use-item-fighting ${robot2.id} broken ${UUID.randomUUID()}"
+        val command8 = "nonsense ${UUID.randomUUID()}"
         val commands = listOf(command1, command2, command3, command4, command5, command6, command7, command8)
 
         // then
@@ -114,8 +114,8 @@ class CommandControllerTest(
     @Test
     fun `can't mix attack commands with other commands`() {
         // given
-        val command1 = "fight ${robot1.player} ${robot1.id} ${robot5.id} ${UUID.randomUUID()}"
-        val command2 = "regenerate ${robot2.player} ${robot2.id} ${UUID.randomUUID()}"
+        val command1 = "fight ${robot1.id} ${robot5.id} ${UUID.randomUUID()}"
+        val command2 = "regenerate ${robot2.id} ${UUID.randomUUID()}"
 
         val commands = listOf(command1, command2)
 
@@ -136,14 +136,14 @@ class CommandControllerTest(
     @Test
     fun `fighting works correctly`() {
         // given
-        val command1 = "fight ${robot1.player} ${robot1.id} ${robot5.id} ${UUID.randomUUID()}"
-        val command2 = "fight ${robot2.player} ${robot2.id} ${robot6.id} ${UUID.randomUUID()}"
-        val command3 = "fight ${robot3.player} ${robot3.id} ${robot7.id} ${UUID.randomUUID()}"
-        val command4 = "fight ${robot4.player} ${robot4.id} ${robot8.id} ${UUID.randomUUID()}"
-        val command5 = "fight ${robot5.player} ${robot5.id} ${robot1.id} ${UUID.randomUUID()}"
-        val command6 = "fight ${robot6.player} ${robot6.id} ${robot2.id} ${UUID.randomUUID()}"
-        val command7 = "fight ${robot7.player} ${robot7.id} ${robot3.id} ${UUID.randomUUID()}"
-        val command8 = "fight ${robot8.player} ${robot8.id} ${robot4.id} ${UUID.randomUUID()}"
+        val command1 = "fight ${robot1.id} ${robot5.id} ${UUID.randomUUID()}"
+        val command2 = "fight ${robot2.id} ${robot6.id} ${UUID.randomUUID()}"
+        val command3 = "fight ${robot3.id} ${robot7.id} ${UUID.randomUUID()}"
+        val command4 = "fight ${robot4.id} ${robot8.id} ${UUID.randomUUID()}"
+        val command5 = "fight ${robot5.id} ${robot1.id} ${UUID.randomUUID()}"
+        val command6 = "fight ${robot6.id} ${robot2.id} ${UUID.randomUUID()}"
+        val command7 = "fight ${robot7.id} ${robot3.id} ${UUID.randomUUID()}"
+        val command8 = "fight ${robot8.id} ${robot4.id} ${UUID.randomUUID()}"
 
         val commands = listOf(command1, command2, command3, command4, command5, command6, command7, command8)
 
@@ -152,7 +152,7 @@ class CommandControllerTest(
             contentType = MediaType.APPLICATION_JSON
             content = mapper.writeValueAsString(CommandDTO(commands))
         }.andExpect {
-            status { isOk() }
+            status { isAccepted() }
             content { string("Command batch accepted") }
         }.andDo { print() }
 
@@ -174,13 +174,13 @@ class CommandControllerTest(
         for (i in 1..3) robot1.upgrade(UpgradeType.DAMAGE, i)
         assertEquals(10, robot1.attackDamage)
         robotRepository.save(robot1)
-        val command = "fight ${robot1.player} ${robot1.id} ${robot5.id} ${UUID.randomUUID()}"
+        val command = "fight ${robot1.id} ${robot5.id} ${UUID.randomUUID()}"
         // when
         mockMvc.post("/commands") {
             contentType = MediaType.APPLICATION_JSON
             content = mapper.writeValueAsString(CommandDTO(listOf(command)))
         }.andExpect {
-            status { isOk() }
+            status { isAccepted() }
             content { string("Command batch accepted") }
         }.andDo { print() }
         // then
@@ -198,13 +198,13 @@ class CommandControllerTest(
                 .setBody(jacksonObjectMapper().writeValueAsString(targetPlanetDto))
         )
 
-        val command = "move ${robot1.player} ${robot1.id} $planet2Id ${UUID.randomUUID()}"
+        val command = "move ${robot1.id} $planet2Id ${UUID.randomUUID()}"
         // when
         mockMvc.post("/commands") {
             contentType = MediaType.APPLICATION_JSON
             content = mapper.writeValueAsString(CommandDTO(listOf(command)))
         }.andExpect {
-            status { isOk() }
+            status { isAccepted() }
             content { string("Command batch accepted") }
         }.andDo { print() }
         // then
@@ -216,14 +216,14 @@ class CommandControllerTest(
     @Test
     fun `block works correctly`() {
         // given
-        val command = "block ${robot1.player} ${robot1.id} ${UUID.randomUUID()}"
+        val command = "block ${robot1.id} ${UUID.randomUUID()}"
 
         // when
         mockMvc.post("/commands") {
             contentType = MediaType.APPLICATION_JSON
             content = mapper.writeValueAsString(CommandDTO(listOf(command)))
         }.andExpect {
-            status { isOk() }
+            status { isAccepted() }
             content { string("Command batch accepted") }
         }.andDo { print() }
         // then
@@ -249,8 +249,8 @@ class CommandControllerTest(
                 .setBody(jacksonObjectMapper().writeValueAsString(targetPlanetDto))
         )
 
-        val command1 = "block ${robot1.player} ${robot2.id} ${UUID.randomUUID()}"
-        val command2 = "move ${robot2.player} ${robot2.id} $planet2Id ${UUID.randomUUID()}"
+        val command1 = "block ${robot2.id} ${UUID.randomUUID()}"
+        val command2 = "move ${robot2.id} $planet2Id ${UUID.randomUUID()}"
         val commands = listOf(command1, command2)
 
         // when
@@ -259,7 +259,7 @@ class CommandControllerTest(
                 contentType = MediaType.APPLICATION_JSON
                 content = mapper.writeValueAsString(CommandDTO(listOf(it)))
             }.andExpect {
-                status { isOk() }
+                status { isAccepted() }
                 content { string("Command batch accepted") }
             }.andDo { print() }
         }
@@ -273,13 +273,13 @@ class CommandControllerTest(
         robot1.move(Planet(planet2Id), 10)
         assertEquals(10, robot1.energy)
         robotRepository.save(robot1)
-        val command = "regenerate ${robot1.player} ${robot1.id} ${UUID.randomUUID()}"
+        val command = "regenerate ${robot1.id} ${UUID.randomUUID()}"
         // when
         mockMvc.post("/commands") {
             contentType = MediaType.APPLICATION_JSON
             content = mapper.writeValueAsString(CommandDTO(listOf(command)))
         }.andExpect {
-            status { isOk() }
+            status { isAccepted() }
             content { string("Command batch accepted") }
         }.andDo { print() }
         // then
@@ -289,21 +289,19 @@ class CommandControllerTest(
     @Test
     fun `all robots correctly regenerate health when using repair swarm`() {
         // given
-        val command = "use-item-reparation ${robot1.player} ${robot1.id} ${ReparationItemType.REPARATION_SWARM} ${UUID.randomUUID()}"
+        val command = "use-item-repair ${robot1.id} ${RepairItemType.REPAIR_SWARM} ${UUID.randomUUID()}"
         robot1.upgrade(UpgradeType.HEALTH, 1)
         robot2.upgrade(UpgradeType.HEALTH, 1)
-        robot1.repair()
-        robot2.repair()
         robot1.receiveDamage(21)
         robot2.receiveDamage(10)
-        robot1.inventory.addItem(ReparationItemType.REPARATION_SWARM)
+        robot1.inventory.addItem(RepairItemType.REPAIR_SWARM)
         robotRepository.saveAll(listOf(robot1, robot2))
         // when
         mockMvc.post("/commands") {
             contentType = MediaType.APPLICATION_JSON
             content = mapper.writeValueAsString(CommandDTO(listOf(command)))
         }.andExpect {
-            status { isOk() }
+            status { isAccepted() }
             content { string("Command batch accepted") }
         }.andDo { print() }
 
@@ -313,7 +311,7 @@ class CommandControllerTest(
             "assert all robots healed correctly",
             {
                 assertEquals(24, robotRepository.findByIdOrNull(robot1.id)!!.health)
-                assertEquals(0, robotRepository.findByIdOrNull(robot1.id)!!.inventory.getItemAmountByType(ReparationItemType.REPARATION_SWARM))
+                assertEquals(0, robotRepository.findByIdOrNull(robot1.id)!!.inventory.getItemAmountByType(RepairItemType.REPAIR_SWARM))
             },
             {
                 assertEquals(25, robotRepository.findByIdOrNull(robot2.id)!!.health)
@@ -324,7 +322,7 @@ class CommandControllerTest(
     @Test
     fun `robot moves to a random planet after using a wormhole`() {
         // given
-        val command = "use-item-movement ${robot1.player} ${robot1.id} ${MovementItemType.WORMHOLE} ${UUID.randomUUID()}"
+        val command = "use-item-movement ${robot1.id} ${MovementItemType.WORMHOLE} ${UUID.randomUUID()}"
         robot1.inventory.addItem(MovementItemType.WORMHOLE)
         robotRepository.save(robot1)
 
@@ -344,7 +342,7 @@ class CommandControllerTest(
             contentType = MediaType.APPLICATION_JSON
             content = mapper.writeValueAsString(CommandDTO(listOf(command)))
         }.andExpect {
-            status { isOk() }
+            status { isAccepted() }
             content { string("Command batch accepted") }
         }.andDo { print() }
 
