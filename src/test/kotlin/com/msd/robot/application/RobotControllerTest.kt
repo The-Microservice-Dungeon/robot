@@ -33,6 +33,8 @@ class RobotControllerTest(
 
     val planet1 = UUID.fromString("8f3c39b1-c439-4646-b646-ace4839d8849")
 
+    val robot1 = robotRepository.save(Robot(player1, Planet(UUID.randomUUID())))
+
     @Test
     fun `Sending Spawn Command with invalid planet UUID returns 400`() {
         val spawnDtoInvalidPlanetUUID = """
@@ -134,9 +136,8 @@ class RobotControllerTest(
     }
 
     @Test
-    fun `Sending an EnergyRegen command leads to a robot's health being increased`() {
+    fun `Sending an EnergyRegen command leads to a robot's energy being increased`() {
 
-        val robot1 = robotRepository.save(Robot(player1, Planet(UUID.randomUUID())))
         // given
         robot1.move(Planet(UUID.randomUUID()), 10)
         Assertions.assertEquals(10, robot1.energy)
@@ -152,5 +153,24 @@ class RobotControllerTest(
         }
         // then
         Assertions.assertEquals(14, robotRepository.findByIdOrNull(robot1.id)!!.energy)
+    }
+
+    @Test
+    fun `Sending an EnergyRegen command doesnt lead to a robot's energy being increased past max Energy amount`() {
+        // given
+        robot1.move(Planet(UUID.randomUUID()), 1)
+        Assertions.assertEquals(19, robot1.energy)
+        robotRepository.save(robot1)
+
+        val command = "regenerate ${robot1.id} ${UUID.randomUUID()}"
+        // when
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(listOf(command)))
+        }.andExpect {
+            status { isAccepted() }
+        }
+        // then
+        Assertions.assertEquals(20, robotRepository.findByIdOrNull(robot1.id)!!.energy)
     }
 }
