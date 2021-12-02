@@ -383,26 +383,6 @@ class CommandControllerTest(
     }
 
     @Test
-    fun `Sending an EnergyRegen command leads to a robot's energy being increased`() {
-
-        // given
-        robot1.move(Planet(UUID.randomUUID()), 10)
-        assertEquals(10, robot1.energy)
-        robotRepository.save(robot1)
-
-        val command = "regenerate ${robot1.id} ${UUID.randomUUID()}"
-        // when
-        mockMvc.post("/commands") {
-            contentType = MediaType.APPLICATION_JSON
-            content = mapper.writeValueAsString(CommandDTO(listOf(command)))
-        }.andExpect {
-            status { isAccepted() }
-        }
-        // then
-        assertEquals(14, robotRepository.findByIdOrNull(robot1.id)!!.energy)
-    }
-
-    @Test
     fun `Sending an EnergyRegen command doesnt lead to a robot's energy being increased past max Energy amount`() {
         // given
         robot1.move(Planet(UUID.randomUUID()), 1)
@@ -420,5 +400,4 @@ class CommandControllerTest(
         // then
         assertEquals(20, robotRepository.findByIdOrNull(robot1.id)!!.energy)
     }
-
 }
