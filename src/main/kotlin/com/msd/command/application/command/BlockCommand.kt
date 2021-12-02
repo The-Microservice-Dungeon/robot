@@ -1,5 +1,6 @@
-package com.msd.command.application
+package com.msd.command.application.command
 
+import com.msd.command.application.command.Command
 import java.util.*
 
 class BlockCommand(

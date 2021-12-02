@@ -1,5 +1,6 @@
 package com.msd.command.application
 
+import com.msd.command.application.command.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 import org.junit.jupiter.api.assertThrows

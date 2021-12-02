@@ -2,7 +2,7 @@ package com.msd.item.domain
 
 import com.msd.domain.InvalidTargetException
 import com.msd.planet.domain.Planet
-import com.msd.robot.application.exception.RobotNotFoundException
+import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
 import com.msd.robot.domain.exception.TargetRobotOutOfReachException

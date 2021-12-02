@@ -1,4 +1,4 @@
-package com.msd.command.application
+package com.msd.command.application.command
 
 import com.msd.item.domain.AttackItemType
 import java.util.*

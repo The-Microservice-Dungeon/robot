@@ -19,10 +19,10 @@ class KafkaTopicConfig {
     @Value(value = "\${spring.kafka.topic.producer.robot-neighbours}")
     private lateinit var neighboursTopic: String
 
-    @Value(value = "\${spring.kafka.topic.producer.robot-movement}")
+    @Value(value = "\${spring.kafka.topic.producer.robot-blocked}")
     private lateinit var planetBlockedTopic: String
 
-    @Value(value = "\${spring.kafka.topic.producer.robot-movement}")
+    @Value(value = "\${spring.kafka.topic.producer.robot-mining}")
     private lateinit var miningTopic: String
 
     @Value(value = "\${spring.kafka.topic.producer.robot-fighting}")

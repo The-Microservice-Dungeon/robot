@@ -1,12 +1,16 @@
 package com.msd.application
 
+import com.msd.application.dto.BlockEventDTO
+import com.msd.application.dto.EnergyRegenEvent
 import com.msd.application.dto.EventDTO
 import com.msd.application.dto.MovementEventDTO
-import com.msd.command.application.Command
-import com.msd.command.application.MovementCommand
+import com.msd.command.application.command.BlockCommand
+import com.msd.command.application.command.Command
+import com.msd.command.application.command.EnergyRegenCommand
+import com.msd.command.application.command.MovementCommand
 import com.msd.core.FailureException
 import com.msd.domain.DomainEvent
-import com.msd.robot.application.exception.RobotNotFoundException
+import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.robot.domain.RobotRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.repository.findByIdOrNull
@@ -23,6 +27,27 @@ class ExceptionConverter(
     @Value(value = "\${spring.kafka.topic.producer.robot-movement}")
     private lateinit var movementTopic: String
 
+    @Value(value = "\${spring.kafka.topic.producer.robot-blocked}")
+    private lateinit var planetBlockedTopic: String
+
+    @Value(value = "\${spring.kafka.topic.producer.robot-mining}")
+    private lateinit var miningTopic: String
+
+    @Value(value = "\${spring.kafka.topic.producer.robot-fighting}")
+    private lateinit var fightingTopic: String
+
+    @Value(value = "\${spring.kafka.topic.producer.robot-regeneration}")
+    private lateinit var regenerationTopic: String
+
+    @Value(value = "\${spring.kafka.topic.producer.robot-item-fighting}")
+    private lateinit var itemFightingTopic: String
+
+    @Value(value = "\${spring.kafka.topic.producer.robot-item-repair}")
+    private lateinit var itemRepairTopic: String
+
+    @Value(value = "\${spring.kafka.topic.producer.robot-item-movement}")
+    private lateinit var itemMovementTopic: String
+
     private val eventVersion = 1
 
     /**
@@ -32,9 +57,25 @@ class ExceptionConverter(
         when (val event = getEventFromCommandAndException(command, fe)) {
             is MovementEventDTO -> {
                 kafkaMessageProducer.send(
-                    getTopicFromEventType(event.eventType),
+                    movementTopic,
                     buildFailureDomainEvent(
-                        event, event.eventType, command.transactionUUID
+                        event, EventType.MOVEMENT, command.transactionUUID
+                    )
+                )
+            }
+            is BlockEventDTO -> {
+                kafkaMessageProducer.send(
+                    planetBlockedTopic,
+                    buildFailureDomainEvent(
+                        event, EventType.PLANET_BLOCKED, command.transactionUUID
+                    )
+                )
+            }
+            is EnergyRegenEvent -> {
+                kafkaMessageProducer.send(
+                    regenerationTopic,
+                    buildFailureDomainEvent(
+                        event, EventType.REGENERATION, command.transactionUUID
                     )
                 )
             }
@@ -52,29 +93,31 @@ class ExceptionConverter(
     }
 
     private fun getEventFromCommandAndException(command: Command, e: FailureException): EventDTO {
-        val robot = robotRepository.findByIdOrNull(command.robotUUID) ?: throw RobotNotFoundException("")
+        val robot = if(e is RobotNotFoundException)
+            null
+        else
+            robotRepository.findByIdOrNull(command.robotUUID)
         return when (command) {
             is MovementCommand -> MovementEventDTO(
                 false,
                 e.message!!,
-                EventType.MOVEMENT,
-                robot.energy,
+                robot?.energy,
                 null,
                 listOf()
             )
-//            is BlockCommand -> Planet
-//            is EnergyRegenCommand -> EventType.REGENERATION
+            is BlockCommand -> BlockEventDTO(
+                false,
+                e.message!!,
+                null,
+                robot?.energy
+            )
+            is EnergyRegenCommand -> EnergyRegenEvent(
+                false, e.message!!, robot?.energy
+            )
 //            is MiningCommand -> EventType.MINING
 //            is ReparationItemUsageCommand -> EventType.ITEM_REPAIR
 //            is MovementItemsUsageCommand -> EventType.ITEM_MOVEMENT
             else -> throw IllegalArgumentException("This is not a Heterogeneous command")
-        }
-    }
-
-    private fun getTopicFromEventType(eventType: EventType): String {
-        return when (eventType) {
-            EventType.MOVEMENT -> movementTopic
-            else -> throw IllegalArgumentException("There is not Topic for this Command")
         }
     }
 

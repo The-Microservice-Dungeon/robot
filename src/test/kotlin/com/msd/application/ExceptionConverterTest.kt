@@ -1,14 +1,18 @@
 package com.msd.application
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.msd.application.dto.BlockEventDTO
 import com.msd.application.dto.MovementEventDTO
-import com.msd.command.application.MovementCommand
+import com.msd.command.application.command.BlockCommand
+import com.msd.command.application.command.MovementCommand
 import com.msd.domain.DomainEvent
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
 import com.msd.robot.domain.exception.NotEnoughEnergyException
 import com.msd.robot.domain.exception.PlanetBlockedException
+import com.msd.robot.domain.exception.RobotNotFoundException
+import com.msd.testUtil.EventChecker
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.junit.jupiter.api.AfterEach
@@ -16,6 +20,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory
 import org.springframework.kafka.listener.ContainerProperties
@@ -35,7 +40,7 @@ import java.util.concurrent.TimeUnit
 @SpringBootTest
 @DirtiesContext
 @EmbeddedKafka(
-    partitions = 1,
+    partitions = 8,
     brokerProperties = ["listeners=PLAINTEXT://\${spring.kafka.bootstrap-servers}", "port=9092"]
 )
 @Transactional
@@ -49,6 +54,32 @@ internal class ExceptionConverterTest(
     private lateinit var consumerRecords: BlockingQueue<ConsumerRecord<String, String>>
     private lateinit var container: KafkaMessageListenerContainer<String, String>
 
+    private val eventChecker = EventChecker()
+
+    @Value(value = "\${spring.kafka.topic.producer.robot-movement}")
+    private lateinit var movementTopic: String
+
+    @Value(value = "\${spring.kafka.topic.producer.robot-blocked}")
+    private lateinit var planetBlockedTopic: String
+
+    @Value(value = "\${spring.kafka.topic.producer.robot-mining}")
+    private lateinit var miningTopic: String
+
+    @Value(value = "\${spring.kafka.topic.producer.robot-fighting}")
+    private lateinit var fightingTopic: String
+
+    @Value(value = "\${spring.kafka.topic.producer.robot-regeneration}")
+    private lateinit var regenerationTopic: String
+
+    @Value(value = "\${spring.kafka.topic.producer.robot-item-fighting}")
+    private lateinit var itemFightingTopic: String
+
+    @Value(value = "\${spring.kafka.topic.producer.robot-item-repair}")
+    private lateinit var itemRepairTopic: String
+
+    @Value(value = "\${spring.kafka.topic.producer.robot-item-movement}")
+    private lateinit var itemMovementTopic: String
+
     @BeforeEach
     fun setup() {
         val robot = Robot(UUID.randomUUID(), Planet(UUID.randomUUID()))
@@ -57,7 +88,7 @@ internal class ExceptionConverterTest(
 
         consumerRecords = LinkedBlockingQueue()
 
-        val containerProperties = ContainerProperties("movement")
+        val containerProperties = ContainerProperties(movementTopic, planetBlockedTopic, miningTopic, fightingTopic, regenerationTopic, itemFightingTopic, itemRepairTopic, itemMovementTopic)
 
         val consumerProperties: Map<String, Any> = KafkaTestUtils.consumerProps(
             "sender", "false", embeddedKafka
@@ -83,7 +114,7 @@ internal class ExceptionConverterTest(
     }
 
     @Test
-    fun `when a MovementEvent is handled due to a Planet block an Event is thrown in the movement topic`() {
+    fun `when a PlanetBlockedException is handled when moving an Event is thrown in the 'movement' topic`() {
         // given
         val movementCommand = MovementCommand(robotId, UUID.randomUUID(), UUID.randomUUID())
         val planetBlockedException = PlanetBlockedException("Planet is blocked")
@@ -92,43 +123,18 @@ internal class ExceptionConverterTest(
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord)
+        assertEquals(movementTopic, singleRecord.topic())
+
         val domainEvent = DomainEvent.build(
             jacksonObjectMapper().readValue(singleRecord.value(), MovementEventDTO::class.java),
             singleRecord.headers()
         )
-
-        assertAll(
-            "Check header correct",
-            {
-                assertEquals(movementCommand.transactionUUID.toString(), domainEvent.transactionId)
-            },
-            {
-                assertEquals("movement", domainEvent.type)
-            }
-        )
-
-        assertAll(
-            "payload correct",
-            {
-                assertEquals(false, domainEvent.payload.success)
-            },
-            {
-                assertEquals("Planet is blocked", domainEvent.payload.message)
-            },
-            {
-                assertEquals(20, domainEvent.payload.remainingEnergy)
-            },
-            {
-                assertEquals(null, domainEvent.payload.planet)
-            },
-            {
-                assertEquals(listOf<UUID>(), domainEvent.payload.robots)
-            }
-        )
+        eventChecker.checkHeaders(movementCommand.transactionUUID, EventType.MOVEMENT, domainEvent)
+        eventChecker.checkMovementPaylod(false, "Planet is blocked", 20, null, listOf(), domainEvent.payload)
     }
 
     @Test
-    fun `When a MovementEvent is handled due to not enough energy an event is sent to the movement topic`() {
+    fun `When a NotEnoughEnergyException is handled when moving an event is sent to the 'movement' topic`() {
         // given
         val movementCommand = MovementCommand(robotId, UUID.randomUUID(), UUID.randomUUID())
         val notEnoughEnergyException = NotEnoughEnergyException("Not enough Energy")
@@ -137,38 +143,78 @@ internal class ExceptionConverterTest(
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord)
+        assertEquals(movementTopic, singleRecord.topic())
+
         val domainEvent = DomainEvent.build(
             jacksonObjectMapper().readValue(singleRecord.value(), MovementEventDTO::class.java),
             singleRecord.headers()
         )
 
-        assertAll(
-            "Check header correct",
-            {
-                assertEquals(movementCommand.transactionUUID.toString(), domainEvent.transactionId)
-            },
-            {
-                assertEquals("movement", domainEvent.type)
-            }
+        eventChecker.checkHeaders(movementCommand.transactionUUID, EventType.MOVEMENT, domainEvent)
+        eventChecker.checkMovementPaylod(false, "Not enough Energy", 20, null, listOf(), domainEvent.payload)
+    }
+
+    @Test
+    fun `when a RobotNotFoundException is handled due to Movement an event is send to the 'movement' topic`() {
+        // given
+        val movementCommand = MovementCommand(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID())
+        val robotNotFoundException = RobotNotFoundException("Robot Not Found")
+        // when
+        exceptionConverter.handle(robotNotFoundException, movementCommand)
+        // then
+        val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
+        assertNotNull(singleRecord)
+        assertEquals(movementTopic, singleRecord.topic())
+
+        val domainEvent = DomainEvent.build(
+            jacksonObjectMapper().readValue(singleRecord.value(), MovementEventDTO::class.java),
+            singleRecord.headers()
         )
 
-        assertAll(
-            "payload correct",
-            {
-                assertEquals(false, domainEvent.payload.success)
-            },
-            {
-                assertEquals("Not enough Energy", domainEvent.payload.message)
-            },
-            {
-                assertEquals(20, domainEvent.payload.remainingEnergy)
-            },
-            {
-                assertEquals(null, domainEvent.payload.planet)
-            },
-            {
-                assertEquals(listOf<UUID>(), domainEvent.payload.robots)
-            }
+        eventChecker.checkHeaders(movementCommand.transactionUUID, EventType.MOVEMENT, domainEvent)
+
+        eventChecker.checkMovementPaylod(false, "Robot Not Found", null, null, listOf(), domainEvent.payload)
+    }
+
+    @Test
+    fun `when NotEnoughEnergyException is thrown while blocking an event is send to 'planet-blocked' topic`() {
+        //given
+        val blockCommand = BlockCommand(robotId, UUID.randomUUID())
+        val notEnoughEnergyException = NotEnoughEnergyException("Robot has not enough Energy")
+        //when
+        exceptionConverter.handle(notEnoughEnergyException, blockCommand)
+        //then
+        val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
+        assertNotNull(singleRecord)
+        assertEquals(planetBlockedTopic, singleRecord.topic())
+
+        val domainEvent = DomainEvent.build(
+            jacksonObjectMapper().readValue(singleRecord.value(), BlockEventDTO::class.java),
+            singleRecord.headers()
         )
+
+        eventChecker.checkHeaders(blockCommand.transactionUUID, EventType.PLANET_BLOCKED, domainEvent)
+        eventChecker.checkBlockPayload(false, "Robot has not enough Energy", null, 20, domainEvent.payload)
+    }
+
+    @Test
+    fun `when RobotNotFoundException is thrown while blocking an event is send to 'planet-blocked' topic`() {
+        //given
+        val blockCommand = BlockCommand(robotId, UUID.randomUUID())
+        val robotNotFoundException = RobotNotFoundException("Robot not Found")
+        //when
+        exceptionConverter.handle(robotNotFoundException, blockCommand)
+        //then
+        val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
+        assertNotNull(singleRecord)
+        assertEquals(planetBlockedTopic, singleRecord.topic())
+
+        val domainEvent = DomainEvent.build(
+            jacksonObjectMapper().readValue(singleRecord.value(), BlockEventDTO::class.java),
+            singleRecord.headers()
+        )
+
+        eventChecker.checkHeaders(blockCommand.transactionUUID, EventType.PLANET_BLOCKED, domainEvent)
+        eventChecker.checkBlockPayload(false, "Robot not Found", null, null, domainEvent.payload)
     }
 }

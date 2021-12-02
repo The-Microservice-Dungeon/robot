@@ -3,7 +3,7 @@ package com.msd.application
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.msd.domain.ResourceType
-import com.msd.robot.application.UnknownPlanetException
+import com.msd.robot.application.exception.UnknownPlanetException
 import com.msd.robot.application.exception.TargetPlanetNotReachableException
 import io.netty.channel.ChannelOption
 import io.netty.handler.timeout.ReadTimeoutHandler

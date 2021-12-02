@@ -1,4 +1,4 @@
-package com.msd.robot.application
+package com.msd.robot.application.exception
 
 import java.util.*
 

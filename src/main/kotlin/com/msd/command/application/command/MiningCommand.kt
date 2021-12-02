@@ -1,4 +1,4 @@
-package com.msd.command.application
+package com.msd.command.application.command
 
 import java.util.*
 

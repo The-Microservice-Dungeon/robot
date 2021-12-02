@@ -1,6 +1,6 @@
 package com.msd.command
 
-import com.msd.command.application.Command
+import com.msd.command.application.command.Command
 import com.msd.domain.ResourceType
 import java.util.*
 

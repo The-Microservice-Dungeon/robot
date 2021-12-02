@@ -2,7 +2,7 @@ package com.msd.application
 
 import com.msd.command.application.CommandBatchParsingException
 import com.msd.command.application.CommandParsingException
-import com.msd.robot.application.exception.RobotNotFoundException
+import com.msd.robot.domain.exception.RobotNotFoundException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
