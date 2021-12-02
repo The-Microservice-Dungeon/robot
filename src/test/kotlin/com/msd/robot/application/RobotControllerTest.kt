@@ -124,7 +124,10 @@ class RobotControllerTest(
     }
 
     @Test
-    fun `Sending EnergyRegen Command with invalid transaction UUID returns 400`() {
+    fun `Sending EnergyRegen Command with invalid transaction UUID returns 400 and does not increase the robots energy`() {
+        robot1.move(Planet(UUID.randomUUID()), 10)
+        Assertions.assertEquals(10, robot1.energy)
+
         val command = "regenerate ${UUID.randomUUID()} invalidTransactionId"
         // when
         mockMvc.post("/commands") {
@@ -133,6 +136,8 @@ class RobotControllerTest(
         }.andExpect {
             status { isBadRequest() }
         }
+
+        Assertions.assertEquals(10, robotRepository.findByIdOrNull(robot1.id)!!.energy)
     }
 
     @Test
