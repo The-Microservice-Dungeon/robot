@@ -350,4 +350,54 @@ class CommandControllerTest(
         assertNotEquals(planet1Id, robotRepository.findByIdOrNull(robot1.id)!!.planet.planetId)
         assertEquals(0, robotRepository.findByIdOrNull(robot1.id)!!.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
     }
+
+    @Test
+    fun `Sending EnergyRegen Command with invalid robot UUID returns 400`() {
+        val command = "regenerate invalidRobotId ${UUID.randomUUID()}"
+        // when
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(listOf(command)))
+        }.andExpect {
+            status { isBadRequest() }
+        }
+    }
+
+    @Test
+    fun `Sending EnergyRegen Command with invalid transaction UUID returns 400 and does not increase the robots energy`() {
+
+        robot1.move(Planet(UUID.randomUUID()), 10)
+        assertEquals(10, robot1.energy)
+        robotRepository.save(robot1)
+
+        val command = "regenerate ${UUID.randomUUID()} invalidTransactionId"
+        // when
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(listOf(command)))
+        }.andExpect {
+            status { isBadRequest() }
+        }
+
+        assertEquals(10, robotRepository.findByIdOrNull(robot1.id)!!.energy)
+    }
+
+    @Test
+    fun `Sending an EnergyRegen command doesnt lead to a robot's energy being increased past max Energy amount`() {
+        // given
+        robot1.move(Planet(UUID.randomUUID()), 1)
+        assertEquals(19, robot1.energy)
+        robotRepository.save(robot1)
+
+        val command = "regenerate ${robot1.id} ${UUID.randomUUID()}"
+        // when
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(listOf(command)))
+        }.andExpect {
+            status { isAccepted() }
+        }
+        // then
+        assertEquals(20, robotRepository.findByIdOrNull(robot1.id)!!.energy)
+    }
 }
