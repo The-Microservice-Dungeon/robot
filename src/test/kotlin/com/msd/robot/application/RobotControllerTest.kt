@@ -126,8 +126,10 @@ class RobotControllerTest(
 
     @Test
     fun `Sending EnergyRegen Command with invalid transaction UUID returns 400 and does not increase the robots energy`() {
+
         robot1.move(Planet(UUID.randomUUID()), 10)
         assertEquals(10, robot1.energy)
+        robotRepository.save(robot1)
 
         val command = "regenerate ${UUID.randomUUID()} invalidTransactionId"
         // when
