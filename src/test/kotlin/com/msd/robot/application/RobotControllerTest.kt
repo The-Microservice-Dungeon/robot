@@ -1,9 +1,10 @@
 package com.msd.robot.application
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.msd.command.application.CommandController
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.command.application.CommandDTO
 import com.msd.planet.domain.Planet
+import com.msd.robot.application.dtos.RestorationDTO
 import com.msd.robot.application.dtos.RobotDto
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
@@ -179,6 +180,7 @@ class RobotControllerTest(
         assertEquals(20, robotRepository.findByIdOrNull(robot1.id)!!.energy)
     }
 
+    @Test
     fun `passing a wrong UUID returns a 404 when restoring`() {
         // given
         val restorationDTO = """
