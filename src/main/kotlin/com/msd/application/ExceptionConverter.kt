@@ -11,4 +11,10 @@ class ExceptionConverter {
      */
     fun handle(exception: RuntimeException, transactionId: UUID) {
     }
+
+    fun handleAll(exception: RuntimeException, transactionIds: List<UUID>) {
+        transactionIds.forEach {
+            handle(exception, it)
+        }
+    }
 }

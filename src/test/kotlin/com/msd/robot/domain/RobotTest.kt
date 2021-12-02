@@ -317,4 +317,14 @@ class RobotTest {
         // then
         assertEquals(robot1.maxHealth, robot1.health)
     }
+
+    @Test
+    fun `energyRestore fully restores a Robot's energy`() {
+        // given
+        robot1.move(Planet(UUID.randomUUID()), 15)
+        // when
+        robot1.restoreEnergy()
+        // then
+        assertEquals(20, robot1.energy)
+    }
 }

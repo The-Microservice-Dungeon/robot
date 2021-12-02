@@ -7,6 +7,8 @@ import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
 import com.msd.planet.domain.Planet
+import com.msd.robot.application.RestorationType
+import com.msd.robot.application.RobotNotFoundException
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
@@ -518,5 +520,44 @@ internal class RobotDomainServiceTest {
                 assert(robot1.inventory.getItemAmountByType(RepairItemType.REPAIR_SWARM) == 1)
             }
         )
+    }
+
+    @Test
+    fun `passing HEALTH as RestorationType only restores Health to full`() {
+// given
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+        every { robotRepository.save(robot1) } returns robot1
+        robot1.move(Planet(UUID.randomUUID()), 10)
+        robot1.receiveDamage(5)
+        // when
+        robotDomainService.restoreRobot(robot1.id, RestorationType.HEALTH)
+        // then
+        assertEquals(10, robot1.energy)
+        assertEquals(10, robot1.health)
+    }
+
+    @Test
+    fun `passing ENERGY as RestorationType only restore ENERGY to full`() {
+        // given
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+        every { robotRepository.save(robot1) } returns robot1
+        robot1.move(Planet(UUID.randomUUID()), 10)
+        robot1.receiveDamage(5)
+        // when
+        robotDomainService.restoreRobot(robot1.id, RestorationType.ENERGY)
+        // then
+        assertEquals(20, robot1.energy)
+        assertEquals(5, robot1.health)
+    }
+
+    @Test
+    fun `passing an invalid UUID throws a RobotNotFoundException`() {
+        // given
+        every { robotRepository.findByIdOrNull(any()) } returns null
+
+        // then
+        assertThrows<RobotNotFoundException> {
+            robotDomainService.restoreRobot(UUID.randomUUID(), RestorationType.ENERGY)
+        }
     }
 }
