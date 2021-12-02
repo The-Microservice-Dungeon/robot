@@ -2,7 +2,6 @@ package com.msd.robot.application
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.msd.command.application.CommandDTO
 import com.msd.planet.domain.Planet
 import com.msd.robot.application.dtos.RestorationDTO
 import com.msd.robot.application.dtos.RobotDto
@@ -33,8 +32,6 @@ class RobotControllerTest(
     val player1Id: UUID = UUID.fromString("d43608d5-2107-47a0-bd4f-6720dfa53c4d")
 
     val planet1Id: UUID = UUID.fromString("8f3c39b1-c439-4646-b646-ace4839d8849")
-
-    val robot1 = robotRepository.save(Robot(player1Id, Planet(UUID.randomUUID())))
 
     @Test
     fun `Sending Spawn Command with invalid planet UUID returns 400`() {
@@ -111,8 +108,6 @@ class RobotControllerTest(
 
         assert(robotRepository.existsById(resultRobot.id))
     }
-
-
 
     @Test
     fun `passing a wrong UUID returns a 404 when restoring`() {
