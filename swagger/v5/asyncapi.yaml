@@ -1,0 +1,356 @@
+asyncapi: '2.2.0'
+info:
+  title: Robot
+  version: '1.0.0'
+  description: |
+                This service is in charge of the robots for The Microservice Dungeon\
+                You can use the "robot" topic to subcribe to our events.\
+
+channels:
+  movement:
+    publish:
+      message:
+        $ref: '#/components/messages/movement'
+  neighbours:
+    publish:
+      message:
+        $ref: '#/components/messages/neighbours'       
+  planet-blocked:
+    publish:
+      message:
+        $ref: '#/components/messages/planet-blocked' 
+  mining:
+    publish:
+      message:
+        $ref: '#/components/messages/mining'
+  fighting:
+    publish:
+      message:
+        $ref: '#/components/messages/fighting'
+  resource-distribution:
+    publish:
+      message:
+        $ref: '#/components/messages/resource-distribution'   
+  regeneration:
+    publish:
+      message:
+        $ref: '#/components/messages/regeneration'        
+  item-fighting: 
+    publish:
+      message:
+        $ref: '#/components/messages/item-fighting'
+  item-repair: 
+    publish:
+      message:
+        $ref: '#/components/messages/item-repair'
+  item-movement:
+    publish:
+      message:
+        $ref: '#/components/messages/item-movement'
+components:
+  messageTraits:
+    DefaultTradingKafkaMessage:
+      bindings:
+        kafka:
+          key:
+            type: string
+            format: uuid
+          bindingVersion: '0.1.0'
+      correlationId:
+        location: "$message.header#/transactionId"
+      headers:
+        type: object
+        required:
+          - eventId
+          - transactionId
+          - version
+          - timestamp
+          - type
+        properties:
+          eventId:
+            type: string
+            format: uuid
+            description: Generated UUID of the event
+            example: 5bc9f935-32f1-4d7b-a90c-ff0e6e34125a
+          transactionId:
+            type: string
+            format: uuid
+            description: TransactionID if available or UUID of the entity concerned
+            example: 0cfc04f1-6df5-42c6-a19a-146128b8a3b4
+          version:
+            type: integer
+            description: Consecutive number for the comparability of the actuality of the event
+            example: 42
+          timestamp:
+            type: string
+            format: date-time
+            description: >
+              timestamp as specified in [time-format-decision](https://the-microservice-dungeon.github.io/decisionlog/decisions/time-format.html)
+            example: 2020-01-10T12:00:00Z
+          type:
+            type: string
+            description: The type of event
+            example: event-example-uploaded
+  messages:
+    movement:
+      description: >
+        Announces wheather a movemnt has been successfull and provides data about planet
+      traits:
+        - $ref: '#/components/messageTraits/DefaultTradingKafkaMessage'
+      payload:
+        type: object
+        properties:
+          success:
+            type: boolean
+            description: true if movement associated with transactionId has been successfull. Maybe transactionId needs to be redacted?
+          message: 
+            type: string
+            example: Movement successfull/Planet does not exist
+            description: Describes the result. If success is false, it describes the error
+          remainingEnergy:
+            type: integer
+            example: 10
+            description: Remaining energy after movement
+          planet:
+            type: object
+            properties:
+              planetId:
+                type: string
+                format: uuid
+              movementDifficulty:
+                type: integer
+                description: Movemenet difficulty of the planet
+              #rechargeMultiplicator:
+              #  type: integer
+              #  description: Recharge multiplicator of the planet
+              planetType:
+                type: string
+                enum: [default, spacestation]
+                description: Planet type (`default` or `spacestation`) of the planet
+              resourceType:
+                type: string
+                enum: [coal, iron, gem, gold, platin]
+          robots:
+            type: array
+            items:
+              type: string
+              format: uuid
+    neighbours:
+      description: >
+        Neighbours of a planet after a robot has moved to it.
+      traits:
+        - $ref: '#/components/messageTraits/DefaultTradingKafkaMessage'
+      payload:
+        type: array
+        items:
+          - type: object
+            properties:
+              planetID:
+                type: string
+                format: uuid
+                decription: uuid of the planets neighbours
+              movementDifficulty:
+                type: integer
+                description: Movemenet difficulty of the planet
+              direction:
+                type: string
+                enum: [north, west, south, east]
+                description: cardinal direction of neighbour 
+    planet-blocked:
+      description: >
+        If a planet has been blocked
+      traits:
+        - $ref: '#/components/messageTraits/DefaultTradingKafkaMessage'
+      payload:
+        type: object
+        properties:
+          success:
+            type: boolean
+            description: true if blocking associated with transactionId has been successfull
+          message: 
+            type: string
+            example: Planet successfully blocked/Not enough energy
+            description: Describes the result. If success is false, it describes the error
+          planetId:
+            type: string
+            format: uuid
+          remainingEnergy:
+            type: integer
+            example: 10
+            description: Remaining energy after blocking
+    mining:
+      description: >
+        Result of a mining operation.
+      traits:
+        - $ref: '#/components/messageTraits/DefaultTradingKafkaMessage'
+      payload:
+        type: object
+        properties:
+          success:
+            type: boolean
+            description: Is true if the transaction succeeded
+          message: 
+            type: string
+            example: Mining successful/Not enough energy
+            description: Describes the result. If success is false, it describes the error
+          remainingEnergy:
+            type: integer
+            example: 10
+            description: Remaining energy after mining
+          upadetetInventory:
+            type: integer
+            example: 5
+            description: Amount of the mined resource in the inventory after mining
+          resourceType:
+            type: string
+            enum: [coal, iron, gem, gold, platin, NONE]
+    fighting:
+      description: >
+        Result of a fight
+      traits:
+        - $ref: '#/components/messageTraits/DefaultTradingKafkaMessage'
+      payload:
+        type: object
+        properties:
+          success:
+            type: boolean
+            description: Is true if the transaction succeeded
+          message: 
+            type: string
+            example: Attacking successful/Target not found
+            description: Describes the result. If success is false, it describes the error
+          attacker:
+            type: string
+            format: uuid
+          defender:
+            type: string
+            format: uuid
+          remainingDefenderHealth:          
+            type: integer
+          #defenderAlive:
+          #  type: boolean
+          #  description: true if the defender is alive after the attack
+          remainingEnergy:
+            type: integer
+            example: 10
+            description: Remaining energy after fighting
+    resource-distribution:
+      description: >
+        Resource distribtion after robots have been destroyed. These events show the updated inventory for every robot that received resources. For every robot that is destroyed, one event is thrown. If a robot received resources from multiple defeated robots, the results are combined into one event.
+      traits:
+        - $ref: '#/components/messageTraits/DefaultTradingKafkaMessage'
+      payload:
+        type: object
+        properties:
+          robotId:
+            type: string
+            format: uuid
+          coal:
+            type: integer
+            example: 3
+            description: amount of coal in the inventory after distribution
+          iron:
+            type: integer
+            example: 0
+            description: amount of iron in the inventory after distribution
+          gem:
+            type: integer
+            example: 1
+            description: amount of gem in the inventory after distribution
+          gold:
+            type: integer
+            example: 3
+            description: amount of gold in the inventory after distribution
+          platin:
+            type: integer
+            example: 5
+            description: amount of platin in the inventory after distribution
+          
+                
+    regeneration:
+      description: >
+        Energy regeneration of a robot
+      traits:
+        - $ref: '#/components/messageTraits/DefaultTradingKafkaMessage'
+      payload:
+        type: object
+        properties:
+          success:
+            type: boolean
+            description: Is true if the transaction succeeded
+          message: 
+            type: string
+            example: Regeneration successful/Target not found
+            description: Describes the result. If success is false, it describes the error
+          remainingEnergy:
+            type: integer
+            example: 10
+            description: Remaining energy after regeneration
+    item-fighting:
+      description: >
+        Usage of fighting item
+      traits:
+        - $ref: '#/components/messageTraits/DefaultTradingKafkaMessage'
+      payload:
+        type: object
+        properties:
+          success:
+            type: boolean
+            description: Is true if the transaction succeeded
+          message: 
+            type: string
+            example: Item usage successful/Item not in robot's inventory
+          remainingItemCount:
+            type: integer
+            example: 2
+            description: Remaining  item count after usage
+          associatedFights:
+            type: array
+            items: 
+              type: string
+              format: uuid
+            description: eventId, associated to a fighting event for every robot that is attacked
+    item-repair:
+      description: >
+        Repair Swarm is used
+      traits:
+        - $ref: '#/components/messageTraits/DefaultTradingKafkaMessage'
+      payload:
+        type: object
+        properties:
+          success:
+            type: boolean
+            description: Is true if the transaction succeeded
+          message: 
+            type: string
+            example: Item usage successful/Item not in robot's inventory
+          robots:
+            type: array
+            description: Robots that are healed and their updated HP
+            items:
+              - type: object
+                properties:
+                  robotId:
+                    type: string
+                    format: uuid
+                  remainingHealth:
+                    type: integer
+                    example: 30
+    item-movement:
+      description: >
+        Usage of an item that affects position of a robot
+      traits:
+        - $ref: '#/components/messageTraits/DefaultTradingKafkaMessage'
+      payload:
+        type: object
+        properties:
+          success:
+            type: boolean
+            description: Is true if the transaction succeeded
+          message: 
+            type: string
+            example: Item usage successful/Item not in robot's inventory
+          associatedMovement:
+            type: string
+            format: uuid
+            description: eventId of a movement event that tells you about your target planet. Also a neighbour event with the same transactionId as this event is thrown to tell you abour neighbour planets.
