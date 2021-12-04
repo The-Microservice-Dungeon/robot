@@ -54,7 +54,8 @@ class RobotApplicationServiceTest {
     lateinit var robotApplicationService: RobotApplicationService
     lateinit var robotDomainService: RobotDomainService
 
-    lateinit var robotIdsToRobot: Map<UUID, Robot>
+    val randomUUID: UUID
+        get() = UUID.randomUUID()
 
     @BeforeEach
     fun setup() {
@@ -81,6 +82,8 @@ class RobotApplicationServiceTest {
         every { robotRepository.findByIdOrNull(robot6.id) } returns robot6
 
         every { robotRepository.save(any()) } returns robot1 // we don't use the return value of save calls
+        every { eventSender.sendEvent(any(), any()) } returns randomUUID
+        justRun { eventSender.sendGenericEvent(any()) }
     }
 
     @Test
