@@ -1,6 +1,7 @@
 package com.msd.testUtil
 
 import com.msd.domain.DomainEvent
+import com.msd.domain.ResourceType
 import com.msd.event.application.EventType
 import com.msd.event.application.dto.*
 import com.msd.planet.application.PlanetDTO
@@ -203,6 +204,34 @@ class EventTestUtils {
             },
             {
                 assertEquals(expectedRemainingEnergy, payload.remainingEnergy)
+            }
+        )
+    }
+
+    fun checkMiningPayload(
+        expectedSuccess: Boolean,
+        expectedMessage: String,
+        expectedRemainingEnergy: Int?,
+        expectedUpdatedInventory: Int?,
+        expectedResource: ResourceType,
+        payload: MiningEventDTO
+    ) {
+        assertAll(
+            "Check mining payload correct",
+            {
+                assertEquals(expectedSuccess, payload.success)
+            },
+            {
+                assertEquals(expectedMessage, payload.message)
+            },
+            {
+                assertEquals(expectedRemainingEnergy, payload.remainingEnergy)
+            },
+            {
+                assertEquals(expectedUpdatedInventory, payload.updatedInventory)
+            },
+            {
+                assertEquals(expectedResource, payload.resourceType)
             }
         )
     }
