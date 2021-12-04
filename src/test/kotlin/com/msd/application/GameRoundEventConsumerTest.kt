@@ -2,7 +2,6 @@ package com.msd.application
 
 import com.msd.planet.domain.Planet
 import com.msd.planet.domain.PlanetRepository
-import io.mockk.impl.annotations.SpyK
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -23,7 +22,7 @@ import javax.transaction.Transactional
 @Transactional
 internal class GameRoundEventConsumerTest(
     @Autowired val kafkaTemplate: KafkaTemplate<String, String>,
-    @SpyK val gameRoundEventConsumer: GameRoundEventConsumer,
+    @Autowired val gameRoundEventConsumer: GameRoundEventConsumer,
     @Autowired val planetRepository: PlanetRepository,
 ) {
 
