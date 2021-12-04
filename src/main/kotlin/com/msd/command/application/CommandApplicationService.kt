@@ -31,11 +31,11 @@ class CommandApplicationService {
      */
     fun parseCommandsFromStrings(commandStrings: List<String>): List<Command> {
         val commands = commandStrings.map { parseCommand(it) }
-        if (commands.find { it is AttackCommand } != null)
-            if (commands.filterIsInstance<AttackCommand>().count() != commands.size)
+        if (commands.find { it is FightingCommand } != null)
+            if (commands.filterIsInstance<FightingCommand>().count() != commands.size)
                 throw CommandBatchParsingException("AttackCommands need to be homogeneous.")
-        if (commands.find { it is AttackItemUsageCommand } != null)
-            if (commands.filterIsInstance<AttackItemUsageCommand>().count() != commands.size)
+        if (commands.find { it is FightingItemUsageCommand } != null)
+            if (commands.filterIsInstance<FightingItemUsageCommand>().count() != commands.size)
                 throw CommandBatchParsingException("AttackItemUsageCommand need to be homogeneous.")
         return commands
     }
@@ -92,7 +92,7 @@ class CommandApplicationService {
      */
     private fun parseItemUsageCommand(verb: String, args: List<String>): Command {
         when (verb) {
-            CommandVerbs.USE_ITEM_FIGHTING.verb -> return AttackItemUsageCommand(
+            CommandVerbs.USE_ITEM_FIGHTING.verb -> return FightingItemUsageCommand(
                 UUID.fromString(args[0]),
                 AttackItemType.valueOf(args[1].uppercase()),
                 UUID.fromString(args[2]),
@@ -159,7 +159,7 @@ class CommandApplicationService {
     fun get3PartConstructorByVerb(verb: String): (UUID, UUID, UUID) -> Command {
         return when (verb) {
             CommandVerbs.MOVE.verb -> ::MovementCommand
-            CommandVerbs.FIGHT.verb -> ::AttackCommand
+            CommandVerbs.FIGHT.verb -> ::FightingCommand
             else -> throw RuntimeException("Internal Error")
         }
     }

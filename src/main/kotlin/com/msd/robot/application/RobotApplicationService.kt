@@ -32,7 +32,7 @@ class RobotApplicationService(
 
     /**
      * Takes a list of commands and passes them on to the corresponding method.
-     * [AttackCommand]s and [AttackItemUsageCommand]s are homogeneous and have to be handled as one single batch.
+     * [FightingCommand]s and [FightingItemUsageCommand]s are homogeneous and have to be handled as one single batch.
      * All other commands can be heterogeneous and thus can be passed to the corresponding methods individually.
      * This method is executed asynchronous and does not block the calling controller.
      *
@@ -40,11 +40,11 @@ class RobotApplicationService(
      */
     @Async
     fun executeCommands(commands: List<Command>) {
-        if (commands[0] is AttackCommand)
+        if (commands[0] is FightingCommand)
         // Attack commands are always homogenous, so this cast is valid
-            executeAttacks(commands as List<AttackCommand>)
-        else if (commands[0] is AttackItemUsageCommand)
-            useAttackItems(commands as List<AttackItemUsageCommand>)
+            executeAttacks(commands as List<FightingCommand>)
+        else if (commands[0] is FightingItemUsageCommand)
+            useAttackItems(commands as List<FightingItemUsageCommand>)
         else if (commands[0] is MineCommand)
             executeMining(commands as List<MineCommand>)
         else
@@ -163,20 +163,20 @@ class RobotApplicationService(
      * This method should never throw any exception. Exceptions occurring during the execution of a single command get
      * handled right then and should not disturb the execution of the following commands.
      *
-     * @param attackCommands    A list of AttackCommands that need to be executed
+     * @param fightingCommands    A list of AttackCommands that need to be executed
      */
-    fun executeAttacks(attackCommands: List<AttackCommand>) {
+    fun executeAttacks(fightingCommands: List<FightingCommand>) {
         val battleFields = mutableSetOf<UUID>()
-        executeFights(attackCommands, battleFields)
+        executeFights(fightingCommands, battleFields)
         postFightCleanup(battleFields)
     }
 
     private fun executeFights(
-        attackCommands: List<AttackCommand>,
+        fightingCommands: List<FightingCommand>,
         battleFields: MutableSet<UUID>
     ) {
         println()
-        attackCommands.forEach {
+        fightingCommands.forEach {
             try {
                 val attacker = robotDomainService.getRobot(it.robotUUID)
                 val target = robotDomainService.getRobot(it.targetRobotUUID)
@@ -228,13 +228,13 @@ class RobotApplicationService(
     }
 
     /**
-     * Execute all [AttackItemUsageCommands][AttackItemUsageCommand]. The failure of one command execution does not
+     * Execute all [AttackItemUsageCommands][FightingItemUsageCommand]. The failure of one command execution does not
      * impair the other command executions. After all commands have been executed, the battlefields get cleaned up,
      * i.e. all dead robots get removed and their resources distributed between the remaining robots on the planet.
      *
      * @param usageCommands: The AttackItemUsageCommands that should be executed
      */
-    fun useAttackItems(usageCommands: List<AttackItemUsageCommand>) {
+    fun useAttackItems(usageCommands: List<FightingItemUsageCommand>) {
         val battleFields = mutableSetOf<UUID>()
         usageCommands.forEach {
             try {

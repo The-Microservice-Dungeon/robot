@@ -42,7 +42,7 @@ class CommandApplicationServiceTest {
                 assert(commands.count { it is MovementCommand } == 1)
             },
             {
-                assert(commands.count { it is AttackCommand } == 1)
+                assert(commands.count { it is FightingCommand } == 1)
             },
             {
                 assert(commands.count { it is MiningCommand } == 1)
@@ -51,7 +51,7 @@ class CommandApplicationServiceTest {
                 assert(commands.count { it is EnergyRegenCommand } == 1)
             },
             {
-                assert(commands.count { it is AttackItemUsageCommand } == 4) // 4 !!!
+                assert(commands.count { it is FightingItemUsageCommand } == 4) // 4 !!!
             },
             {
                 assert(commands.count { it is MovementItemsUsageCommand } == 1)

@@ -1,14 +1,10 @@
 package com.msd.event.application
 
-import com.msd.command.application.command.BlockCommand
-import com.msd.command.application.command.Command
-import com.msd.command.application.command.EnergyRegenCommand
-import com.msd.command.application.command.MovementCommand
+import com.msd.command.application.command.*
 import com.msd.core.FailureException
 import com.msd.domain.DomainEvent
 import com.msd.event.application.dto.*
 import com.msd.robot.domain.RobotRepository
-import com.msd.robot.domain.exception.RobotNotFoundException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
@@ -28,7 +24,7 @@ class EventSender(
      * Convert the Exception into a corresponding Kafka Event
      */
     fun handleException(fe: FailureException, command: Command) {
-        when (val event = getEventFromCommandAndException(command, fe)) {
+        when (val event = getFailureEventFromCommandAndException(command, fe)) {
             is MovementEventDTO -> {
                 kafkaMessageProducer.send(
                     topicConfig.ROBOT_MOVEMENT,
@@ -54,19 +50,44 @@ class EventSender(
                 )
             }
             is MiningEventDTO -> {
-                TODO()
+                kafkaMessageProducer.send(
+                    topicConfig.ROBOT_MINING,
+                    buildDomainEvent(
+                        event, EventType.REGENERATION, command.transactionUUID
+                    )
+                )
             }
             is FightingEventDTO -> {
-                TODO()
+                kafkaMessageProducer.send(
+                    topicConfig.ROBOT_FIGHTING,
+                    buildDomainEvent(
+                        event, EventType.REGENERATION, command.transactionUUID
+                    )
+                )
             }
             is ItemFightingEventDTO -> {
-                TODO()
+                kafkaMessageProducer.send(
+                    topicConfig.ROBOT_ITEM_FIGHTING,
+                    buildDomainEvent(
+                        event, EventType.ITEM_FIGHTING, command.transactionUUID
+                    )
+                )
             }
             is ItemMovementEventDTO -> {
-                TODO()
+                kafkaMessageProducer.send(
+                    topicConfig.ROBOT_ITEM_MOVEMENT,
+                    buildDomainEvent(
+                        event, EventType.ITEM_MOVEMENT, command.transactionUUID
+                    )
+                )
             }
             is ItemRepairEventDTO -> {
-                TODO()
+                kafkaMessageProducer.send(
+                    topicConfig.ROBOT_ITEM_REPAIR,
+                    buildDomainEvent(
+                        event, EventType.ITEM_REPAIR, command.transactionUUID
+                    )
+                )
             }
         }
     }
@@ -110,6 +131,7 @@ class EventSender(
         )
     }
 
+    // TODO do we need this method? It only gets used when sending a successful event, we now what topic we need there
     private fun getTopicByEvent(event: GenericEventDTO): String {
         return when (event) {
             is MiningEventDTO -> topicConfig.ROBOT_MINING
@@ -120,6 +142,7 @@ class EventSender(
         }
     }
 
+    // TODO do we need this method? It only gets used when sending a successful event, we now what the EventType we need there
     private fun getEventTypeByEvent(event: GenericEventDTO): EventType {
         return when (event) {
             is MiningEventDTO -> EventType.MINING
@@ -130,11 +153,8 @@ class EventSender(
         }
     }
 
-    private fun getEventFromCommandAndException(command: Command, e: FailureException): EventDTO {
-        val robot = if (e is RobotNotFoundException)
-            null
-        else
-            robotRepository.findByIdOrNull(command.robotUUID)
+    private fun getFailureEventFromCommandAndException(command: Command, e: FailureException): EventDTO {
+        val robot = robotRepository.findByIdOrNull(command.robotUUID)
         return when (command) {
             is MovementCommand -> MovementEventDTO(
                 false,
@@ -152,10 +172,39 @@ class EventSender(
             is EnergyRegenCommand -> EnergyRegenEventDTO(
                 false, e.message!!, robot?.energy
             )
-//            is MiningCommand -> EventType.MINING
-//            is ReparationItemUsageCommand -> EventType.ITEM_REPAIR
-//            is MovementItemsUsageCommand -> EventType.ITEM_MOVEMENT
-            else -> throw IllegalArgumentException("This is not a Heterogeneous command")
+            is MiningCommand -> MiningEventDTO(
+                false, e.message!!, robot?.energy, null, null
+            )
+            is FightingCommand -> {
+                val target = robotRepository.findByIdOrNull(command.targetRobotUUID)
+                FightingEventDTO(
+                    false,
+                    e.message!!,
+                    robot?.id,
+                    target?.id,
+                    target?.health,
+                    robot?.energy
+                )
+            }
+            is FightingItemUsageCommand -> {
+                ItemFightingEventDTO(
+                    false,
+                    e.message!!,
+                    robot?.inventory?.getItemAmountByType(command.itemType),
+                    listOf()
+                )
+            }
+            is RepairItemUsageCommand -> ItemRepairEventDTO(
+                false,
+                e.message!!,
+                listOf()
+            )
+            is MovementItemsUsageCommand -> ItemMovementEventDTO(
+                false,
+                e.message!!,
+                null
+            )
+            else -> throw IllegalArgumentException("Not a proper Command")
         }
     }
 }

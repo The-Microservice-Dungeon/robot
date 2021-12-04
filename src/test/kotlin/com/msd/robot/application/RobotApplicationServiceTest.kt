@@ -358,16 +358,16 @@ class RobotApplicationServiceTest {
             robot1, robot2, robot3, robot4, robot5, robot6
         )
 
-        val attackCommands = listOf(
-            AttackCommand(robot1.id, robot4.id, UUID.randomUUID()),
-            AttackCommand(robot2.id, robot5.id, UUID.randomUUID()),
-            AttackCommand(robot3.id, robot6.id, UUID.randomUUID()),
-            AttackCommand(robot4.id, robot1.id, UUID.randomUUID()),
-            AttackCommand(robot5.id, robot2.id, UUID.randomUUID()),
-            AttackCommand(robot6.id, robot3.id, UUID.randomUUID()),
+        val fightingCommands = listOf(
+            FightingCommand(robot1.id, robot4.id, UUID.randomUUID()),
+            FightingCommand(robot2.id, robot5.id, UUID.randomUUID()),
+            FightingCommand(robot3.id, robot6.id, UUID.randomUUID()),
+            FightingCommand(robot4.id, robot1.id, UUID.randomUUID()),
+            FightingCommand(robot5.id, robot2.id, UUID.randomUUID()),
+            FightingCommand(robot6.id, robot3.id, UUID.randomUUID()),
         )
         // when
-        robotApplicationService.executeAttacks(attackCommands)
+        robotApplicationService.executeAttacks(fightingCommands)
         // then
         assertAll(
             {
@@ -410,17 +410,17 @@ class RobotApplicationServiceTest {
             robot1, robot2, robot3, robot4, robot5, robot6
         )
 
-        val attackCommands = listOf(
-            AttackCommand(robot1.id, robot4.id, UUID.randomUUID()),
-            AttackCommand(robot2.id, robot4.id, UUID.randomUUID()),
-            AttackCommand(robot3.id, robot6.id, UUID.randomUUID()),
-            AttackCommand(robot4.id, robot1.id, UUID.randomUUID()),
-            AttackCommand(robot5.id, robot1.id, UUID.randomUUID()),
-            AttackCommand(robot6.id, robot3.id, UUID.randomUUID()),
+        val fightingCommands = listOf(
+            FightingCommand(robot1.id, robot4.id, UUID.randomUUID()),
+            FightingCommand(robot2.id, robot4.id, UUID.randomUUID()),
+            FightingCommand(robot3.id, robot6.id, UUID.randomUUID()),
+            FightingCommand(robot4.id, robot1.id, UUID.randomUUID()),
+            FightingCommand(robot5.id, robot1.id, UUID.randomUUID()),
+            FightingCommand(robot6.id, robot3.id, UUID.randomUUID()),
         )
         justRun { eventSender.handleException(any(), any()) }
         // when
-        robotApplicationService.executeAttacks(attackCommands)
+        robotApplicationService.executeAttacks(fightingCommands)
         // then
         assertAll(
             {
@@ -469,17 +469,17 @@ class RobotApplicationServiceTest {
 
         ResourceType.values().forEach { robot4.inventory.addResource(it, 4) }
 
-        val attackCommands = listOf(
-            AttackCommand(robot1.id, robot4.id, UUID.randomUUID()),
-            AttackCommand(robot2.id, robot5.id, UUID.randomUUID()),
-            AttackCommand(robot3.id, robot4.id, UUID.randomUUID()),
-            AttackCommand(robot4.id, robot1.id, UUID.randomUUID()),
-            AttackCommand(robot5.id, robot2.id, UUID.randomUUID()),
-            AttackCommand(robot6.id, robot4.id, UUID.randomUUID()),
+        val fightingCommands = listOf(
+            FightingCommand(robot1.id, robot4.id, UUID.randomUUID()),
+            FightingCommand(robot2.id, robot5.id, UUID.randomUUID()),
+            FightingCommand(robot3.id, robot4.id, UUID.randomUUID()),
+            FightingCommand(robot4.id, robot1.id, UUID.randomUUID()),
+            FightingCommand(robot5.id, robot2.id, UUID.randomUUID()),
+            FightingCommand(robot6.id, robot4.id, UUID.randomUUID()),
         )
 
         // Let every robot attack 3 times
-        for (i in 1..3) robotApplicationService.executeAttacks(attackCommands)
+        for (i in 1..3) robotApplicationService.executeAttacks(fightingCommands)
 
         // This time one robot will die, so the repo has to return the correct robot
         every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(robot1.planet.planetId) } returns listOf(
@@ -490,7 +490,7 @@ class RobotApplicationServiceTest {
 
         // when
         // now Robot 4 dies
-        robotApplicationService.executeAttacks(attackCommands)
+        robotApplicationService.executeAttacks(fightingCommands)
 
         // then
         assertAll(
@@ -518,13 +518,13 @@ class RobotApplicationServiceTest {
     fun `Invalid Command in batch leads to ExceptionHandler being called and no damage`() {
         // given
         val robots = listOf(robot1, robot2, robot3, robot4, robot5, robot6)
-        val attackCommands = listOf(
-            AttackCommand(robot1.id, robot4.id, UUID.randomUUID()),
-            AttackCommand(robot2.id, UUID.randomUUID(), UUID.randomUUID()), // invalid robot id
-            AttackCommand(robot3.id, robot4.id, UUID.randomUUID()),
-            AttackCommand(robot4.id, robot1.id, UUID.randomUUID()),
-            AttackCommand(robot5.id, UUID.randomUUID(), UUID.randomUUID()), // invalid robot id
-            AttackCommand(robot6.id, robot4.id, UUID.randomUUID()),
+        val fightingCommands = listOf(
+            FightingCommand(robot1.id, robot4.id, UUID.randomUUID()),
+            FightingCommand(robot2.id, UUID.randomUUID(), UUID.randomUUID()), // invalid robot id
+            FightingCommand(robot3.id, robot4.id, UUID.randomUUID()),
+            FightingCommand(robot4.id, robot1.id, UUID.randomUUID()),
+            FightingCommand(robot5.id, UUID.randomUUID(), UUID.randomUUID()), // invalid robot id
+            FightingCommand(robot6.id, robot4.id, UUID.randomUUID()),
         )
 
         every { robotRepository.findByIdOrNull(any()) } returns null
@@ -547,7 +547,7 @@ class RobotApplicationServiceTest {
         justRun { eventSender.handleException(any(), any()) }
 
         // when
-        robotApplicationService.executeAttacks(attackCommands)
+        robotApplicationService.executeAttacks(fightingCommands)
 
         // assert
         verify(exactly = 2) {
@@ -591,14 +591,14 @@ class RobotApplicationServiceTest {
             }
         )
 
-        val attackCommands = listOf(
-            AttackCommand(robot1.id, robot4.id, UUID.randomUUID()),
-            AttackCommand(robot3.id, robot4.id, UUID.randomUUID()),
-            AttackCommand(robot6.id, robot4.id, UUID.randomUUID()),
+        val fightingCommands = listOf(
+            FightingCommand(robot1.id, robot4.id, UUID.randomUUID()),
+            FightingCommand(robot3.id, robot4.id, UUID.randomUUID()),
+            FightingCommand(robot6.id, robot4.id, UUID.randomUUID()),
         )
 
         // Let every robot attack 3 times
-        for (i in 1..3) robotApplicationService.executeAttacks(attackCommands)
+        for (i in 1..3) robotApplicationService.executeAttacks(fightingCommands)
 
         // This time one robot will die, so the repo has to return the correct robot
         every { robotRepository.findAllByAliveFalseAndPlanet_PlanetId(robot1.planet.planetId) } returns listOf(
@@ -609,7 +609,7 @@ class RobotApplicationServiceTest {
 
         // when
         // now Robot 4 dies
-        robotApplicationService.executeAttacks(attackCommands)
+        robotApplicationService.executeAttacks(fightingCommands)
 
         // then
         assertAll(
@@ -833,11 +833,11 @@ class RobotApplicationServiceTest {
         robot5.inventory.addItem(AttackItemType.LONG_RANGE_BOMBARDMENT)
 
         val commands = listOf(
-            AttackItemUsageCommand(robot1.id, AttackItemType.ROCKET, robot1.id, UUID.randomUUID()),
-            AttackItemUsageCommand(robot2.id, AttackItemType.NUKE, planet2.planetId, UUID.randomUUID()),
-            AttackItemUsageCommand(robot3.id, AttackItemType.ROCKET, robot4.id, UUID.randomUUID()),
-            AttackItemUsageCommand(robot4.id, AttackItemType.SELF_DESTRUCTION, robot4.id, UUID.randomUUID()),
-            AttackItemUsageCommand(
+            FightingItemUsageCommand(robot1.id, AttackItemType.ROCKET, robot1.id, UUID.randomUUID()),
+            FightingItemUsageCommand(robot2.id, AttackItemType.NUKE, planet2.planetId, UUID.randomUUID()),
+            FightingItemUsageCommand(robot3.id, AttackItemType.ROCKET, robot4.id, UUID.randomUUID()),
+            FightingItemUsageCommand(robot4.id, AttackItemType.SELF_DESTRUCTION, robot4.id, UUID.randomUUID()),
+            FightingItemUsageCommand(
                 robot5.id, AttackItemType.LONG_RANGE_BOMBARDMENT,
                 robot6.planet.planetId, UUID.randomUUID()
             )
@@ -906,11 +906,11 @@ class RobotApplicationServiceTest {
         robot6.inventory.addResource(ResourceType.COAL, 10)
 
         val commands = listOf(
-            AttackItemUsageCommand(robot1.id, AttackItemType.ROCKET, robot1.id, UUID.randomUUID()),
-            AttackItemUsageCommand(robot2.id, AttackItemType.NUKE, planet2.planetId, UUID.randomUUID()),
-            AttackItemUsageCommand(robot3.id, AttackItemType.ROCKET, robot4.id, UUID.randomUUID()),
-            AttackItemUsageCommand(robot4.id, AttackItemType.SELF_DESTRUCTION, robot4.id, UUID.randomUUID()),
-            AttackItemUsageCommand(
+            FightingItemUsageCommand(robot1.id, AttackItemType.ROCKET, robot1.id, UUID.randomUUID()),
+            FightingItemUsageCommand(robot2.id, AttackItemType.NUKE, planet2.planetId, UUID.randomUUID()),
+            FightingItemUsageCommand(robot3.id, AttackItemType.ROCKET, robot4.id, UUID.randomUUID()),
+            FightingItemUsageCommand(robot4.id, AttackItemType.SELF_DESTRUCTION, robot4.id, UUID.randomUUID()),
+            FightingItemUsageCommand(
                 robot5.id, AttackItemType.LONG_RANGE_BOMBARDMENT,
                 robot6.planet.planetId, UUID.randomUUID()
             )
