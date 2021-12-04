@@ -153,7 +153,7 @@ internal class EventSenderTest(
         // given
         startPlanetBlockedContainer()
 
-        val blockCommand = BlockCommand(robotId, UUID.randomUUID())
+        val blockCommand = BlockCommand(UUID.randomUUID(), UUID.randomUUID())
         val robotNotFoundException = RobotNotFoundException("Robot not Found")
         // when
         eventSender.handleException(robotNotFoundException, blockCommand)
