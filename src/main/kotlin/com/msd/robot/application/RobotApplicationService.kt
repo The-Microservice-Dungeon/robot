@@ -1,19 +1,22 @@
 package com.msd.robot.application
 
-import com.msd.application.ExceptionConverter
+import com.msd.application.EventSender
 import com.msd.application.GameMapService
 import com.msd.application.NoResourceOnPlanetException
+import com.msd.application.dto.FightingEventDTO
+import com.msd.application.dto.MiningEventDTO
+import com.msd.application.dto.ResourceDistributionEventDTO
 import com.msd.command.*
 import com.msd.command.application.*
 import com.msd.command.application.command.*
 import com.msd.core.FailureException
 import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
-import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.robot.domain.LevelTooLowException
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
 import com.msd.robot.domain.UpgradeType
+import com.msd.robot.domain.exception.RobotNotFoundException
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import java.util.*
@@ -23,7 +26,7 @@ import kotlin.math.floor
 class RobotApplicationService(
     val gameMapService: GameMapService,
     val robotDomainService: RobotDomainService,
-    val exceptionConverter: ExceptionConverter
+    val eventSender: EventSender
 ) {
 
     /**
@@ -63,7 +66,7 @@ class RobotApplicationService(
                     is MovementItemsUsageCommand -> useMovementItem(it)
                 }
             } catch (fe: FailureException) {
-                exceptionConverter.handle(fe, it)
+                eventSender.handle(fe, it)
             }
         }
     }
@@ -169,6 +172,17 @@ class RobotApplicationService(
                 val target = robotDomainService.getRobot(it.targetRobotUUID)
 
                 robotDomainService.fight(attacker, target)
+                eventSender.sendEvent(
+                    FightingEventDTO(
+                        true,
+                        "Attacking successful",
+                        it.robotUUID,
+                        it.targetRobotUUID,
+                        target.health,
+                        attacker.energy
+                    ),
+                    it.transactionUUID
+                )
                 battleFields.add(attacker.planet.planetId)
             } catch (re: FailureException) {
 //                eventConverter.handle(re, it.transactionUUID)
@@ -176,7 +190,19 @@ class RobotApplicationService(
         }
 
         battleFields.forEach { planetId ->
-            robotDomainService.postFightCleanup(planetId)
+            val affectedRobots = robotDomainService.postFightCleanup(planetId)
+            affectedRobots.forEach {
+                eventSender.sendGenericEvent(
+                    ResourceDistributionEventDTO(
+                        it.id,
+                        it.inventory.getStorageUsageForResource(ResourceType.COAL),
+                        it.inventory.getStorageUsageForResource(ResourceType.IRON),
+                        it.inventory.getStorageUsageForResource(ResourceType.GEM),
+                        it.inventory.getStorageUsageForResource(ResourceType.GOLD),
+                        it.inventory.getStorageUsageForResource(ResourceType.PLATIN),
+                    )
+                )
+            }
         }
     }
 
@@ -238,6 +264,19 @@ class RobotApplicationService(
 
         amountsByGroupedPlanet.forEach { (planet, amount) ->
             mineResourcesOnPlanet(validMineCommands, planet, amount)
+        }
+
+        validMineCommands.forEach {
+            eventSender.sendEvent(
+                MiningEventDTO(
+                    true,
+                    "Robot ${it.robot.id} mined successfully",
+                    it.robot.energy,
+                    it.robot.inventory.getStorageUsageForResource(it.resource),
+                    it.resource.name
+                ),
+                it.transactionId
+            )
         }
     }
 
@@ -303,7 +342,7 @@ class RobotApplicationService(
                     throw LevelTooLowException("The mining level of the robot is too low to mine the resource $resource")
                 validMineCommands.add(validMineCommand)
             } catch (re: FailureException) {
-                exceptionConverter.handle(re, mineCommand)
+                eventSender.handle(re, mineCommand)
             }
         }
         return validMineCommands
@@ -347,7 +386,7 @@ class RobotApplicationService(
             val minedAmount = gameMapService.mine(planet, amount)
             distributeMinedResources(miningRobotsOnPlanet, minedAmount, resource)
         } catch (re: FailureException) {
-            exceptionConverter.handleAll(re, validMineCommands.map { MineCommand(it.robot.id, it.transactionId) })
+            eventSender.handleAll(re, validMineCommands.map { MineCommand(it.robot.id, it.transactionId) })
         }
     }
 

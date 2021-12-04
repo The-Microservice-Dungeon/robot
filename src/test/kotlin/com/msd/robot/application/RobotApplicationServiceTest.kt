@@ -6,11 +6,11 @@ import com.msd.command.application.command.*
 import com.msd.domain.ResourceType
 import com.msd.item.domain.AttackItemType
 import com.msd.planet.domain.Planet
-import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.robot.application.exception.TargetPlanetNotReachableException
 import com.msd.robot.domain.*
 import com.msd.robot.domain.exception.NotEnoughEnergyException
 import com.msd.robot.domain.exception.PlanetBlockedException
+import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.robot.domain.exception.UpgradeException
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
@@ -49,7 +49,7 @@ class RobotApplicationServiceTest {
     lateinit var gameMapMockService: GameMapService
 
     @MockK
-    lateinit var exceptionConverter: ExceptionConverter
+    lateinit var eventSender: EventSender
 
     lateinit var robotApplicationService: RobotApplicationService
     lateinit var robotDomainService: RobotDomainService
@@ -60,7 +60,7 @@ class RobotApplicationServiceTest {
     fun setup() {
         MockKAnnotations.init(this)
         robotDomainService = RobotDomainService(robotRepository, gameMapMockService)
-        robotApplicationService = RobotApplicationService(gameMapMockService, robotDomainService, exceptionConverter)
+        robotApplicationService = RobotApplicationService(gameMapMockService, robotDomainService, eventSender)
 
         planet1 = Planet(UUID.randomUUID())
         planet2 = Planet(UUID.randomUUID())
@@ -413,7 +413,7 @@ class RobotApplicationServiceTest {
             AttackCommand(robot5.id, robot1.id, UUID.randomUUID()),
             AttackCommand(robot6.id, robot3.id, UUID.randomUUID()),
         )
-        justRun { exceptionConverter.handle(any(), any()) }
+        justRun { eventSender.handle(any(), any()) }
         // when
         robotApplicationService.executeAttacks(attackCommands)
         // then
@@ -444,7 +444,7 @@ class RobotApplicationServiceTest {
             },
         )
         verify(exactly = 2) {
-            exceptionConverter.handle(any(), any())
+            eventSender.handle(any(), any())
         }
     }
 
@@ -530,14 +530,14 @@ class RobotApplicationServiceTest {
         every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf(
             robot1, robot2, robot3, robot4, robot5, robot6
         )
-        justRun { exceptionConverter.handle(any(), any()) }
+        justRun { eventSender.handle(any(), any()) }
 
         // when
         robotApplicationService.executeAttacks(attackCommands)
 
         // assert
         verify(exactly = 2) {
-            exceptionConverter.handle(any(), any())
+            eventSender.handle(any(), any())
         }
     }
 
@@ -655,7 +655,7 @@ class RobotApplicationServiceTest {
         every { gameMapMockService.mine(robot1.planet.planetId, robot1.miningSpeed) } returns robot1.miningSpeed
         every { gameMapMockService.mine(robot2.planet.planetId, robot2.miningSpeed) } returns robot2.miningSpeed
 
-        justRun { exceptionConverter.handle(any(), any()) }
+        justRun { eventSender.handle(any(), any()) }
 
         val mineCommands = listOf(
             MineCommand(robot1.id, UUID.randomUUID()),
@@ -667,7 +667,7 @@ class RobotApplicationServiceTest {
 
         // then
         verify(exactly = 1) {
-            exceptionConverter.handle(any(), any())
+            eventSender.handle(any(), any())
         }
         assertEquals(robot1.miningSpeed, robot1.inventory.getStorageUsageForResource(ResourceType.COAL))
     }
@@ -764,7 +764,7 @@ class RobotApplicationServiceTest {
         every { gameMapMockService.getResourceOnPlanet(robot6.planet.planetId) } returns ResourceType.COAL
         every { gameMapMockService.mine(robot6.planet.planetId, robot6.miningSpeed) } returns robot6.miningSpeed
         every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf() // we dont need the return value
-        justRun { exceptionConverter.handle(any(), any()) }
+        justRun { eventSender.handle(any(), any()) }
 
         val mineCommands = listOf(
             MineCommand(unknownRobotId, UUID.fromString("11111111-1111-1111-1111-111111111111")), // unknown robot
@@ -779,7 +779,7 @@ class RobotApplicationServiceTest {
 
         // then
         verify(exactly = 4) {
-            exceptionConverter.handle(any(), any())
+            eventSender.handle(any(), any())
         }
         assertEquals(robot6.miningSpeed, robot6.inventory.getStorageUsageForResource(ResourceType.COAL))
     }
@@ -833,7 +833,7 @@ class RobotApplicationServiceTest {
         robotApplicationService.executeCommands(commands)
 
         // then
-        verify(exactly = 0) { exceptionConverter.handle(any(), any()) }
+        verify(exactly = 0) { eventSender.handle(any(), any()) }
         assertAll(
             {
                 assert(robot1.health == robot1.maxHealth - 5 - 20 - 10)

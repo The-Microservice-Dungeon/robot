@@ -39,8 +39,8 @@ import java.util.concurrent.TimeUnit
     brokerProperties = ["listeners=PLAINTEXT://\${spring.kafka.bootstrap-servers}", "port=9092"]
 )
 @Transactional
-internal class ExceptionConverterTest(
-    @Autowired private val exceptionConverter: ExceptionConverter,
+internal class EventSenderTest(
+    @Autowired private val eventSender: EventSender,
     @Autowired private val embeddedKafka: EmbeddedKafkaBroker,
     @Autowired private val robotRepository: RobotRepository
 ) {
@@ -106,7 +106,7 @@ internal class ExceptionConverterTest(
         val movementCommand = MovementCommand(robotId, UUID.randomUUID(), UUID.randomUUID())
         val planetBlockedException = PlanetBlockedException("Planet is blocked")
         // when
-        exceptionConverter.handle(planetBlockedException, movementCommand)
+        eventSender.handle(planetBlockedException, movementCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord)
@@ -126,7 +126,7 @@ internal class ExceptionConverterTest(
         val movementCommand = MovementCommand(robotId, UUID.randomUUID(), UUID.randomUUID())
         val notEnoughEnergyException = NotEnoughEnergyException("Not enough Energy")
         // when
-        exceptionConverter.handle(notEnoughEnergyException, movementCommand)
+        eventSender.handle(notEnoughEnergyException, movementCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord)
@@ -147,7 +147,7 @@ internal class ExceptionConverterTest(
         val movementCommand = MovementCommand(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID())
         val robotNotFoundException = RobotNotFoundException("Robot Not Found")
         // when
-        exceptionConverter.handle(robotNotFoundException, movementCommand)
+        eventSender.handle(robotNotFoundException, movementCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord)
@@ -169,7 +169,7 @@ internal class ExceptionConverterTest(
         val blockCommand = BlockCommand(robotId, UUID.randomUUID())
         val notEnoughEnergyException = NotEnoughEnergyException("Robot has not enough Energy")
         // when
-        exceptionConverter.handle(notEnoughEnergyException, blockCommand)
+        eventSender.handle(notEnoughEnergyException, blockCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord)
@@ -190,7 +190,7 @@ internal class ExceptionConverterTest(
         val blockCommand = BlockCommand(robotId, UUID.randomUUID())
         val robotNotFoundException = RobotNotFoundException("Robot not Found")
         // when
-        exceptionConverter.handle(robotNotFoundException, blockCommand)
+        eventSender.handle(robotNotFoundException, blockCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord)

@@ -1,17 +1,14 @@
 package com.msd.application
 
-import com.msd.application.dto.BlockEventDTO
-import com.msd.application.dto.EnergyRegenEvent
-import com.msd.application.dto.EventDTO
-import com.msd.application.dto.MovementEventDTO
+import com.msd.application.dto.*
 import com.msd.command.application.command.BlockCommand
 import com.msd.command.application.command.Command
 import com.msd.command.application.command.EnergyRegenCommand
 import com.msd.command.application.command.MovementCommand
 import com.msd.core.FailureException
 import com.msd.domain.DomainEvent
-import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.robot.domain.RobotRepository
+import com.msd.robot.domain.exception.RobotNotFoundException
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -20,7 +17,7 @@ import java.time.ZoneOffset
 import java.util.*
 
 @Service
-class ExceptionConverter(
+class EventSender(
     private val kafkaMessageProducer: KafkaMessageProducer,
     private val robotRepository: RobotRepository
 ) {
@@ -58,7 +55,7 @@ class ExceptionConverter(
             is MovementEventDTO -> {
                 kafkaMessageProducer.send(
                     movementTopic,
-                    buildFailureDomainEvent(
+                    buildDomainEvent(
                         event, EventType.MOVEMENT, command.transactionUUID
                     )
                 )
@@ -66,7 +63,7 @@ class ExceptionConverter(
             is BlockEventDTO -> {
                 kafkaMessageProducer.send(
                     planetBlockedTopic,
-                    buildFailureDomainEvent(
+                    buildDomainEvent(
                         event, EventType.PLANET_BLOCKED, command.transactionUUID
                     )
                 )
@@ -74,7 +71,7 @@ class ExceptionConverter(
             is EnergyRegenEvent -> {
                 kafkaMessageProducer.send(
                     regenerationTopic,
-                    buildFailureDomainEvent(
+                    buildDomainEvent(
                         event, EventType.REGENERATION, command.transactionUUID
                     )
                 )
@@ -92,8 +89,52 @@ class ExceptionConverter(
         }
     }
 
+    fun sendEvent(event: GenericEventDTO, transactionId: UUID) {
+        kafkaMessageProducer.send(
+            getTopicByEvent(event),
+            buildDomainEvent(event, getEventTypeByEvent(event), transactionId)
+        )
+    }
+
+    fun sendGenericEvent(event: GenericEventDTO) {
+        kafkaMessageProducer.send(
+            getTopicByEvent(event),
+            buildDomainEvent(event, getEventTypeByEvent(event), UUID.fromString("00000000-0000-0000-0000-000000000000"))
+        )
+    }
+
+    private fun buildDomainEvent(
+        eventDTO: GenericEventDTO,
+        eventType: EventType,
+        transactionId: UUID
+    ): DomainEvent<Any> {
+        return DomainEvent(
+            eventDTO,
+            eventType.eventString,
+            transactionId.toString(),
+            eventVersion,
+            OffsetDateTime.now(ZoneOffset.UTC).toString()
+        )
+    }
+
+    private fun getTopicByEvent(event: GenericEventDTO): String {
+        return when (event) {
+            is MiningEventDTO -> miningTopic
+            is FightingEventDTO -> fightingTopic
+            else -> TODO()
+        }
+    }
+
+    private fun getEventTypeByEvent(event: GenericEventDTO): EventType {
+        return when (event) {
+            is MiningEventDTO -> EventType.MINING
+            is FightingEventDTO -> EventType.FIGHTING
+            else -> TODO()
+        }
+    }
+
     private fun getEventFromCommandAndException(command: Command, e: FailureException): EventDTO {
-        val robot = if(e is RobotNotFoundException)
+        val robot = if (e is RobotNotFoundException)
             null
         else
             robotRepository.findByIdOrNull(command.robotUUID)
@@ -119,19 +160,5 @@ class ExceptionConverter(
 //            is MovementItemsUsageCommand -> EventType.ITEM_MOVEMENT
             else -> throw IllegalArgumentException("This is not a Heterogeneous command")
         }
-    }
-
-    private fun buildFailureDomainEvent(
-        failureEventDTO: EventDTO,
-        eventType: EventType,
-        transactionId: UUID
-    ): DomainEvent<Any> {
-        return DomainEvent(
-            failureEventDTO,
-            eventType.eventString,
-            transactionId.toString(),
-            eventVersion,
-            OffsetDateTime.now(ZoneOffset.UTC).toString()
-        )
     }
 }

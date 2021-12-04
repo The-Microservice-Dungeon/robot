@@ -7,8 +7,8 @@ import com.msd.item.domain.ItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
 import com.msd.robot.application.RestorationType
-import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.robot.domain.exception.NotEnoughItemsException
+import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.robot.domain.exception.TargetRobotOutOfReachException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -42,10 +42,11 @@ class RobotDomainService(
      * planet and that dead robots get deleted from the repository.
      *
      * This method should not throw any exceptions.
+     * @return the list of robots whose inventory has changed
      */
-    fun postFightCleanup(planetId: UUID) {
+    fun postFightCleanup(planetId: UUID): List<Robot> {
         val resourcesToBeDistributed = deleteDeadRobots(planetId)
-        distributeDroppedResources(planetId, resourcesToBeDistributed)
+        return distributeDroppedResources(planetId, resourcesToBeDistributed)
     }
 
     /**
@@ -80,18 +81,22 @@ class RobotDomainService(
      * @param planetId      Id of the planet on which the resources get distributed. This is needed to determine which
      *                      robots get them.
      * @param resourcesToBeDistributed  The resources which need to get distributed.
+     *
+     * @return the list of robots whose inventory has changed
      */
     private fun distributeDroppedResources(
         planetId: UUID,
         resourcesToBeDistributed: MutableMap<ResourceType, Int>
-    ) {
+    ): List<Robot> {
         val robotsAliveOnPlanet = robotRepository.findAllByPlanet_PlanetId(planetId)
 
         // reversed, so the most valuable resources get distributed first
         resourcesToBeDistributed.entries.sortedBy { it.key }.reversed().forEach {
             distributeDroppedResourcesOfTypeToRobots(it, robotsAliveOnPlanet)
         }
+
         robotRepository.saveAll(robotsAliveOnPlanet)
+        return robotsAliveOnPlanet
     }
 
     /**
