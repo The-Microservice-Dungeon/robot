@@ -14,7 +14,6 @@ import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.testUtil.EventChecker
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.apache.kafka.common.serialization.StringDeserializer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -22,14 +21,10 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.kafka.core.DefaultKafkaConsumerFactory
-import org.springframework.kafka.listener.ContainerProperties
 import org.springframework.kafka.listener.KafkaMessageListenerContainer
-import org.springframework.kafka.listener.MessageListener
 import org.springframework.kafka.test.EmbeddedKafkaBroker
 import org.springframework.kafka.test.context.EmbeddedKafka
 import org.springframework.kafka.test.utils.ContainerTestUtils
-import org.springframework.kafka.test.utils.KafkaTestUtils
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
@@ -40,7 +35,7 @@ import java.util.concurrent.TimeUnit
 @SpringBootTest
 @DirtiesContext
 @EmbeddedKafka(
-    partitions = 8,
+    partitions = 1,
     brokerProperties = ["listeners=PLAINTEXT://\${spring.kafka.bootstrap-servers}", "port=9092"]
 )
 @Transactional
@@ -52,7 +47,8 @@ internal class ExceptionConverterTest(
     private lateinit var robotId: UUID
 
     private lateinit var consumerRecords: BlockingQueue<ConsumerRecord<String, String>>
-    private lateinit var container: KafkaMessageListenerContainer<String, String>
+    private lateinit var movementContainer: KafkaMessageListenerContainer<String, String>
+    private lateinit var blockedContainer: KafkaMessageListenerContainer<String, String>
 
     private val eventChecker = EventChecker()
 
@@ -88,29 +84,20 @@ internal class ExceptionConverterTest(
 
         consumerRecords = LinkedBlockingQueue()
 
-        val containerProperties = ContainerProperties(movementTopic, planetBlockedTopic, miningTopic, fightingTopic, regenerationTopic, itemFightingTopic, itemRepairTopic, itemMovementTopic)
+        movementContainer = eventChecker.createMessageListenerContainer(embeddedKafka, movementTopic, consumerRecords)
+        blockedContainer = eventChecker.createMessageListenerContainer(embeddedKafka, planetBlockedTopic, consumerRecords)
 
-        val consumerProperties: Map<String, Any> = KafkaTestUtils.consumerProps(
-            "sender", "false", embeddedKafka
-        )
+        movementContainer.start()
+        blockedContainer.start()
 
-        val consumer: DefaultKafkaConsumerFactory<String, String> =
-            DefaultKafkaConsumerFactory(consumerProperties, StringDeserializer(), StringDeserializer())
-
-        container = KafkaMessageListenerContainer(consumer, containerProperties)
-        container.setupMessageListener(
-            MessageListener { record: ConsumerRecord<String, String> ->
-                consumerRecords.add(record)
-            }
-        )
-        container.start()
-
-        ContainerTestUtils.waitForAssignment(container, embeddedKafka.partitionsPerTopic)
+        ContainerTestUtils.waitForAssignment(blockedContainer, embeddedKafka.partitionsPerTopic)
+        ContainerTestUtils.waitForAssignment(movementContainer, embeddedKafka.partitionsPerTopic)
     }
 
     @AfterEach
     fun tearDown() {
-        container.stop()
+        movementContainer.stop()
+        blockedContainer.stop()
     }
 
     @Test
@@ -178,12 +165,12 @@ internal class ExceptionConverterTest(
 
     @Test
     fun `when NotEnoughEnergyException is thrown while blocking an event is send to 'planet-blocked' topic`() {
-        //given
+        // given
         val blockCommand = BlockCommand(robotId, UUID.randomUUID())
         val notEnoughEnergyException = NotEnoughEnergyException("Robot has not enough Energy")
-        //when
+        // when
         exceptionConverter.handle(notEnoughEnergyException, blockCommand)
-        //then
+        // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord)
         assertEquals(planetBlockedTopic, singleRecord.topic())
@@ -199,12 +186,12 @@ internal class ExceptionConverterTest(
 
     @Test
     fun `when RobotNotFoundException is thrown while blocking an event is send to 'planet-blocked' topic`() {
-        //given
+        // given
         val blockCommand = BlockCommand(robotId, UUID.randomUUID())
         val robotNotFoundException = RobotNotFoundException("Robot not Found")
-        //when
+        // when
         exceptionConverter.handle(robotNotFoundException, blockCommand)
-        //then
+        // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord)
         assertEquals(planetBlockedTopic, singleRecord.topic())
