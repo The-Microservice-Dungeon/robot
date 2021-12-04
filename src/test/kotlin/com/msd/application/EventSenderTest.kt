@@ -73,6 +73,7 @@ internal class EventSenderTest(
         )
         eventChecker.checkHeaders(movementCommand.transactionUUID, EventType.MOVEMENT, domainEvent)
         eventChecker.checkMovementPaylod(false, "Planet is blocked", 20, null, listOf(), domainEvent.payload)
+        movementContainer.stop()
     }
 
     @Test
@@ -96,6 +97,7 @@ internal class EventSenderTest(
 
         eventChecker.checkHeaders(movementCommand.transactionUUID, EventType.MOVEMENT, domainEvent)
         eventChecker.checkMovementPaylod(false, "Not enough Energy", 20, null, listOf(), domainEvent.payload)
+        movementContainer.stop()
     }
 
     @Test
@@ -119,6 +121,7 @@ internal class EventSenderTest(
 
         eventChecker.checkHeaders(movementCommand.transactionUUID, EventType.MOVEMENT, domainEvent)
         eventChecker.checkMovementPaylod(false, "Robot Not Found", null, null, listOf(), domainEvent.payload)
+        movementContainer.stop()
     }
 
     @Test
@@ -142,6 +145,7 @@ internal class EventSenderTest(
 
         eventChecker.checkHeaders(blockCommand.transactionUUID, EventType.PLANET_BLOCKED, domainEvent)
         eventChecker.checkBlockPayload(false, "Robot has not enough Energy", null, 20, domainEvent.payload)
+        blockedContainer.stop()
     }
 
     @Test
@@ -165,6 +169,7 @@ internal class EventSenderTest(
 
         eventChecker.checkHeaders(blockCommand.transactionUUID, EventType.PLANET_BLOCKED, domainEvent)
         eventChecker.checkBlockPayload(false, "Robot not Found", null, null, domainEvent.payload)
+        blockedContainer.stop()
     }
 
     @Test
@@ -188,5 +193,6 @@ internal class EventSenderTest(
 
         eventChecker.checkHeaders(regenCommand.transactionUUID, EventType.REGENERATION, domainEvent)
         eventChecker.checkRegenerationPayload(false, "Robot not Found", null, domainEvent.payload)
+        regenerationContainer.stop()
     }
 }

@@ -18,9 +18,9 @@ open class RobotKafkaTest(
 
     protected lateinit var consumerRecords: BlockingQueue<ConsumerRecord<String, String>>
 
-    private lateinit var movementContainer: KafkaMessageListenerContainer<String, String>
-    private lateinit var blockedContainer: KafkaMessageListenerContainer<String, String>
-    private lateinit var regenerationContainer: KafkaMessageListenerContainer<String, String>
+    internal lateinit var movementContainer: KafkaMessageListenerContainer<String, String>
+    internal lateinit var blockedContainer: KafkaMessageListenerContainer<String, String>
+    internal lateinit var regenerationContainer: KafkaMessageListenerContainer<String, String>
 
     @BeforeEach
     open fun setup() {
