@@ -45,6 +45,9 @@ class EventSender(
     @Value(value = "\${spring.kafka.topic.producer.robot-item-movement}")
     private lateinit var itemMovementTopic: String
 
+    @Value(value = "\${spring.kafka.topic.producer.robot-resource-distribution}")
+    private lateinit var resourceDistributionTopic: String
+
     private val eventVersion = 1
 
     /**
@@ -89,11 +92,13 @@ class EventSender(
         }
     }
 
-    fun sendEvent(event: GenericEventDTO, transactionId: UUID) {
+    fun sendEvent(event: GenericEventDTO, transactionId: UUID): UUID {
+        val domainEvent = buildDomainEvent(event, getEventTypeByEvent(event), transactionId)
         kafkaMessageProducer.send(
             getTopicByEvent(event),
-            buildDomainEvent(event, getEventTypeByEvent(event), transactionId)
+            domainEvent
         )
+        return UUID.fromString(domainEvent.id)
     }
 
     fun sendGenericEvent(event: GenericEventDTO) {
@@ -121,6 +126,8 @@ class EventSender(
         return when (event) {
             is MiningEventDTO -> miningTopic
             is FightingEventDTO -> fightingTopic
+            is ResourceDistributionEventDTO -> resourceDistributionTopic
+            is ItemFightingEventDTO -> itemFightingTopic
             else -> TODO()
         }
     }
@@ -129,6 +136,8 @@ class EventSender(
         return when (event) {
             is MiningEventDTO -> EventType.MINING
             is FightingEventDTO -> EventType.FIGHTING
+            is ResourceDistributionEventDTO -> EventType.RESOURCE_DISTRIBUTION
+            is ItemFightingEventDTO -> EventType.ITEM_FIGHTING
             else -> TODO()
         }
     }

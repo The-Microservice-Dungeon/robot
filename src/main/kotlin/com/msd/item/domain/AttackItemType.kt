@@ -1,14 +1,14 @@
 package com.msd.item.domain
 
 import com.msd.domain.InvalidTargetException
-import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
+import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.robot.domain.exception.TargetRobotOutOfReachException
 import org.springframework.data.repository.findByIdOrNull
 import java.util.*
 
-enum class AttackItemType(val use: (Robot, UUID, RobotRepository) -> UUID) : ItemType {
+enum class AttackItemType(val use: (Robot, UUID, RobotRepository) -> Pair<UUID, List<Robot>>) : ItemType {
     ROCKET(::useRocket),
     LONG_RANGE_BOMBARDMENT(::useBombardment),
     SELF_DESTRUCTION(::useSelfDestruct),
@@ -27,14 +27,14 @@ enum class AttackItemType(val use: (Robot, UUID, RobotRepository) -> UUID) : Ite
  *
  * @return the UUID of the planet on which the fight happened
  */
-private fun useRocket(user: Robot, target: UUID, robotRepo: RobotRepository): UUID {
+private fun useRocket(user: Robot, target: UUID, robotRepo: RobotRepository): Pair<UUID, List<Robot>> {
     val targetRobot = robotRepo.findByIdOrNull(target)
         ?: throw RobotNotFoundException("The rocket couldn't find a robot with that UUID")
     if (targetRobot.planet.planetId != user.planet.planetId)
         throw TargetRobotOutOfReachException("The target robot is not on the same planet as the using robot")
     targetRobot.receiveDamage(5)
     robotRepo.save(targetRobot)
-    return targetRobot.planet.planetId
+    return targetRobot.planet.planetId to listOf(targetRobot)
 }
 
 /**
@@ -47,13 +47,13 @@ private fun useRocket(user: Robot, target: UUID, robotRepo: RobotRepository): UU
  *
  * @return the UUID of the planet on which the fight happened
  */
-private fun useBombardment(user: Robot, target: UUID, robotRepo: RobotRepository): UUID {
+private fun useBombardment(user: Robot, target: UUID, robotRepo: RobotRepository): Pair<UUID, List<Robot>> {
     val targetRobots = robotRepo.findAllByPlanet_PlanetId(target)
     targetRobots.forEach {
         it.receiveDamage(10)
     }
     robotRepo.saveAll(targetRobots)
-    return target
+    return target to targetRobots
 }
 
 /**
@@ -66,7 +66,7 @@ private fun useBombardment(user: Robot, target: UUID, robotRepo: RobotRepository
  *
  * @return the UUID of the planet on which the fight happened
  */
-private fun useSelfDestruct(user: Robot, target: UUID, robotRepo: RobotRepository): UUID {
+private fun useSelfDestruct(user: Robot, target: UUID, robotRepo: RobotRepository): Pair<UUID, List<Robot>> {
     if (user.id != target) throw InvalidTargetException("Robot cannot self-destruct other robot than itself")
     user.receiveDamage(1000)
     val targetRobots = robotRepo.findAllByPlanet_PlanetId(user.planet.planetId)
@@ -74,7 +74,7 @@ private fun useSelfDestruct(user: Robot, target: UUID, robotRepo: RobotRepositor
         it.receiveDamage(20)
     }
     robotRepo.saveAll(targetRobots)
-    return user.planet.planetId
+    return user.planet.planetId to targetRobots
 }
 
 /**
@@ -86,11 +86,11 @@ private fun useSelfDestruct(user: Robot, target: UUID, robotRepo: RobotRepositor
  *
  * @return the UUID of the planet on which the fight happened
  */
-private fun useNuke(user: Robot, target: UUID, robotRepo: RobotRepository): UUID {
+private fun useNuke(user: Robot, target: UUID, robotRepo: RobotRepository): Pair<UUID, List<Robot>> {
     val targetRobots = robotRepo.findAllByPlanet_PlanetId(target)
     targetRobots.forEach {
         it.receiveDamage(100)
     }
     robotRepo.saveAll(targetRobots)
-    return target
+    return target to targetRobots
 }

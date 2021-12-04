@@ -16,6 +16,7 @@ spring:
         robot-item-fighting: item-fighting
         robot-item-repair: item-repair
         robot-item-movement: item-movement
+        robot-resource-distribution: resource-distribution
       consumer:
         round: gameServiceRound
     consumer:

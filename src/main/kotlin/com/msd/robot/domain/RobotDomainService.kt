@@ -238,13 +238,13 @@ class RobotDomainService(
      *
      * @return the UUID of the planet on which robots could have died.
      */
-    fun useAttackItem(userId: UUID, target: UUID, item: AttackItemType): UUID {
+    fun useAttackItem(userId: UUID, target: UUID, item: AttackItemType): Pair<UUID, List<Robot>> {
         val user = getRobot(userId)
         if (user.inventory.getItemAmountByType(item) > 0) {
-            val battlefield = item.use(user, target, robotRepository)
+            val battlefieldAndtargetRobots = item.use(user, target, robotRepository)
             user.inventory.removeItem(item)
             robotRepository.save(user)
-            return battlefield
+            return battlefieldAndtargetRobots
         } else
             throw NotEnoughItemsException("This Robot doesn't have the required Item", item)
     }

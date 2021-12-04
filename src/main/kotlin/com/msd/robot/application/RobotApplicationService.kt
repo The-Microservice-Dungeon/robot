@@ -4,6 +4,7 @@ import com.msd.application.EventSender
 import com.msd.application.GameMapService
 import com.msd.application.NoResourceOnPlanetException
 import com.msd.application.dto.FightingEventDTO
+import com.msd.application.dto.ItemFightingEventDTO
 import com.msd.application.dto.MiningEventDTO
 import com.msd.application.dto.ResourceDistributionEventDTO
 import com.msd.command.*
@@ -236,16 +237,36 @@ class RobotApplicationService(
         val battleFields = mutableSetOf<UUID>()
         usageCommands.forEach {
             try {
-                val battlefield = robotDomainService.useAttackItem(it.robotUUID, it.targetUUID, it.itemType)
+                val robot = robotDomainService.getRobot(it.robotUUID)
+                val (battlefield, targetRobots) = robotDomainService.useAttackItem(it.robotUUID, it.targetUUID, it.itemType)
+                val causedFightingEvents = targetRobots.map { targetRobot ->
+                    eventSender.sendEvent(
+                        FightingEventDTO(
+                            true,
+                            "Attacking successful",
+                            it.robotUUID,
+                            targetRobot.id,
+                            targetRobot.health,
+                            robot.energy
+                        ),
+                        it.transactionUUID
+                    )
+                }
+                eventSender.sendEvent(
+                    ItemFightingEventDTO(
+                        true,
+                        "Item usage successful",
+                        robot.inventory.getItemAmountByType(it.itemType),
+                        causedFightingEvents
+                    ),
+                    it.transactionUUID
+                )
                 battleFields.add(battlefield)
             } catch (re: FailureException) {
 //                eventConverter.handle(re, it.transactionUUID)
             }
         }
-
-        battleFields.forEach { planetId ->
-            robotDomainService.postFightCleanup(planetId)
-        }
+        postFightCleanup(battleFields)
     }
 
     /**
