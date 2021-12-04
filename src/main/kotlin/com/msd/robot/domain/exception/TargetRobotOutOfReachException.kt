@@ -1,3 +1,5 @@
 package com.msd.robot.domain.exception
 
-class TargetRobotOutOfReachException(s: String) : RuntimeException(s)
+import com.msd.core.FailureException
+
+class TargetRobotOutOfReachException(s: String) : FailureException(s)

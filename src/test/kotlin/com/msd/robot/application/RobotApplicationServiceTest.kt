@@ -418,7 +418,7 @@ class RobotApplicationServiceTest {
             AttackCommand(robot5.id, robot1.id, UUID.randomUUID()),
             AttackCommand(robot6.id, robot3.id, UUID.randomUUID()),
         )
-        justRun { eventSender.handle(any(), any()) }
+        justRun { eventSender.handleException(any(), any()) }
         // when
         robotApplicationService.executeAttacks(attackCommands)
         // then
@@ -449,7 +449,7 @@ class RobotApplicationServiceTest {
             },
         )
         verify(exactly = 2) {
-            eventSender.handle(any(), any())
+            eventSender.handleException(any(), any())
         }
     }
 
@@ -517,6 +517,7 @@ class RobotApplicationServiceTest {
     @Test
     fun `Invalid Command in batch leads to ExceptionHandler being called and no damage`() {
         // given
+        val robots = listOf(robot1, robot2, robot3, robot4, robot5, robot6)
         val attackCommands = listOf(
             AttackCommand(robot1.id, robot4.id, UUID.randomUUID()),
             AttackCommand(robot2.id, UUID.randomUUID(), UUID.randomUUID()), // invalid robot id
@@ -526,6 +527,14 @@ class RobotApplicationServiceTest {
             AttackCommand(robot6.id, robot4.id, UUID.randomUUID()),
         )
 
+        every { robotRepository.findByIdOrNull(any()) } returns null
+        every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
+        every { robotRepository.findByIdOrNull(robot2.id) } returns robot2
+        every { robotRepository.findByIdOrNull(robot3.id) } returns robot3
+        every { robotRepository.findByIdOrNull(robot4.id) } returns robot4
+        every { robotRepository.findByIdOrNull(robot5.id) } returns robot5
+        every { robotRepository.findByIdOrNull(robot6.id) } returns robot6
+//        every { robotRepository.findByIdOrNull(any())} answers { robots.find { it.id == firstArg() }} TODO why the fuck doesn't this work?
         every { robotRepository.findAllByPlanet_PlanetId(robot1.planet.planetId) } returns
             listOf(robot1, robot3, robot4, robot6)
         every { robotRepository.findAllByPlanet_PlanetId(robot2.planet.planetId) } returns
@@ -535,14 +544,14 @@ class RobotApplicationServiceTest {
         every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf(
             robot1, robot2, robot3, robot4, robot5, robot6
         )
-        justRun { eventSender.handle(any(), any()) }
+        justRun { eventSender.handleException(any(), any()) }
 
         // when
         robotApplicationService.executeAttacks(attackCommands)
 
         // assert
         verify(exactly = 2) {
-            eventSender.handle(any(), any())
+            eventSender.handleException(any(), any())
         }
     }
 
@@ -660,7 +669,7 @@ class RobotApplicationServiceTest {
         every { gameMapMockService.mine(robot1.planet.planetId, robot1.miningSpeed) } returns robot1.miningSpeed
         every { gameMapMockService.mine(robot2.planet.planetId, robot2.miningSpeed) } returns robot2.miningSpeed
 
-        justRun { eventSender.handle(any(), any()) }
+        justRun { eventSender.handleException(any(), any()) }
 
         val mineCommands = listOf(
             MineCommand(robot1.id, UUID.randomUUID()),
@@ -672,7 +681,7 @@ class RobotApplicationServiceTest {
 
         // then
         verify(exactly = 1) {
-            eventSender.handle(any(), any())
+            eventSender.handleException(any(), any())
         }
         assertEquals(robot1.miningSpeed, robot1.inventory.getStorageUsageForResource(ResourceType.COAL))
     }
@@ -769,7 +778,7 @@ class RobotApplicationServiceTest {
         every { gameMapMockService.getResourceOnPlanet(robot6.planet.planetId) } returns ResourceType.COAL
         every { gameMapMockService.mine(robot6.planet.planetId, robot6.miningSpeed) } returns robot6.miningSpeed
         every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf() // we dont need the return value
-        justRun { eventSender.handle(any(), any()) }
+        justRun { eventSender.handleException(any(), any()) }
 
         val mineCommands = listOf(
             MineCommand(unknownRobotId, UUID.fromString("11111111-1111-1111-1111-111111111111")), // unknown robot
@@ -784,7 +793,7 @@ class RobotApplicationServiceTest {
 
         // then
         verify(exactly = 4) {
-            eventSender.handle(any(), any())
+            eventSender.handleException(any(), any())
         }
         assertEquals(robot6.miningSpeed, robot6.inventory.getStorageUsageForResource(ResourceType.COAL))
     }
@@ -838,7 +847,7 @@ class RobotApplicationServiceTest {
         robotApplicationService.executeCommands(commands)
 
         // then
-        verify(exactly = 0) { eventSender.handle(any(), any()) }
+        verify(exactly = 0) { eventSender.handleException(any(), any()) }
         assertAll(
             {
                 assert(robot1.health == robot1.maxHealth - 5 - 20 - 10)

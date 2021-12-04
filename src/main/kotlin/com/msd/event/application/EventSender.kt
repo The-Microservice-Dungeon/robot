@@ -27,7 +27,7 @@ class EventSender(
     /**
      * Convert the Exception into a corresponding Kafka Event
      */
-    fun handle(fe: FailureException, command: Command) {
+    fun handleException(fe: FailureException, command: Command) {
         when (val event = getEventFromCommandAndException(command, fe)) {
             is MovementEventDTO -> {
                 kafkaMessageProducer.send(
@@ -53,16 +53,27 @@ class EventSender(
                     )
                 )
             }
-//            is NotEnoughItemsException -> TODO()
-//            is TargetRobotOutOfReachException -> TODO()
-//            is UpgradeException -> TODO()
-//            is TargetPlanetNotReachableException -> TODO()
+            is MiningEventDTO -> {
+                TODO()
+            }
+            is FightingEventDTO -> {
+                TODO()
+            }
+            is ItemFightingEventDTO -> {
+                TODO()
+            }
+            is ItemMovementEventDTO -> {
+                TODO()
+            }
+            is ItemRepairEventDTO -> {
+                TODO()
+            }
         }
     }
 
     fun handleAll(exception: FailureException, commands: List<Command>) {
         commands.forEach {
-            handle(exception, it)
+            handleException(exception, it)
         }
     }
 

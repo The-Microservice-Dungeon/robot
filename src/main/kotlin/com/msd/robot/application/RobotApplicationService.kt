@@ -67,7 +67,7 @@ class RobotApplicationService(
                     is MovementItemsUsageCommand -> useMovementItem(it)
                 }
             } catch (fe: FailureException) {
-                eventSender.handle(fe, it)
+                eventSender.handleException(fe, it)
             }
         }
     }
@@ -175,6 +175,7 @@ class RobotApplicationService(
         attackCommands: List<AttackCommand>,
         battleFields: MutableSet<UUID>
     ) {
+        println()
         attackCommands.forEach {
             try {
                 val attacker = robotDomainService.getRobot(it.robotUUID)
@@ -193,8 +194,8 @@ class RobotApplicationService(
                     it.transactionUUID
                 )
                 battleFields.add(attacker.planet.planetId)
-            } catch (re: FailureException) {
-                //                eventConverter.handle(re, it.transactionUUID)
+            } catch (fe: FailureException) {
+                eventSender.handleException(fe, it)
             }
         }
     }
@@ -238,7 +239,11 @@ class RobotApplicationService(
         usageCommands.forEach {
             try {
                 val robot = robotDomainService.getRobot(it.robotUUID)
-                val (battlefield, targetRobots) = robotDomainService.useAttackItem(it.robotUUID, it.targetUUID, it.itemType)
+                val (battlefield, targetRobots) = robotDomainService.useAttackItem(
+                    it.robotUUID,
+                    it.targetUUID,
+                    it.itemType
+                )
                 val causedFightingEvents = targetRobots.map { targetRobot ->
                     eventSender.sendEvent(
                         FightingEventDTO(
@@ -262,8 +267,8 @@ class RobotApplicationService(
                     it.transactionUUID
                 )
                 battleFields.add(battlefield)
-            } catch (re: FailureException) {
-//                eventConverter.handle(re, it.transactionUUID)
+            } catch (fe: FailureException) {
+                eventSender.handleException(fe, it)
             }
         }
         postFightCleanup(battleFields)
@@ -352,7 +357,7 @@ class RobotApplicationService(
      * @param planetsToResources: A map of planets assigning each a resourceType or a null value, representing no
      *                            resource present on the planet.
      * @return a list of [ValidMineCommand]s, representing only the MineCommands which are valid and having replaced
-*              the IDs with the corresponding entities.
+     *              the IDs with the corresponding entities.
      */
     private fun replaceIdsWithObjectsInValidMineCommands(
         mineCommands: List<MineCommand>,
@@ -373,7 +378,7 @@ class RobotApplicationService(
                     throw LevelTooLowException("The mining level of the robot is too low to mine the resource $resource")
                 validMineCommands.add(validMineCommand)
             } catch (re: FailureException) {
-                eventSender.handle(re, mineCommand)
+                eventSender.handleException(re, mineCommand)
             }
         }
         return validMineCommands
