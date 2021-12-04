@@ -174,4 +174,36 @@ class EventTestUtils {
             }
         )
     }
+
+    fun checkFightingPayload(
+        expectedSuccess: Boolean,
+        expectedMessage: String,
+        expectedAttackerId: UUID?,
+        expectedDefenderID: UUID?,
+        expectedRemainingDefenderHealth: Int?,
+        expectedRemainingEnergy: Int?,
+        payload: FightingEventDTO
+    ) {
+        assertAll(
+            "Check fighting payload correct",
+            {
+                assertEquals(expectedSuccess, payload.success)
+            },
+            {
+                assertEquals(expectedMessage, payload.message)
+            },
+            {
+                assertEquals(expectedAttackerId, payload.attacker)
+            },
+            {
+                assertEquals(expectedDefenderID, payload.defender)
+            },
+            {
+                assertEquals(expectedRemainingDefenderHealth, payload.remainingDefenderHealth)
+            },
+            {
+                assertEquals(expectedRemainingEnergy, payload.remainingEnergy)
+            }
+        )
+    }
 }

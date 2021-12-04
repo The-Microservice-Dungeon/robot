@@ -14,10 +14,7 @@ import com.msd.robot.application.exception.TargetPlanetNotReachableException
 import com.msd.robot.application.exception.UnknownPlanetException
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
-import com.msd.robot.domain.exception.NotEnoughEnergyException
-import com.msd.robot.domain.exception.NotEnoughItemsException
-import com.msd.robot.domain.exception.PlanetBlockedException
-import com.msd.robot.domain.exception.RobotNotFoundException
+import com.msd.robot.domain.exception.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -251,6 +248,138 @@ internal class EventSenderTest(
         eventTestUtils.checkHeaders(regenCommand.transactionUUID, EventType.REGENERATION, domainEvent)
         eventTestUtils.checkRegenerationPayload(false, "Robot not Found", null, domainEvent.payload)
         regenerationContainer.stop()
+    }
+
+    @Test
+    fun `when RobotNotFoundException is thrown while fighting, due to the attacker not being found, an event is send to the 'fighting' topic with the attacker being null`() {
+        // given
+        startFightingContainer()
+
+        val fightingCommand = FightingCommand(UUID.randomUUID(), robotId, UUID.randomUUID())
+        val robotNotFoundException = RobotNotFoundException("Attacker not found")
+        // when
+        eventSender.handleException(robotNotFoundException, fightingCommand)
+        // then
+        val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
+        assertNotNull(singleRecord)
+        assertEquals(topicConfig.ROBOT_FIGHTING, singleRecord.topic())
+
+        val domainEvent = DomainEvent.build(
+            jacksonObjectMapper().readValue(singleRecord.value(), FightingEventDTO::class.java),
+            singleRecord.headers()
+        )
+
+        eventTestUtils.checkHeaders(fightingCommand.transactionUUID, EventType.FIGHTING, domainEvent)
+        eventTestUtils.checkFightingPayload(
+            false,
+            "Attacker not found",
+            null,
+            robotId,
+            10,
+            null,
+            domainEvent.payload
+        )
+        fightingContainer.stop()
+    }
+
+    @Test
+    fun `when RobotNotFoundException is thrown while fighting, due to the defender not being found, an event is send to the 'fighting' topic with the defender being null`() {
+        // given
+        startFightingContainer()
+
+        val fightingCommand = FightingCommand(robotId, UUID.randomUUID(), UUID.randomUUID())
+        val robotNotFoundException = RobotNotFoundException("Defender not found")
+        // when
+        eventSender.handleException(robotNotFoundException, fightingCommand)
+        // then
+        val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
+        assertNotNull(singleRecord)
+        assertEquals(topicConfig.ROBOT_FIGHTING, singleRecord.topic())
+
+        val domainEvent = DomainEvent.build(
+            jacksonObjectMapper().readValue(singleRecord.value(), FightingEventDTO::class.java),
+            singleRecord.headers()
+        )
+
+        eventTestUtils.checkHeaders(fightingCommand.transactionUUID, EventType.FIGHTING, domainEvent)
+        eventTestUtils.checkFightingPayload(
+            false,
+            "Defender not found",
+            robotId,
+            null,
+            null,
+            20,
+            domainEvent.payload
+        )
+        fightingContainer.stop()
+    }
+
+    @Test
+    fun `when NotEnoughEnergyException is thrown while fighting an event is send to 'fighting' topic`() {
+        // given
+        startFightingContainer()
+        val defender = Robot(UUID.randomUUID(), Planet(UUID.randomUUID()))
+        robotRepository.save(defender)
+
+        val fightingCommand = FightingCommand(robotId, defender.id, UUID.randomUUID())
+        val notEnoughEnergyException = NotEnoughEnergyException("Not enough energy")
+        // when
+        eventSender.handleException(notEnoughEnergyException, fightingCommand)
+        // then
+        val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
+        assertNotNull(singleRecord)
+        assertEquals(topicConfig.ROBOT_FIGHTING, singleRecord.topic())
+
+        val domainEvent = DomainEvent.build(
+            jacksonObjectMapper().readValue(singleRecord.value(), FightingEventDTO::class.java),
+            singleRecord.headers()
+        )
+
+        eventTestUtils.checkHeaders(fightingCommand.transactionUUID, EventType.FIGHTING, domainEvent)
+        eventTestUtils.checkFightingPayload(
+            false,
+            "Not enough energy",
+            robotId,
+            defender.id,
+            10,
+            20,
+            domainEvent.payload
+        )
+        fightingContainer.stop()
+    }
+
+    @Test
+    fun `when TargetRobotOutOfReachException is thrown while fighting an event is send to 'fighting' topic`() {
+        // given
+        startFightingContainer()
+        val defender = Robot(UUID.randomUUID(), Planet(UUID.randomUUID()))
+        robotRepository.save(defender)
+
+        val fightingCommand = FightingCommand(robotId, defender.id, UUID.randomUUID())
+        val targetRobotOutOfReachException = TargetRobotOutOfReachException("Target out of reach")
+        // when
+        eventSender.handleException(targetRobotOutOfReachException, fightingCommand)
+        // then
+        val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
+        assertNotNull(singleRecord)
+        assertEquals(topicConfig.ROBOT_FIGHTING, singleRecord.topic())
+
+        val domainEvent = DomainEvent.build(
+            jacksonObjectMapper().readValue(singleRecord.value(), FightingEventDTO::class.java),
+            singleRecord.headers()
+        )
+
+        eventTestUtils.checkHeaders(fightingCommand.transactionUUID, EventType.FIGHTING, domainEvent)
+        eventTestUtils.checkFightingPayload(
+            false,
+            "Target out of reach",
+            robotId,
+            defender.id,
+            10,
+            20,
+            domainEvent.payload
+        )
+        fightingContainer.stop()
     }
 
     @Test

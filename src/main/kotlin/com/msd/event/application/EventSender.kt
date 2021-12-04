@@ -53,7 +53,7 @@ class EventSender(
                 kafkaMessageProducer.send(
                     topicConfig.ROBOT_MINING,
                     buildDomainEvent(
-                        event, EventType.REGENERATION, command.transactionUUID
+                        event, EventType.MINING, command.transactionUUID
                     )
                 )
             }
@@ -61,7 +61,7 @@ class EventSender(
                 kafkaMessageProducer.send(
                     topicConfig.ROBOT_FIGHTING,
                     buildDomainEvent(
-                        event, EventType.REGENERATION, command.transactionUUID
+                        event, EventType.FIGHTING, command.transactionUUID
                     )
                 )
             }

@@ -1,6 +1,8 @@
 package com.msd.event.application.dto
 
+import java.util.*
+
 class RepairEventRobotDTO(
-    val robotId: String,
+    val robotId: UUID,
     val remainingHealth: Int
 )
