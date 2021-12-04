@@ -166,6 +166,14 @@ class RobotApplicationService(
      */
     fun executeAttacks(attackCommands: List<AttackCommand>) {
         val battleFields = mutableSetOf<UUID>()
+        executeFights(attackCommands, battleFields)
+        postFightCleanup(battleFields)
+    }
+
+    private fun executeFights(
+        attackCommands: List<AttackCommand>,
+        battleFields: MutableSet<UUID>
+    ) {
         attackCommands.forEach {
             try {
                 val attacker = robotDomainService.getRobot(it.robotUUID)
@@ -185,10 +193,12 @@ class RobotApplicationService(
                 )
                 battleFields.add(attacker.planet.planetId)
             } catch (re: FailureException) {
-//                eventConverter.handle(re, it.transactionUUID)
+                //                eventConverter.handle(re, it.transactionUUID)
             }
         }
+    }
 
+    private fun postFightCleanup(battleFields: MutableSet<UUID>) {
         battleFields.forEach { planetId ->
             val affectedRobots = robotDomainService.postFightCleanup(planetId)
             affectedRobots.forEach {
