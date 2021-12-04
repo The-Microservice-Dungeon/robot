@@ -2,9 +2,7 @@ package com.msd.testUtil
 
 import com.msd.domain.DomainEvent
 import com.msd.event.application.EventType
-import com.msd.event.application.dto.BlockEventDTO
-import com.msd.event.application.dto.EnergyRegenEventDTO
-import com.msd.event.application.dto.MovementEventDTO
+import com.msd.event.application.dto.*
 import com.msd.planet.application.PlanetDTO
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -19,7 +17,7 @@ import org.springframework.kafka.test.utils.KafkaTestUtils
 import java.util.*
 import java.util.concurrent.BlockingQueue
 
-class EventChecker {
+class EventTestUtils {
 
     fun createMessageListenerContainer(
         embeddedKafka: EmbeddedKafkaBroker,
@@ -86,7 +84,8 @@ class EventChecker {
                 assertEquals(expectedPlanetDTO, payload.planet)
             },
             {
-                assertEquals(expectedRobots, payload.robots)
+                assert(expectedRobots.containsAll(payload.robots))
+                assert(payload.robots.containsAll(expectedRobots))
             }
         )
     }
@@ -131,6 +130,47 @@ class EventChecker {
             },
             {
                 assertEquals(expectedremainingEnergy, payload.remainingEnergy)
+            }
+        )
+    }
+
+    fun checkItemRepairPayload(
+        expectedSuccess: Boolean,
+        expectedMessage: String,
+        expectedRobots: List<RepairEventRobotDTO>,
+        payload: ItemRepairEventDTO
+    ) {
+        assertAll(
+            "check item repair payload correct",
+            {
+                assertEquals(expectedSuccess, payload.success)
+            },
+            {
+                assertEquals(expectedMessage, payload.message)
+            },
+            {
+                assert(expectedRobots.containsAll(payload.robots))
+                assert(payload.robots.containsAll(expectedRobots))
+            }
+        )
+    }
+
+    fun checkItemMovementPayload(
+        expectedSuccess: Boolean,
+        expectedMessage: String,
+        expectedAssociatedMovementId: String?,
+        payload: ItemMovementEventDTO
+    ) {
+        assertAll(
+            "check item movement payload correct",
+            {
+                assertEquals(expectedSuccess, payload.success)
+            },
+            {
+                assertEquals(expectedMessage, payload.message)
+            },
+            {
+                assertEquals(expectedAssociatedMovementId, payload.associatedMovement)
             }
         )
     }

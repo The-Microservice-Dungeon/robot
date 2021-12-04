@@ -2,7 +2,7 @@ package com.msd.command.application
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.msd.application.RobotKafkaTest
+import com.msd.application.AbstractKafkaProducerTest
 import com.msd.application.dto.GameMapPlanetDto
 import com.msd.event.application.ProducerTopicConfiguration
 import com.msd.item.domain.MovementItemType
@@ -39,14 +39,14 @@ import java.util.concurrent.LinkedBlockingQueue
     brokerProperties = ["listeners=PLAINTEXT://\${spring.kafka.bootstrap-servers}", "port=9092"]
 )
 @ActiveProfiles(profiles = ["no-async"])
-class CommandControllerTest(
+class CommandControllerProducerTestAbstract(
     @Autowired private var mockMvc: MockMvc,
     @Autowired private var commandController: CommandController,
     @Autowired private var robotRepository: RobotRepository,
     @Autowired private var mapper: ObjectMapper,
     @Autowired private val embeddedKafka: EmbeddedKafkaBroker,
     @Autowired private val topicConfig: ProducerTopicConfiguration
-) : RobotKafkaTest(embeddedKafka, topicConfig) {
+) : AbstractKafkaProducerTest(embeddedKafka, topicConfig) {
     private val player1Id = UUID.randomUUID()
     private val player2Id = UUID.randomUUID()
 
