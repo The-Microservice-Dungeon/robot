@@ -1,4 +1,4 @@
-package com.msd.application
+package com.msd.event.application
 
 enum class EventType(val eventString: String) {
     MOVEMENT("movement"),

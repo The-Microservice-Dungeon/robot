@@ -1,6 +1,5 @@
-package com.msd.application.dto
+package com.msd.event.application.dto
 
-import com.msd.application.EventType
 import java.util.*
 
 class BlockEventDTO(
@@ -8,5 +7,4 @@ class BlockEventDTO(
     message: String,
     val planetId: UUID?,
     val remainingEnergy: Int?
-) : EventDTO(success, message) {
-}
+) : EventDTO(success, message)

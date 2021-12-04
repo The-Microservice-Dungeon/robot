@@ -1,4 +1,4 @@
-package com.msd.application.dto
+package com.msd.event.application.dto
 
 import com.msd.planet.application.PlanetDTO
 import java.util.*

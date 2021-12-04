@@ -1,13 +1,16 @@
 package com.msd.application
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.msd.application.dto.BlockEventDTO
-import com.msd.application.dto.EnergyRegenEventDTO
-import com.msd.application.dto.MovementEventDTO
 import com.msd.command.application.command.BlockCommand
 import com.msd.command.application.command.EnergyRegenCommand
 import com.msd.command.application.command.MovementCommand
 import com.msd.domain.DomainEvent
+import com.msd.event.application.EventSender
+import com.msd.event.application.EventType
+import com.msd.event.application.ProducerTopicEnum
+import com.msd.event.application.dto.BlockEventDTO
+import com.msd.event.application.dto.EnergyRegenEventDTO
+import com.msd.event.application.dto.MovementEventDTO
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
@@ -20,7 +23,6 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.kafka.listener.KafkaMessageListenerContainer
 import org.springframework.kafka.test.EmbeddedKafkaBroker
@@ -55,30 +57,6 @@ internal class EventSenderTest(
 
     private val eventChecker = EventChecker()
 
-    @Value(value = "\${spring.kafka.topic.producer.robot-movement}")
-    private lateinit var movementTopic: String
-
-    @Value(value = "\${spring.kafka.topic.producer.robot-blocked}")
-    private lateinit var planetBlockedTopic: String
-
-    @Value(value = "\${spring.kafka.topic.producer.robot-mining}")
-    private lateinit var miningTopic: String
-
-    @Value(value = "\${spring.kafka.topic.producer.robot-fighting}")
-    private lateinit var fightingTopic: String
-
-    @Value(value = "\${spring.kafka.topic.producer.robot-regeneration}")
-    private lateinit var regenerationTopic: String
-
-    @Value(value = "\${spring.kafka.topic.producer.robot-item-fighting}")
-    private lateinit var itemFightingTopic: String
-
-    @Value(value = "\${spring.kafka.topic.producer.robot-item-repair}")
-    private lateinit var itemRepairTopic: String
-
-    @Value(value = "\${spring.kafka.topic.producer.robot-item-movement}")
-    private lateinit var itemMovementTopic: String
-
     @BeforeEach
     fun setup() {
         val robot = Robot(UUID.randomUUID(), Planet(UUID.randomUUID()))
@@ -100,7 +78,7 @@ internal class EventSenderTest(
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord)
-        assertEquals(movementTopic, singleRecord.topic())
+        assertEquals(ProducerTopicEnum.ROBOT_MOVEMENT.topicName, singleRecord.topic())
 
         val domainEvent = DomainEvent.build(
             jacksonObjectMapper().readValue(singleRecord.value(), MovementEventDTO::class.java),
@@ -124,7 +102,7 @@ internal class EventSenderTest(
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord)
-        assertEquals(movementTopic, singleRecord.topic())
+        assertEquals(ProducerTopicEnum.ROBOT_MOVEMENT.topicName, singleRecord.topic())
 
         val domainEvent = DomainEvent.build(
             jacksonObjectMapper().readValue(singleRecord.value(), MovementEventDTO::class.java),
@@ -149,7 +127,7 @@ internal class EventSenderTest(
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord)
-        assertEquals(movementTopic, singleRecord.topic())
+        assertEquals(ProducerTopicEnum.ROBOT_MOVEMENT.topicName, singleRecord.topic())
 
         val domainEvent = DomainEvent.build(
             jacksonObjectMapper().readValue(singleRecord.value(), MovementEventDTO::class.java),
@@ -174,7 +152,7 @@ internal class EventSenderTest(
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord)
-        assertEquals(planetBlockedTopic, singleRecord.topic())
+        assertEquals(ProducerTopicEnum.ROBOT_BLOCKED.topicName, singleRecord.topic())
 
         val domainEvent = DomainEvent.build(
             jacksonObjectMapper().readValue(singleRecord.value(), BlockEventDTO::class.java),
@@ -199,7 +177,7 @@ internal class EventSenderTest(
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord)
-        assertEquals(planetBlockedTopic, singleRecord.topic())
+        assertEquals(ProducerTopicEnum.ROBOT_BLOCKED.topicName, singleRecord.topic())
 
         val domainEvent = DomainEvent.build(
             jacksonObjectMapper().readValue(singleRecord.value(), BlockEventDTO::class.java),
@@ -224,7 +202,7 @@ internal class EventSenderTest(
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord)
-        assertEquals(regenerationTopic, singleRecord.topic())
+        assertEquals(ProducerTopicEnum.ROBOT_REGENERATION.topicName, singleRecord.topic())
 
         val domainEvent = DomainEvent.build(
             jacksonObjectMapper().readValue(singleRecord.value(), EnergyRegenEventDTO::class.java),
@@ -236,21 +214,21 @@ internal class EventSenderTest(
     }
 
     private fun startMovementContainer() {
-        movementContainer = eventChecker.createMessageListenerContainer(embeddedKafka, movementTopic, consumerRecords)
+        movementContainer = eventChecker.createMessageListenerContainer(embeddedKafka, ProducerTopicEnum.ROBOT_MOVEMENT.topicName, consumerRecords)
         movementContainer.start()
         ContainerTestUtils.waitForAssignment(movementContainer, embeddedKafka.partitionsPerTopic)
     }
 
     private fun startPlanetBlockedContainer() {
         blockedContainer =
-            eventChecker.createMessageListenerContainer(embeddedKafka, planetBlockedTopic, consumerRecords)
+            eventChecker.createMessageListenerContainer(embeddedKafka, ProducerTopicEnum.ROBOT_BLOCKED.topicName, consumerRecords)
         blockedContainer.start()
         ContainerTestUtils.waitForAssignment(blockedContainer, embeddedKafka.partitionsPerTopic)
     }
 
     private fun startRegenerationContainer() {
         regenerationContainer =
-            eventChecker.createMessageListenerContainer(embeddedKafka, regenerationTopic, consumerRecords)
+            eventChecker.createMessageListenerContainer(embeddedKafka, ProducerTopicEnum.ROBOT_REGENERATION.topicName, consumerRecords)
         regenerationContainer.start()
         ContainerTestUtils.waitForAssignment(regenerationContainer, embeddedKafka.partitionsPerTopic)
     }

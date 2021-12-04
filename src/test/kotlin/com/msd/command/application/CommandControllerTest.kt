@@ -2,7 +2,7 @@ package com.msd.command.application
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.msd.application.GameMapPlanetDto
+import com.msd.application.dto.GameMapPlanetDto
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
 import com.msd.planet.domain.Planet

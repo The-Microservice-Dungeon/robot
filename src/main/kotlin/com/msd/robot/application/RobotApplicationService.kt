@@ -1,17 +1,17 @@
 package com.msd.robot.application
 
-import com.msd.application.EventSender
 import com.msd.application.GameMapService
 import com.msd.application.NoResourceOnPlanetException
-import com.msd.application.dto.FightingEventDTO
-import com.msd.application.dto.ItemFightingEventDTO
-import com.msd.application.dto.MiningEventDTO
-import com.msd.application.dto.ResourceDistributionEventDTO
 import com.msd.command.*
 import com.msd.command.application.*
 import com.msd.command.application.command.*
 import com.msd.core.FailureException
 import com.msd.domain.ResourceType
+import com.msd.event.application.EventSender
+import com.msd.event.application.dto.FightingEventDTO
+import com.msd.event.application.dto.ItemFightingEventDTO
+import com.msd.event.application.dto.MiningEventDTO
+import com.msd.event.application.dto.ResourceDistributionEventDTO
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.LevelTooLowException
 import com.msd.robot.domain.Robot

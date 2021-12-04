@@ -1,15 +1,14 @@
-package com.msd.application
+package com.msd.event.application
 
-import com.msd.application.dto.*
 import com.msd.command.application.command.BlockCommand
 import com.msd.command.application.command.Command
 import com.msd.command.application.command.EnergyRegenCommand
 import com.msd.command.application.command.MovementCommand
 import com.msd.core.FailureException
 import com.msd.domain.DomainEvent
+import com.msd.event.application.dto.*
 import com.msd.robot.domain.RobotRepository
 import com.msd.robot.domain.exception.RobotNotFoundException
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
@@ -21,32 +20,6 @@ class EventSender(
     private val kafkaMessageProducer: KafkaMessageProducer,
     private val robotRepository: RobotRepository
 ) {
-    @Value(value = "\${spring.kafka.topic.producer.robot-movement}")
-    private lateinit var movementTopic: String
-
-    @Value(value = "\${spring.kafka.topic.producer.robot-blocked}")
-    private lateinit var planetBlockedTopic: String
-
-    @Value(value = "\${spring.kafka.topic.producer.robot-mining}")
-    private lateinit var miningTopic: String
-
-    @Value(value = "\${spring.kafka.topic.producer.robot-fighting}")
-    private lateinit var fightingTopic: String
-
-    @Value(value = "\${spring.kafka.topic.producer.robot-regeneration}")
-    private lateinit var regenerationTopic: String
-
-    @Value(value = "\${spring.kafka.topic.producer.robot-item-fighting}")
-    private lateinit var itemFightingTopic: String
-
-    @Value(value = "\${spring.kafka.topic.producer.robot-item-repair}")
-    private lateinit var itemRepairTopic: String
-
-    @Value(value = "\${spring.kafka.topic.producer.robot-item-movement}")
-    private lateinit var itemMovementTopic: String
-
-    @Value(value = "\${spring.kafka.topic.producer.robot-resource-distribution}")
-    private lateinit var resourceDistributionTopic: String
 
     private val eventVersion = 1
 
@@ -57,7 +30,7 @@ class EventSender(
         when (val event = getEventFromCommandAndException(command, fe)) {
             is MovementEventDTO -> {
                 kafkaMessageProducer.send(
-                    movementTopic,
+                    ProducerTopicEnum.ROBOT_MOVEMENT.topicName,
                     buildDomainEvent(
                         event, EventType.MOVEMENT, command.transactionUUID
                     )
@@ -65,7 +38,7 @@ class EventSender(
             }
             is BlockEventDTO -> {
                 kafkaMessageProducer.send(
-                    planetBlockedTopic,
+                    ProducerTopicEnum.ROBOT_BLOCKED.topicName,
                     buildDomainEvent(
                         event, EventType.PLANET_BLOCKED, command.transactionUUID
                     )
@@ -73,7 +46,7 @@ class EventSender(
             }
             is EnergyRegenEventDTO -> {
                 kafkaMessageProducer.send(
-                    regenerationTopic,
+                    ProducerTopicEnum.ROBOT_REGENERATION.topicName,
                     buildDomainEvent(
                         event, EventType.REGENERATION, command.transactionUUID
                     )
@@ -124,10 +97,10 @@ class EventSender(
 
     private fun getTopicByEvent(event: GenericEventDTO): String {
         return when (event) {
-            is MiningEventDTO -> miningTopic
-            is FightingEventDTO -> fightingTopic
-            is ResourceDistributionEventDTO -> resourceDistributionTopic
-            is ItemFightingEventDTO -> itemFightingTopic
+            is MiningEventDTO -> ProducerTopicEnum.ROBOT_MINING.topicName
+            is FightingEventDTO -> ProducerTopicEnum.ROBOT_FIGHTING.topicName
+            is ResourceDistributionEventDTO -> ProducerTopicEnum.ROBOT_RESOURCE_DISTRIBUTION.topicName
+            is ItemFightingEventDTO -> ProducerTopicEnum.ROBOT_ITEM_FIGHTING.topicName
             else -> TODO()
         }
     }

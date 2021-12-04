@@ -1,10 +1,10 @@
 package com.msd.testUtil
 
-import com.msd.application.EventType
-import com.msd.application.dto.BlockEventDTO
-import com.msd.application.dto.EnergyRegenEventDTO
-import com.msd.application.dto.MovementEventDTO
 import com.msd.domain.DomainEvent
+import com.msd.event.application.EventType
+import com.msd.event.application.dto.BlockEventDTO
+import com.msd.event.application.dto.EnergyRegenEventDTO
+import com.msd.event.application.dto.MovementEventDTO
 import com.msd.planet.application.PlanetDTO
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization.StringDeserializer

@@ -1,4 +1,4 @@
-package com.msd.application.dto
+package com.msd.event.application.dto
 
 class RepairEventRobotDTO(
     val robotId: String,
