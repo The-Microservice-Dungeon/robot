@@ -2,7 +2,9 @@ package com.msd.command.application
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.msd.application.RobotKafkaTest
 import com.msd.application.dto.GameMapPlanetDto
+import com.msd.event.application.ProducerTopicConfiguration
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
 import com.msd.planet.domain.Planet
@@ -20,20 +22,31 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
+import org.springframework.kafka.test.EmbeddedKafkaBroker
+import org.springframework.kafka.test.context.EmbeddedKafka
+import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
 import java.util.*
+import java.util.concurrent.LinkedBlockingQueue
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
+@DirtiesContext
+@EmbeddedKafka(
+    partitions = 1,
+    brokerProperties = ["listeners=PLAINTEXT://\${spring.kafka.bootstrap-servers}", "port=9092"]
+)
 @ActiveProfiles(profiles = ["no-async"])
 class CommandControllerTest(
     @Autowired private var mockMvc: MockMvc,
     @Autowired private var commandController: CommandController,
     @Autowired private var robotRepository: RobotRepository,
     @Autowired private var mapper: ObjectMapper,
-) {
+    @Autowired private val embeddedKafka: EmbeddedKafkaBroker,
+    @Autowired private val topicConfig: ProducerTopicConfiguration
+) : RobotKafkaTest(embeddedKafka, topicConfig) {
     private val player1Id = UUID.randomUUID()
     private val player2Id = UUID.randomUUID()
 
@@ -77,6 +90,8 @@ class CommandControllerTest(
         robot7 = robotRepository.save(Robot(player2Id, Planet(planet2Id)))
         robot8 = robotRepository.save(Robot(player2Id, Planet(planet2Id)))
         robots = listOf(robot1, robot2, robot3, robot4, robot5, robot6, robot7, robot8)
+
+        consumerRecords = LinkedBlockingQueue()
     }
 
     @Test
@@ -136,6 +151,8 @@ class CommandControllerTest(
     @Test
     fun `fighting works correctly`() {
         // given
+        startMovementContainer()
+
         val command1 = "fight ${robot1.id} ${robot5.id} ${UUID.randomUUID()}"
         val command2 = "fight ${robot2.id} ${robot6.id} ${UUID.randomUUID()}"
         val command3 = "fight ${robot3.id} ${robot7.id} ${UUID.randomUUID()}"

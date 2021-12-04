@@ -18,7 +18,8 @@ import java.util.*
 @Service
 class EventSender(
     private val kafkaMessageProducer: KafkaMessageProducer,
-    private val robotRepository: RobotRepository
+    private val robotRepository: RobotRepository,
+    private val topicConfig: ProducerTopicConfiguration
 ) {
 
     private val eventVersion = 1
@@ -30,7 +31,7 @@ class EventSender(
         when (val event = getEventFromCommandAndException(command, fe)) {
             is MovementEventDTO -> {
                 kafkaMessageProducer.send(
-                    ProducerTopicEnum.ROBOT_MOVEMENT.topicName,
+                    topicConfig.ROBOT_MOVEMENT,
                     buildDomainEvent(
                         event, EventType.MOVEMENT, command.transactionUUID
                     )
@@ -38,7 +39,7 @@ class EventSender(
             }
             is BlockEventDTO -> {
                 kafkaMessageProducer.send(
-                    ProducerTopicEnum.ROBOT_BLOCKED.topicName,
+                    topicConfig.ROBOT_BLOCKED,
                     buildDomainEvent(
                         event, EventType.PLANET_BLOCKED, command.transactionUUID
                     )
@@ -46,7 +47,7 @@ class EventSender(
             }
             is EnergyRegenEventDTO -> {
                 kafkaMessageProducer.send(
-                    ProducerTopicEnum.ROBOT_REGENERATION.topicName,
+                    topicConfig.ROBOT_REGENERATION,
                     buildDomainEvent(
                         event, EventType.REGENERATION, command.transactionUUID
                     )
@@ -65,6 +66,9 @@ class EventSender(
         }
     }
 
+    /**
+     * Send the Kafka DomainEvent with the given transactionId and put the given GenericEventDTO in
+     */
     fun sendEvent(event: GenericEventDTO, transactionId: UUID): UUID {
         val domainEvent = buildDomainEvent(event, getEventTypeByEvent(event), transactionId)
         kafkaMessageProducer.send(
@@ -97,10 +101,10 @@ class EventSender(
 
     private fun getTopicByEvent(event: GenericEventDTO): String {
         return when (event) {
-            is MiningEventDTO -> ProducerTopicEnum.ROBOT_MINING.topicName
-            is FightingEventDTO -> ProducerTopicEnum.ROBOT_FIGHTING.topicName
-            is ResourceDistributionEventDTO -> ProducerTopicEnum.ROBOT_RESOURCE_DISTRIBUTION.topicName
-            is ItemFightingEventDTO -> ProducerTopicEnum.ROBOT_ITEM_FIGHTING.topicName
+            is MiningEventDTO -> topicConfig.ROBOT_MINING
+            is FightingEventDTO -> topicConfig.ROBOT_FIGHTING
+            is ResourceDistributionEventDTO -> topicConfig.ROBOT_RESOURCE_DISTRIBUTION
+            is ItemFightingEventDTO -> topicConfig.ROBOT_ITEM_FIGHTING
             else -> TODO()
         }
     }
