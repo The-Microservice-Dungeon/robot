@@ -2,8 +2,10 @@ package com.msd.application
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.application.dto.BlockEventDTO
+import com.msd.application.dto.EnergyRegenEventDTO
 import com.msd.application.dto.MovementEventDTO
 import com.msd.command.application.command.BlockCommand
+import com.msd.command.application.command.EnergyRegenCommand
 import com.msd.command.application.command.MovementCommand
 import com.msd.domain.DomainEvent
 import com.msd.planet.domain.Planet
@@ -49,6 +51,7 @@ internal class EventSenderTest(
 
     private lateinit var movementContainer: KafkaMessageListenerContainer<String, String>
     private lateinit var blockedContainer: KafkaMessageListenerContainer<String, String>
+    private lateinit var regenerationContainer: KafkaMessageListenerContainer<String, String>
 
     private val eventChecker = EventChecker()
 
@@ -209,6 +212,29 @@ internal class EventSenderTest(
         blockedContainer.stop()
     }
 
+    @Test
+    fun `when RobotNotFoundException is thrown when regenerating an event is send to 'regeneration' topic`() {
+        // given
+        startRegenerationContainer()
+
+        val regenCommand = EnergyRegenCommand(UUID.randomUUID(), UUID.randomUUID())
+        val robotNotFoundException = RobotNotFoundException("Robot not Found")
+        // when
+        eventSender.handle(robotNotFoundException, regenCommand)
+        // then
+        val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
+        assertNotNull(singleRecord)
+        assertEquals(regenerationTopic, singleRecord.topic())
+
+        val domainEvent = DomainEvent.build(
+            jacksonObjectMapper().readValue(singleRecord.value(), EnergyRegenEventDTO::class.java),
+            singleRecord.headers()
+        )
+
+        eventChecker.checkHeaders(regenCommand.transactionUUID, EventType.REGENERATION, domainEvent)
+        eventChecker.checkRegenerationPayload(false, "Robot not Found", null, domainEvent.payload)
+    }
+
     private fun startMovementContainer() {
         movementContainer = eventChecker.createMessageListenerContainer(embeddedKafka, movementTopic, consumerRecords)
         movementContainer.start()
@@ -220,5 +246,12 @@ internal class EventSenderTest(
             eventChecker.createMessageListenerContainer(embeddedKafka, planetBlockedTopic, consumerRecords)
         blockedContainer.start()
         ContainerTestUtils.waitForAssignment(blockedContainer, embeddedKafka.partitionsPerTopic)
+    }
+
+    private fun startRegenerationContainer() {
+        regenerationContainer =
+            eventChecker.createMessageListenerContainer(embeddedKafka, regenerationTopic, consumerRecords)
+        regenerationContainer.start()
+        ContainerTestUtils.waitForAssignment(regenerationContainer, embeddedKafka.partitionsPerTopic)
     }
 }

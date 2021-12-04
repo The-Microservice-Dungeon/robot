@@ -1,9 +1,7 @@
 package com.msd.application.dto
 
-class EnergyRegenEvent(
+class EnergyRegenEventDTO(
     success: Boolean,
     message: String,
     val remainingEnergy: Int?
-) : EventDTO(success, message) {
-
-}
+) : EventDTO(success, message)
