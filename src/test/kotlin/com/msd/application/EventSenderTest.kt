@@ -2,8 +2,10 @@ package com.msd.application
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.application.dto.BlockEventDTO
+import com.msd.application.dto.EnergyRegenEventDTO
 import com.msd.application.dto.MovementEventDTO
 import com.msd.command.application.command.BlockCommand
+import com.msd.command.application.command.EnergyRegenCommand
 import com.msd.command.application.command.MovementCommand
 import com.msd.domain.DomainEvent
 import com.msd.planet.domain.Planet
@@ -14,7 +16,6 @@ import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.testUtil.EventChecker
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -47,8 +48,10 @@ internal class EventSenderTest(
     private lateinit var robotId: UUID
 
     private lateinit var consumerRecords: BlockingQueue<ConsumerRecord<String, String>>
+
     private lateinit var movementContainer: KafkaMessageListenerContainer<String, String>
     private lateinit var blockedContainer: KafkaMessageListenerContainer<String, String>
+    private lateinit var regenerationContainer: KafkaMessageListenerContainer<String, String>
 
     private val eventChecker = EventChecker()
 
@@ -83,26 +86,13 @@ internal class EventSenderTest(
         robotRepository.save(robot)
 
         consumerRecords = LinkedBlockingQueue()
-
-        movementContainer = eventChecker.createMessageListenerContainer(embeddedKafka, movementTopic, consumerRecords)
-        blockedContainer = eventChecker.createMessageListenerContainer(embeddedKafka, planetBlockedTopic, consumerRecords)
-
-        movementContainer.start()
-        blockedContainer.start()
-
-        ContainerTestUtils.waitForAssignment(blockedContainer, embeddedKafka.partitionsPerTopic)
-        ContainerTestUtils.waitForAssignment(movementContainer, embeddedKafka.partitionsPerTopic)
-    }
-
-    @AfterEach
-    fun tearDown() {
-        movementContainer.stop()
-        blockedContainer.stop()
     }
 
     @Test
     fun `when a PlanetBlockedException is handled when moving an Event is thrown in the 'movement' topic`() {
         // given
+        startMovementContainer()
+
         val movementCommand = MovementCommand(robotId, UUID.randomUUID(), UUID.randomUUID())
         val planetBlockedException = PlanetBlockedException("Planet is blocked")
         // when
@@ -118,11 +108,15 @@ internal class EventSenderTest(
         )
         eventChecker.checkHeaders(movementCommand.transactionUUID, EventType.MOVEMENT, domainEvent)
         eventChecker.checkMovementPaylod(false, "Planet is blocked", 20, null, listOf(), domainEvent.payload)
+
+        movementContainer.stop()
     }
 
     @Test
     fun `When a NotEnoughEnergyException is handled when moving an event is sent to the 'movement' topic`() {
         // given
+        startMovementContainer()
+
         val movementCommand = MovementCommand(robotId, UUID.randomUUID(), UUID.randomUUID())
         val notEnoughEnergyException = NotEnoughEnergyException("Not enough Energy")
         // when
@@ -139,11 +133,15 @@ internal class EventSenderTest(
 
         eventChecker.checkHeaders(movementCommand.transactionUUID, EventType.MOVEMENT, domainEvent)
         eventChecker.checkMovementPaylod(false, "Not enough Energy", 20, null, listOf(), domainEvent.payload)
+
+        movementContainer.stop()
     }
 
     @Test
     fun `when a RobotNotFoundException is handled due to Movement an event is send to the 'movement' topic`() {
         // given
+        startMovementContainer()
+
         val movementCommand = MovementCommand(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID())
         val robotNotFoundException = RobotNotFoundException("Robot Not Found")
         // when
@@ -159,13 +157,16 @@ internal class EventSenderTest(
         )
 
         eventChecker.checkHeaders(movementCommand.transactionUUID, EventType.MOVEMENT, domainEvent)
-
         eventChecker.checkMovementPaylod(false, "Robot Not Found", null, null, listOf(), domainEvent.payload)
+
+        movementContainer.stop()
     }
 
     @Test
     fun `when NotEnoughEnergyException is thrown while blocking an event is send to 'planet-blocked' topic`() {
         // given
+        startPlanetBlockedContainer()
+
         val blockCommand = BlockCommand(robotId, UUID.randomUUID())
         val notEnoughEnergyException = NotEnoughEnergyException("Robot has not enough Energy")
         // when
@@ -182,11 +183,15 @@ internal class EventSenderTest(
 
         eventChecker.checkHeaders(blockCommand.transactionUUID, EventType.PLANET_BLOCKED, domainEvent)
         eventChecker.checkBlockPayload(false, "Robot has not enough Energy", null, 20, domainEvent.payload)
+
+        blockedContainer.stop()
     }
 
     @Test
     fun `when RobotNotFoundException is thrown while blocking an event is send to 'planet-blocked' topic`() {
         // given
+        startPlanetBlockedContainer()
+
         val blockCommand = BlockCommand(robotId, UUID.randomUUID())
         val robotNotFoundException = RobotNotFoundException("Robot not Found")
         // when
@@ -203,5 +208,50 @@ internal class EventSenderTest(
 
         eventChecker.checkHeaders(blockCommand.transactionUUID, EventType.PLANET_BLOCKED, domainEvent)
         eventChecker.checkBlockPayload(false, "Robot not Found", null, null, domainEvent.payload)
+
+        blockedContainer.stop()
+    }
+
+    @Test
+    fun `when RobotNotFoundException is thrown when regenerating an event is send to 'regeneration' topic`() {
+        // given
+        startRegenerationContainer()
+
+        val regenCommand = EnergyRegenCommand(UUID.randomUUID(), UUID.randomUUID())
+        val robotNotFoundException = RobotNotFoundException("Robot not Found")
+        // when
+        eventSender.handle(robotNotFoundException, regenCommand)
+        // then
+        val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
+        assertNotNull(singleRecord)
+        assertEquals(regenerationTopic, singleRecord.topic())
+
+        val domainEvent = DomainEvent.build(
+            jacksonObjectMapper().readValue(singleRecord.value(), EnergyRegenEventDTO::class.java),
+            singleRecord.headers()
+        )
+
+        eventChecker.checkHeaders(regenCommand.transactionUUID, EventType.REGENERATION, domainEvent)
+        eventChecker.checkRegenerationPayload(false, "Robot not Found", null, domainEvent.payload)
+    }
+
+    private fun startMovementContainer() {
+        movementContainer = eventChecker.createMessageListenerContainer(embeddedKafka, movementTopic, consumerRecords)
+        movementContainer.start()
+        ContainerTestUtils.waitForAssignment(movementContainer, embeddedKafka.partitionsPerTopic)
+    }
+
+    private fun startPlanetBlockedContainer() {
+        blockedContainer =
+            eventChecker.createMessageListenerContainer(embeddedKafka, planetBlockedTopic, consumerRecords)
+        blockedContainer.start()
+        ContainerTestUtils.waitForAssignment(blockedContainer, embeddedKafka.partitionsPerTopic)
+    }
+
+    private fun startRegenerationContainer() {
+        regenerationContainer =
+            eventChecker.createMessageListenerContainer(embeddedKafka, regenerationTopic, consumerRecords)
+        regenerationContainer.start()
+        ContainerTestUtils.waitForAssignment(regenerationContainer, embeddedKafka.partitionsPerTopic)
     }
 }

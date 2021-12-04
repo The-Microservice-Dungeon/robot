@@ -2,6 +2,7 @@ package com.msd.testUtil
 
 import com.msd.application.EventType
 import com.msd.application.dto.BlockEventDTO
+import com.msd.application.dto.EnergyRegenEventDTO
 import com.msd.application.dto.MovementEventDTO
 import com.msd.domain.DomainEvent
 import com.msd.planet.application.PlanetDTO
@@ -110,6 +111,26 @@ class EventChecker {
             },
             {
                 assertEquals(expectedRemainingEnergy, payload.remainingEnergy)
+            }
+        )
+    }
+
+    fun checkRegenerationPayload(
+        expectedSuccess: Boolean,
+        expectedMessage: String,
+        expectedremainingEnergy: Int?,
+        payload: EnergyRegenEventDTO
+    ) {
+        assertAll(
+            "assert regeneration payload correct",
+            {
+                assertEquals(expectedSuccess, payload.success)
+            },
+            {
+                assertEquals(expectedMessage, payload.message)
+            },
+            {
+                assertEquals(expectedremainingEnergy, payload.remainingEnergy)
             }
         )
     }

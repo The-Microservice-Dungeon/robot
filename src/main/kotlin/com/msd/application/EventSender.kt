@@ -71,7 +71,7 @@ class EventSender(
                     )
                 )
             }
-            is EnergyRegenEvent -> {
+            is EnergyRegenEventDTO -> {
                 kafkaMessageProducer.send(
                     regenerationTopic,
                     buildDomainEvent(
@@ -161,7 +161,7 @@ class EventSender(
                 null,
                 robot?.energy
             )
-            is EnergyRegenCommand -> EnergyRegenEvent(
+            is EnergyRegenCommand -> EnergyRegenEventDTO(
                 false, e.message!!, robot?.energy
             )
 //            is MiningCommand -> EventType.MINING
