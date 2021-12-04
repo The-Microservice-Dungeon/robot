@@ -1,16 +1,16 @@
 package com.msd.robot.domain
 
-import com.msd.application.GameMapPlanetDto
 import com.msd.application.GameMapService
+import com.msd.application.dto.GameMapPlanetDto
 import com.msd.domain.ResourceType
 import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
 import com.msd.planet.domain.Planet
 import com.msd.robot.application.RestorationType
-import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.robot.domain.exception.NotEnoughEnergyException
 import com.msd.robot.domain.exception.NotEnoughItemsException
+import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.robot.domain.exception.TargetRobotOutOfReachException
 import io.mockk.every
 import io.mockk.impl.annotations.MockK

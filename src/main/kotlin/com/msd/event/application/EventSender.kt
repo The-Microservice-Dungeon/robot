@@ -1,12 +1,12 @@
-package com.msd.application
+package com.msd.event.application
 
-import com.msd.application.dto.*
 import com.msd.command.application.command.BlockCommand
 import com.msd.command.application.command.Command
 import com.msd.command.application.command.EnergyRegenCommand
 import com.msd.command.application.command.MovementCommand
 import com.msd.core.FailureException
 import com.msd.domain.DomainEvent
+import com.msd.event.application.dto.*
 import com.msd.robot.domain.RobotRepository
 import com.msd.robot.domain.exception.RobotNotFoundException
 import org.springframework.beans.factory.annotation.Value

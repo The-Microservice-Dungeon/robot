@@ -1,4 +1,4 @@
-package com.msd.application
+package com.msd.application.dto
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.msd.planet.domain.Planet

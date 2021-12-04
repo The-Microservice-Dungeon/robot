@@ -1,4 +1,4 @@
-package com.msd.application
+package com.msd.application.dto
 
 class MineRequestDto(
     amount: Int

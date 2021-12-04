@@ -1,4 +1,4 @@
-package com.msd.application
+package com.msd.event.application
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.domain.DomainEvent

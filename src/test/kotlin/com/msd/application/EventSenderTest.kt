@@ -1,13 +1,15 @@
 package com.msd.application
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.msd.application.dto.BlockEventDTO
-import com.msd.application.dto.EnergyRegenEventDTO
-import com.msd.application.dto.MovementEventDTO
 import com.msd.command.application.command.BlockCommand
 import com.msd.command.application.command.EnergyRegenCommand
 import com.msd.command.application.command.MovementCommand
 import com.msd.domain.DomainEvent
+import com.msd.event.application.EventSender
+import com.msd.event.application.EventType
+import com.msd.event.application.dto.BlockEventDTO
+import com.msd.event.application.dto.EnergyRegenEventDTO
+import com.msd.event.application.dto.MovementEventDTO
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
