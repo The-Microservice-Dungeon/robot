@@ -186,6 +186,7 @@ class RobotApplicationServiceTest(
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { robotRepository.save(any()) } returns robot1
         every { gameMapMockService.retrieveTargetPlanetIfRobotCanReach(any(), any()) } returns planetDto
+        every { robotRepository.findAllByPlanet_PlanetId(any()) } returns listOf()
 
         // when
         robotApplicationService.move(command)
