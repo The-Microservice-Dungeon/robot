@@ -143,6 +143,7 @@ class EventSender(
             is EnergyRegenEventDTO -> topicConfig.ROBOT_REGENERATION
             is FightingEventDTO -> topicConfig.ROBOT_FIGHTING
             is ItemFightingEventDTO -> topicConfig.ROBOT_ITEM_FIGHTING
+            is NeighboursEventDTO -> topicConfig.ROBOT_NEIGHBOURS
             is ItemRepairEventDTO -> topicConfig.ROBOT_ITEM_REPAIR
             is ItemMovementEventDTO -> topicConfig.ROBOT_ITEM_MOVEMENT
             else -> TODO()
