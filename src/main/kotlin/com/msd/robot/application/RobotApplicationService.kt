@@ -17,6 +17,7 @@ import com.msd.robot.domain.LevelTooLowException
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
 import com.msd.robot.domain.UpgradeType
+import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.RobotNotFoundException
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
@@ -110,19 +111,24 @@ class RobotApplicationService(
             gameMapService.retrieveTargetPlanetIfRobotCanReach(robot.planet.planetId, moveCommand.targetPlanetUUID)
         val cost = planetDto.movementDifficulty
         val planet = planetDto.toPlanet()
-        robot.move(planet, cost)
-        robotDomainService.saveRobot(robot)
-        eventSender.sendEvent(
-            MovementEventDTO(
-                true,
-                "Movement successful",
-                robot.energy,
-                planetMapper.planetToPlanetDTO(robot.planet, cost, PlanetType.DEFAULT), // TODO planet type?
-                robotDomainService.getRobotsOnPlanet(robot.planet.planetId).map { it.id }
-            ),
-            EventType.MOVEMENT,
-            moveCommand.transactionUUID
-        )
+        try {
+            robot.move(planet, cost)
+            robotDomainService.saveRobot(robot)
+            eventSender.sendEvent(
+                MovementEventDTO(
+                    true,
+                    "Movement successful",
+                    robot.energy,
+                    planetMapper.planetToPlanetDTO(robot.planet, cost, PlanetType.DEFAULT), // TODO planet type?
+                    robotDomainService.getRobotsOnPlanet(robot.planet.planetId).map { it.id }
+                ),
+                EventType.MOVEMENT,
+                moveCommand.transactionUUID
+            )
+        } catch (pbe: PlanetBlockedException) {
+            robotDomainService.saveRobot(robot)
+            throw pbe
+        }
     }
 
     /**
