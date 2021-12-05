@@ -141,6 +141,7 @@ class EventSender(
             is ResourceDistributionEventDTO -> topicConfig.ROBOT_RESOURCE_DISTRIBUTION
             is ItemFightingEventDTO -> topicConfig.ROBOT_ITEM_FIGHTING
             is MovementEventDTO -> topicConfig.ROBOT_MOVEMENT
+            is NeighboursEventDTO -> topicConfig.ROBOT_NEIGHBOURS
             else -> TODO()
         }
     }
