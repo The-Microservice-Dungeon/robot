@@ -136,12 +136,16 @@ class EventSender(
     // TODO do we need this method? It only gets used when sending a successful event, we now what topic we need there
     private fun getTopicByEvent(event: GenericEventDTO): String {
         return when (event) {
-            is MiningEventDTO -> topicConfig.ROBOT_MINING
-            is FightingEventDTO -> topicConfig.ROBOT_FIGHTING
-            is ResourceDistributionEventDTO -> topicConfig.ROBOT_RESOURCE_DISTRIBUTION
-            is ItemFightingEventDTO -> topicConfig.ROBOT_ITEM_FIGHTING
             is MovementEventDTO -> topicConfig.ROBOT_MOVEMENT
+            is BlockEventDTO -> topicConfig.ROBOT_BLOCKED
+            is MiningEventDTO -> topicConfig.ROBOT_MINING
+            is ResourceDistributionEventDTO -> topicConfig.ROBOT_RESOURCE_DISTRIBUTION
+            is EnergyRegenEventDTO -> topicConfig.ROBOT_REGENERATION
+            is FightingEventDTO -> topicConfig.ROBOT_FIGHTING
+            is ItemFightingEventDTO -> topicConfig.ROBOT_ITEM_FIGHTING
             is NeighboursEventDTO -> topicConfig.ROBOT_NEIGHBOURS
+            is ItemRepairEventDTO -> topicConfig.ROBOT_ITEM_REPAIR
+            is ItemMovementEventDTO -> topicConfig.ROBOT_ITEM_MOVEMENT
             else -> TODO()
         }
     }

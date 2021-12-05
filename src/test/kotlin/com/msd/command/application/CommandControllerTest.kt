@@ -101,6 +101,11 @@ class CommandControllerTest(
         consumerRecords = LinkedBlockingQueue()
     }
 
+    @AfterEach
+    fun tearDown() {
+        shutDownAllContainers()
+    }
+
     @Test
     fun `application context loads`() {
         assertNotNull(commandController)

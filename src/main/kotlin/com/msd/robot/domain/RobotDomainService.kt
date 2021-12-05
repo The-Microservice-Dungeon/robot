@@ -2,10 +2,12 @@ package com.msd.robot.domain
 
 import com.msd.application.GameMapService
 import com.msd.domain.ResourceType
+import com.msd.event.application.dto.RepairEventRobotDTO
 import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.ItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
+import com.msd.planet.domain.Planet
 import com.msd.robot.application.RestorationType
 import com.msd.robot.domain.exception.NotEnoughItemsException
 import com.msd.robot.domain.exception.RobotNotFoundException
@@ -226,12 +228,13 @@ class RobotDomainService(
      * @param item        the `RepairItemType` which should be used.
      * @throws NotEnoughItemsException when the specified `Robot` doesn't own the specified item.
      */
-    fun useRepairItem(robotId: UUID, item: RepairItemType) {
+    fun useRepairItem(robotId: UUID, item: RepairItemType): List<RepairEventRobotDTO> {
         val robot = this.getRobot(robotId)
         if (robot.inventory.getItemAmountByType(item) > 0) {
-            item.func(robot, robotRepository)
+            val robots = item.func(robot, robotRepository)
             robot.inventory.removeItem(item)
             robotRepository.save(robot)
+            return robots
         } else
             throw NotEnoughItemsException("This Robot doesn't have the required Item", item)
     }
@@ -269,12 +272,13 @@ class RobotDomainService(
      * @param itemType    the [MovementItemType] of the used item.
      * @throws NotEnoughItemsException when the `Robot` doesn't own enough of the specified `itemType`
      */
-    fun useMovementItem(robotId: UUID, itemType: MovementItemType) {
+    fun useMovementItem(robotId: UUID, itemType: MovementItemType): Pair<Robot, Planet> {
         val robot = this.getRobot(robotId)
         if (robot.inventory.getItemAmountByType(itemType) > 0) {
-            itemType.func(robot, robotRepository, gameMapService)
+            val planet = itemType.func(robot, robotRepository, gameMapService)
             robot.inventory.removeItem(itemType)
             robotRepository.save(robot)
+            return Pair(robot, planet)
         } else
             throw NotEnoughItemsException("This Robot doesn't have the required Item", itemType)
     }

@@ -82,7 +82,17 @@ class RobotApplicationService(
      * @param command   the `MovementItemsUsageCommand` specifying which `Robot` should use which `item`
      */
     private fun useMovementItem(command: MovementItemsUsageCommand) {
-        robotDomainService.useMovementItem(command.robotUUID, command.itemType)
+        val (robot, planet) = robotDomainService.useMovementItem(command.robotUUID, command.itemType)
+        val moveEventId = sendMovementEvent(robot, 0, command.transactionUUID)
+        eventSender.sendEvent(
+            ItemMovementEventDTO(
+                true,
+                "Item usage successful",
+                moveEventId
+            ),
+            EventType.ITEM_MOVEMENT,
+            command.transactionUUID
+        )
     }
 
     /**
@@ -120,6 +130,27 @@ class RobotApplicationService(
             robotDomainService.saveRobot(robot)
             throw pbe
         }
+        robot.move(planet, cost)
+        robotDomainService.saveRobot(robot)
+        sendMovementEvent(robot, cost, moveCommand.transactionUUID)
+    }
+
+    private fun sendMovementEvent(
+        robot: Robot,
+        cost: Int,
+        transactionUUID: UUID
+    ): UUID {
+        return eventSender.sendEvent(
+            MovementEventDTO(
+                true,
+                "Movement successful",
+                robot.energy,
+                planetMapper.planetToPlanetDTO(robot.planet, cost, PlanetType.DEFAULT), // TODO planet type?
+                robotDomainService.getRobotsOnPlanet(robot.planet.planetId).map { it.id }
+            ),
+            EventType.MOVEMENT,
+            transactionUUID
+        )
     }
 
     /**
@@ -169,6 +200,16 @@ class RobotApplicationService(
         val robot = robotDomainService.getRobot(blockCommand.robotUUID)
         robot.block()
         robotDomainService.saveRobot(robot)
+        eventSender.sendEvent(
+            BlockEventDTO(
+                true,
+                "Planet with ID: ${robot.planet.planetId} has been blocked",
+                robot.planet.planetId,
+                robot.energy
+            ),
+            EventType.PLANET_BLOCKED,
+            blockCommand.transactionUUID
+        )
     }
 
     /**
@@ -183,6 +224,15 @@ class RobotApplicationService(
         val robot = robotDomainService.getRobot(energyRegenCommand.robotUUID)
         robot.regenerateEnergy()
         robotDomainService.saveRobot(robot)
+        eventSender.sendEvent(
+            EnergyRegenEventDTO(
+                true,
+                "Robot regenerated ${robot.energyRegen} energy",
+                robot.energy
+            ),
+            EventType.REGENERATION,
+            energyRegenCommand.transactionUUID
+        )
     }
 
     /**
@@ -271,7 +321,16 @@ class RobotApplicationService(
      * @param command the [RepairItemUsageCommand] which specifies which `Robot` should use which item
      */
     fun useRepairItem(command: RepairItemUsageCommand) {
-        robotDomainService.useRepairItem(command.robotUUID, command.itemType)
+        val robots = robotDomainService.useRepairItem(command.robotUUID, command.itemType)
+        eventSender.sendEvent(
+            ItemRepairEventDTO(
+                true,
+                "Robot has used ${command.itemType}",
+                robots
+            ),
+            EventType.ITEM_REPAIR,
+            command.transactionUUID
+        )
     }
 
     /**
