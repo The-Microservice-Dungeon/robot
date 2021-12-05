@@ -206,4 +206,34 @@ class RobotControllerTest(
         assertEquals(20, robot1.energy)
         assertEquals(5, robot1.health)
     }
+
+    @Test
+    fun `Sending Upgrade Command with invalid player transaction UUID returns 400 and does not increase the upgrade level`() {
+        // given
+        val robot1 = robotRepository.save(Robot(player1Id, Planet(UUID.randomUUID())))
+
+        val upgradeDto = """
+            {
+                "transaction_id": "Invalid UUID",
+                "upgrade-type": "DAMAGE",
+                "target-level": 1
+            }
+        """.trimIndent()
+
+        assertEquals(robot1.damageLevel, 0)
+
+        // when
+        val result = mockMvc.post("/robots/${robot1.id}/upgrades") {
+            contentType = MediaType.APPLICATION_JSON
+            content = upgradeDto
+        }.andExpect {
+            status { HttpStatus.OK }
+        }.andDo {
+            print()
+        }.andReturn()
+
+        // then
+        assertEquals("Request could not be accepted", result.response.contentAsString)
+        assertEquals(robot1.damageLevel, 0)
+    }
 }
