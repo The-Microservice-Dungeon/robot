@@ -130,7 +130,6 @@ class RobotApplicationService(
             robotDomainService.saveRobot(robot)
             throw pbe
         }
-        robot.move(planet, cost)
         robotDomainService.saveRobot(robot)
         sendMovementEvent(robot, cost, moveCommand.transactionUUID)
     }
@@ -270,7 +269,6 @@ class RobotApplicationService(
         fightingCommands: List<FightingCommand>,
         battleFields: MutableSet<UUID>
     ) {
-        println()
         fightingCommands.forEach {
             try {
                 val attacker = robotDomainService.getRobot(it.robotUUID)

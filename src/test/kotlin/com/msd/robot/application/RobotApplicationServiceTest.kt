@@ -193,7 +193,7 @@ class RobotApplicationServiceTest(
 
         // then
         assertEquals(planet2, robot1.planet)
-        verify(exactly = 1) { robotRepository.save(robot1) }
+        verify(atLeast = 1) { robotRepository.save(robot1) }
     }
 
     @Test

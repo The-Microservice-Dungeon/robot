@@ -90,6 +90,13 @@ class RobotDomainService(
         planetId: UUID,
         resourcesToBeDistributed: MutableMap<ResourceType, Int>
     ): List<Robot> {
+        if (
+            resourcesToBeDistributed[ResourceType.PLATIN] == 0 &&
+            resourcesToBeDistributed[ResourceType.GOLD] == 0 &&
+            resourcesToBeDistributed[ResourceType.GEM] == 0 &&
+            resourcesToBeDistributed[ResourceType.IRON] == 0 &&
+            resourcesToBeDistributed[ResourceType.COAL] == 0
+        ) return listOf()
         val robotsAliveOnPlanet = robotRepository.findAllByPlanet_PlanetId(planetId)
 
         // reversed, so the most valuable resources get distributed first

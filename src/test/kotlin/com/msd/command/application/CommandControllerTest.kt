@@ -7,6 +7,7 @@ import com.msd.application.dto.GameMapPlanetDto
 import com.msd.domain.DomainEvent
 import com.msd.event.application.EventType
 import com.msd.event.application.ProducerTopicConfiguration
+import com.msd.event.application.dto.BlockEventDTO
 import com.msd.event.application.dto.FightingEventDTO
 import com.msd.event.application.dto.MovementEventDTO
 import com.msd.item.domain.MovementItemType
@@ -164,6 +165,7 @@ class CommandControllerTest(
     fun `fighting works correctly`() {
         // given
         startFightingContainer()
+        consumerRecords.clear()
 
         val command1 = "fight ${robot1.id} ${robot5.id} ${UUID.randomUUID()}"
         val command2 = "fight ${robot2.id} ${robot6.id} ${UUID.randomUUID()}"
@@ -185,6 +187,13 @@ class CommandControllerTest(
             content { string("Command batch accepted") }
         }.andDo { print() }
 
+        commands.forEach {
+            println(it.split(" ").last())
+        }
+        println()
+        consumerRecords.forEach {
+            println(it.topic() + " " + it.headers().toArray().forEach { println("\t" + it.key() + ": " + String(it.value())) })
+        }
         // then
         assertAll(
             "Check all robot values",
@@ -219,9 +228,6 @@ class CommandControllerTest(
                 }
             }
         )
-
-        // clean up
-        shutDownAllContainers()
     }
 
     @Test
@@ -284,9 +290,6 @@ class CommandControllerTest(
         )
 
         // TODO Neighbors Event checken
-
-        // clean up
-        shutDownAllContainers()
     }
 
     @Test
@@ -316,9 +319,13 @@ class CommandControllerTest(
 
     @Test
     fun `robots can't move from blocked planet`() {
-        startMovementContainer()
         // given
+        startPlanetBlockedContainer()
+        startMovementContainer()
+        consumerRecords.clear()
+
         val targetPlanetDto = GameMapPlanetDto(planet2Id, 3)
+        val moveCommandId = UUID.randomUUID()
 
         mockGameServiceWebClient.enqueue(
             MockResponse()
@@ -327,7 +334,7 @@ class CommandControllerTest(
         )
 
         val command1 = "block ${robot1.id} ${UUID.randomUUID()}"
-        val command2 = "move ${robot2.id} $planet2Id ${UUID.randomUUID()}"
+        val command2 = "move ${robot2.id} $planet2Id $moveCommandId"
         val commands = listOf(command1, command2)
 
         // when
@@ -345,8 +352,9 @@ class CommandControllerTest(
         assertEquals(planet1Id, robotRepository.findByIdOrNull(robot2.id)!!.planet.planetId)
         assertEquals(17, robotRepository.findByIdOrNull(robot2.id)!!.energy)
         // events
+        val blockedEvent = eventTestUtils.getNextEventOfTopic<BlockEventDTO>(consumerRecords, topicConfig.ROBOT_BLOCKED)
         val domainEvent = eventTestUtils.getNextEventOfTopic<MovementEventDTO>(consumerRecords, topicConfig.ROBOT_MOVEMENT)
-        eventTestUtils.checkHeaders(UUID.fromString(commands[1].split(" ").last()), EventType.MOVEMENT, domainEvent)
+        eventTestUtils.checkHeaders(moveCommandId, EventType.MOVEMENT, domainEvent)
         eventTestUtils.checkMovementPaylod(
             false,
             "Can't move out of a blocked planet",
@@ -355,9 +363,6 @@ class CommandControllerTest(
             listOf(),
             domainEvent.payload
         )
-
-        // clean up
-        shutDownAllContainers()
     }
 
     @Test
