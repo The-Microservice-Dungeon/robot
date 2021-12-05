@@ -39,7 +39,7 @@ import java.util.concurrent.LinkedBlockingQueue
     brokerProperties = ["listeners=PLAINTEXT://\${spring.kafka.bootstrap-servers}", "port=9092"]
 )
 @ActiveProfiles(profiles = ["no-async"])
-class CommandControllerProducerTestAbstract(
+class CommandControllerProducerTest(
     @Autowired private var mockMvc: MockMvc,
     @Autowired private var commandController: CommandController,
     @Autowired private var robotRepository: RobotRepository,
