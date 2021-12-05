@@ -43,7 +43,7 @@ class EventSender(
                     )
                 )
             }
-            is EnergyRegenEventDTO -> {
+            is RegenerationEventDTO -> {
                 kafkaMessageProducer.send(
                     topicConfig.ROBOT_REGENERATION,
                     buildDomainEvent(
@@ -140,7 +140,7 @@ class EventSender(
             is BlockEventDTO -> topicConfig.ROBOT_BLOCKED
             is MiningEventDTO -> topicConfig.ROBOT_MINING
             is ResourceDistributionEventDTO -> topicConfig.ROBOT_RESOURCE_DISTRIBUTION
-            is EnergyRegenEventDTO -> topicConfig.ROBOT_REGENERATION
+            is RegenerationEventDTO -> topicConfig.ROBOT_REGENERATION
             is FightingEventDTO -> topicConfig.ROBOT_FIGHTING
             is ItemFightingEventDTO -> topicConfig.ROBOT_ITEM_FIGHTING
             is NeighboursEventDTO -> topicConfig.ROBOT_NEIGHBOURS
@@ -166,7 +166,7 @@ class EventSender(
                 null,
                 robot?.energy
             )
-            is EnergyRegenCommand -> EnergyRegenEventDTO(
+            is EnergyRegenCommand -> RegenerationEventDTO(
                 false, e.message!!, robot?.energy
             )
             is MiningCommand -> {

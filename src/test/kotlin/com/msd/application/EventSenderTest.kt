@@ -82,7 +82,7 @@ internal class EventSenderTest(
             singleRecord.headers()
         )
         eventTestUtils.checkHeaders(movementCommand.transactionUUID, EventType.MOVEMENT, domainEvent)
-        eventTestUtils.checkMovementPaylod(false, "Planet is blocked", 20, null, listOf(), domainEvent.payload)
+        eventTestUtils.checkMovementPayload(false, "Planet is blocked", 20, null, listOf(), domainEvent.payload)
     }
 
     @Test
@@ -105,7 +105,7 @@ internal class EventSenderTest(
         )
 
         eventTestUtils.checkHeaders(movementCommand.transactionUUID, EventType.MOVEMENT, domainEvent)
-        eventTestUtils.checkMovementPaylod(false, "Not enough Energy", 20, null, listOf(), domainEvent.payload)
+        eventTestUtils.checkMovementPayload(false, "Not enough Energy", 20, null, listOf(), domainEvent.payload)
     }
 
     @Test
@@ -128,7 +128,7 @@ internal class EventSenderTest(
         )
 
         eventTestUtils.checkHeaders(movementCommand.transactionUUID, EventType.MOVEMENT, domainEvent)
-        eventTestUtils.checkMovementPaylod(false, "Planet not reachable", 20, null, listOf(), domainEvent.payload)
+        eventTestUtils.checkMovementPayload(false, "Planet not reachable", 20, null, listOf(), domainEvent.payload)
     }
 
     @Test
@@ -152,7 +152,7 @@ internal class EventSenderTest(
         )
 
         eventTestUtils.checkHeaders(movementCommand.transactionUUID, EventType.MOVEMENT, domainEvent)
-        eventTestUtils.checkMovementPaylod(
+        eventTestUtils.checkMovementPayload(
             false,
             "Map Service doesn't have a planet with the id $planetId",
             20,
@@ -182,7 +182,7 @@ internal class EventSenderTest(
         )
 
         eventTestUtils.checkHeaders(movementCommand.transactionUUID, EventType.MOVEMENT, domainEvent)
-        eventTestUtils.checkMovementPaylod(false, "Robot Not Found", null, null, listOf(), domainEvent.payload)
+        eventTestUtils.checkMovementPayload(false, "Robot Not Found", null, null, listOf(), domainEvent.payload)
     }
 
     @Test
@@ -246,7 +246,7 @@ internal class EventSenderTest(
         assertEquals(topicConfig.ROBOT_REGENERATION, singleRecord.topic())
 
         val domainEvent = DomainEvent.build(
-            jacksonObjectMapper().readValue(singleRecord.value(), EnergyRegenEventDTO::class.java),
+            jacksonObjectMapper().readValue(singleRecord.value(), RegenerationEventDTO::class.java),
             singleRecord.headers()
         )
 

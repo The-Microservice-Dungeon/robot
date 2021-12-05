@@ -1,6 +1,6 @@
 package com.msd.event.application.dto
 
-class EnergyRegenEventDTO(
+class RegenerationEventDTO(
     success: Boolean,
     message: String,
     val remainingEnergy: Int?

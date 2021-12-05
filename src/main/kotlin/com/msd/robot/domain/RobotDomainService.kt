@@ -1,13 +1,13 @@
 package com.msd.robot.domain
 
 import com.msd.application.GameMapService
+import com.msd.application.dto.GameMapPlanetDto
 import com.msd.domain.ResourceType
 import com.msd.event.application.dto.RepairEventRobotDTO
 import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.ItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
-import com.msd.planet.domain.Planet
 import com.msd.robot.application.RestorationType
 import com.msd.robot.domain.exception.NotEnoughItemsException
 import com.msd.robot.domain.exception.RobotNotFoundException
@@ -279,13 +279,13 @@ class RobotDomainService(
      * @param itemType    the [MovementItemType] of the used item.
      * @throws NotEnoughItemsException when the `Robot` doesn't own enough of the specified `itemType`
      */
-    fun useMovementItem(robotId: UUID, itemType: MovementItemType): Pair<Robot, Planet> {
+    fun useMovementItem(robotId: UUID, itemType: MovementItemType): Pair<Robot, GameMapPlanetDto> {
         val robot = this.getRobot(robotId)
         if (robot.inventory.getItemAmountByType(itemType) > 0) {
-            val planet = itemType.func(robot, robotRepository, gameMapService)
+            val planetDTO = itemType.func(robot, robotRepository, gameMapService)
             robot.inventory.removeItem(itemType)
             robotRepository.save(robot)
-            return Pair(robot, planet)
+            return Pair(robot, planetDTO)
         } else
             throw NotEnoughItemsException("This Robot doesn't have the required Item", itemType)
     }

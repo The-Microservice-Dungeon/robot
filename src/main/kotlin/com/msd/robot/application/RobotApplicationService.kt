@@ -82,8 +82,8 @@ class RobotApplicationService(
      * @param command   the `MovementItemsUsageCommand` specifying which `Robot` should use which `item`
      */
     private fun useMovementItem(command: MovementItemsUsageCommand) {
-        val (robot, planet) = robotDomainService.useMovementItem(command.robotUUID, command.itemType)
-        val moveEventId = sendMovementEvent(robot, 0, command.transactionUUID)
+        val (robot, planetDTO) = robotDomainService.useMovementItem(command.robotUUID, command.itemType)
+        val moveEventId = sendMovementEvent(robot, planetDTO.movementDifficulty, command.transactionUUID)
         eventSender.sendEvent(
             ItemMovementEventDTO(
                 true,
@@ -224,7 +224,7 @@ class RobotApplicationService(
         robot.regenerateEnergy()
         robotDomainService.saveRobot(robot)
         eventSender.sendEvent(
-            EnergyRegenEventDTO(
+            RegenerationEventDTO(
                 true,
                 "Robot regenerated ${robot.energyRegen} energy",
                 robot.energy

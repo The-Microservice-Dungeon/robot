@@ -76,7 +76,7 @@ class EventTestUtils {
         )
     }
 
-    fun checkMovementPaylod(
+    fun checkMovementPayload(
         expectedSuccess: Boolean,
         expectedMessage: String,
         expectedRemainingEnergy: Int?,
@@ -133,7 +133,7 @@ class EventTestUtils {
         expectedSuccess: Boolean,
         expectedMessage: String,
         expectedremainingEnergy: Int?,
-        payload: EnergyRegenEventDTO
+        payload: RegenerationEventDTO
     ) {
         assertAll(
             "assert regeneration payload correct",
@@ -173,7 +173,7 @@ class EventTestUtils {
     fun checkItemMovementPayload(
         expectedSuccess: Boolean,
         expectedMessage: String,
-        expectedAssociatedMovementId: String?,
+        expectedAssociatedMovementId: UUID?,
         payload: ItemMovementEventDTO
     ) {
         assertAll(

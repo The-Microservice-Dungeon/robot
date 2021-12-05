@@ -7,8 +7,7 @@ import com.msd.application.dto.GameMapPlanetDto
 import com.msd.domain.DomainEvent
 import com.msd.event.application.EventType
 import com.msd.event.application.ProducerTopicConfiguration
-import com.msd.event.application.dto.FightingEventDTO
-import com.msd.event.application.dto.MovementEventDTO
+import com.msd.event.application.dto.*
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
 import com.msd.planet.application.PlanetDTO
@@ -34,6 +33,7 @@ import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
+import org.springframework.transaction.annotation.Transactional
 import java.util.*
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
@@ -46,6 +46,7 @@ import java.util.concurrent.TimeUnit
     brokerProperties = ["listeners=PLAINTEXT://\${spring.kafka.bootstrap-servers}", "port=9092"]
 )
 @ActiveProfiles(profiles = ["no-async"])
+@Transactional
 class CommandControllerTest(
     @Autowired private var mockMvc: MockMvc,
     @Autowired private var commandController: CommandController,
@@ -279,7 +280,7 @@ class CommandControllerTest(
         // events
         val domainEvent = eventTestUtils.getNextEventOfTopic<MovementEventDTO>(consumerRecords, topicConfig.ROBOT_MOVEMENT)
         eventTestUtils.checkHeaders(UUID.fromString(command.split(" ").last()), EventType.MOVEMENT, domainEvent)
-        eventTestUtils.checkMovementPaylod(
+        eventTestUtils.checkMovementPayload(
             true,
             "Movement successful",
             17,
@@ -294,7 +295,10 @@ class CommandControllerTest(
     @Test
     fun `block works correctly`() {
         // given
-        val command = "block ${robot1.id} ${UUID.randomUUID()}"
+        startPlanetBlockedContainer()
+
+        val transactionId = UUID.randomUUID()
+        val command = "block ${robot1.id} $transactionId"
 
         // when
         mockMvc.post("/commands") {
@@ -314,6 +318,23 @@ class CommandControllerTest(
             }
         )
         assertEquals(16, robotRepository.findByIdOrNull(robot1.id)!!.energy)
+
+        val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
+        assertNotNull(singleRecord!!)
+        assertEquals(topicConfig.ROBOT_BLOCKED, singleRecord.topic())
+        val domainEvent = DomainEvent.build(
+            jacksonObjectMapper().readValue(singleRecord.value(), BlockEventDTO::class.java),
+            singleRecord.headers()
+        )
+
+        eventTestUtils.checkHeaders(transactionId, EventType.PLANET_BLOCKED, domainEvent)
+        eventTestUtils.checkBlockPayload(
+            true,
+            "Planet with ID: $planet1Id has been blocked",
+            planet1Id,
+            16,
+            domainEvent.payload
+        )
     }
 
     @Test
@@ -352,7 +373,7 @@ class CommandControllerTest(
         // events
         val domainEvent = eventTestUtils.getNextEventOfTopic<MovementEventDTO>(consumerRecords, topicConfig.ROBOT_MOVEMENT)
         eventTestUtils.checkHeaders(moveCommandId, EventType.MOVEMENT, domainEvent)
-        eventTestUtils.checkMovementPaylod(
+        eventTestUtils.checkMovementPayload(
             false,
             "Can't move out of a blocked planet",
             17,
@@ -365,10 +386,15 @@ class CommandControllerTest(
     @Test
     fun `robot correctly regenerates energy`() {
         // given
+        startRegenerationContainer()
+        consumerRecords.clear()
+
         robot1.move(Planet(planet2Id), 10)
         assertEquals(10, robot1.energy)
         robotRepository.save(robot1)
-        val command = "regenerate ${robot1.id} ${UUID.randomUUID()}"
+
+        val transactionId = UUID.randomUUID()
+        val command = "regenerate ${robot1.id} $transactionId"
         // when
         mockMvc.post("/commands") {
             contentType = MediaType.APPLICATION_JSON
@@ -379,12 +405,33 @@ class CommandControllerTest(
         }.andDo { print() }
         // then
         assertEquals(14, robotRepository.findByIdOrNull(robot1.id)!!.energy)
+
+        // events
+        println("Consumer size: ${consumerRecords.size}")
+        val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
+        assertNotNull(singleRecord!!)
+        assertEquals(topicConfig.ROBOT_REGENERATION, singleRecord.topic())
+        val domainEvent = DomainEvent.build(
+            jacksonObjectMapper().readValue(singleRecord.value(), RegenerationEventDTO::class.java),
+            singleRecord.headers()
+        )
+
+        eventTestUtils.checkHeaders(transactionId, EventType.REGENERATION, domainEvent)
+        eventTestUtils.checkRegenerationPayload(
+            true,
+            "Robot regenerated 4 energy",
+            14,
+            domainEvent.payload,
+        )
     }
 
     @Test
     fun `all robots correctly regenerate health when using repair swarm`() {
         // given
-        val command = "use-item-repair ${robot1.id} ${RepairItemType.REPAIR_SWARM} ${UUID.randomUUID()}"
+        startItemRepairContainer()
+
+        val transactionId = UUID.randomUUID()
+        val command = "use-item-repair ${robot1.id} ${RepairItemType.REPAIR_SWARM} $transactionId"
         robot1.upgrade(UpgradeType.HEALTH, 1)
         robot2.upgrade(UpgradeType.HEALTH, 1)
         robot1.receiveDamage(21)
@@ -402,22 +449,45 @@ class CommandControllerTest(
 
         // then
 
+        val robot1rep = robotRepository.findByIdOrNull(robot1.id)!!
+        val robot2rep = robotRepository.findByIdOrNull(robot2.id)!!
+        assertEquals(0, robot1rep.inventory.getItemAmountByType(RepairItemType.REPAIR_SWARM))
         assertAll(
             "assert all robots healed correctly",
             {
-                assertEquals(24, robotRepository.findByIdOrNull(robot1.id)!!.health)
-                assertEquals(0, robotRepository.findByIdOrNull(robot1.id)!!.inventory.getItemAmountByType(RepairItemType.REPAIR_SWARM))
+                assertEquals(24, robot1rep.health)
             },
             {
-                assertEquals(25, robotRepository.findByIdOrNull(robot2.id)!!.health)
+                assertEquals(25, robot2rep.health)
             }
+        )
+
+        // events
+        val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
+        assertNotNull(singleRecord!!)
+        assertEquals(topicConfig.ROBOT_ITEM_REPAIR, singleRecord.topic())
+        val domainEvent = DomainEvent.build(
+            jacksonObjectMapper().readValue(singleRecord.value(), ItemRepairEventDTO::class.java),
+            singleRecord.headers()
+        )
+
+        eventTestUtils.checkHeaders(transactionId, EventType.ITEM_REPAIR, domainEvent)
+        eventTestUtils.checkItemRepairPayload(
+            true,
+            "Robot has used ${RepairItemType.REPAIR_SWARM}",
+            listOf(robot1rep, robot2rep).map { RepairEventRobotDTO(it.id, it.health) },
+            domainEvent.payload,
         )
     }
 
     @Test
     fun `robot moves to a random planet after using a wormhole`() {
         // given
-        val command = "use-item-movement ${robot1.id} ${MovementItemType.WORMHOLE} ${UUID.randomUUID()}"
+        startItemMovementContainer()
+        startMovementContainer()
+
+        val transactionId = UUID.randomUUID()
+        val command = "use-item-movement ${robot1.id} ${MovementItemType.WORMHOLE} $transactionId"
         robot1.inventory.addItem(MovementItemType.WORMHOLE)
         robotRepository.save(robot1)
 
@@ -442,8 +512,36 @@ class CommandControllerTest(
         }.andDo { print() }
 
         // then
-        assertNotEquals(planet1Id, robotRepository.findByIdOrNull(robot1.id)!!.planet.planetId)
-        assertEquals(0, robotRepository.findByIdOrNull(robot1.id)!!.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
+        robot1 = robotRepository.findByIdOrNull(robot1.id)!!
+        assertNotEquals(planet1Id, robot1.planet.planetId)
+        assertEquals(0, robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
+
+        // events
+        // movement
+        val domainEventMovement = eventTestUtils.getNextEventOfTopic<MovementEventDTO>(consumerRecords, topicConfig.ROBOT_MOVEMENT)
+
+        eventTestUtils.checkHeaders(transactionId, EventType.MOVEMENT, domainEventMovement)
+        eventTestUtils.checkMovementPayload(
+            true,
+            "Movement successful",
+            20,
+            PlanetDTO(robot1.planet.planetId, 3, PlanetType.DEFAULT, null),
+            listOf(robot1.id),
+            domainEventMovement.payload,
+        )
+
+        // item-movement
+        val domainEventItem = eventTestUtils.getNextEventOfTopic<ItemMovementEventDTO>(consumerRecords, topicConfig.ROBOT_ITEM_MOVEMENT)
+
+        val movementEventId = domainEventMovement.id
+
+        eventTestUtils.checkHeaders(transactionId, EventType.ITEM_MOVEMENT, domainEventItem)
+        eventTestUtils.checkItemMovementPayload(
+            true,
+            "Item usage successful",
+            UUID.fromString(movementEventId),
+            domainEventItem.payload,
+        )
     }
 
     @Test
