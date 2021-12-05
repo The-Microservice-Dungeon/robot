@@ -3,7 +3,6 @@ package com.msd.application
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.command.application.command.*
 import com.msd.domain.DomainEvent
-import com.msd.domain.ResourceType
 import com.msd.event.application.EventSender
 import com.msd.event.application.EventType
 import com.msd.event.application.ProducerTopicConfiguration
@@ -19,7 +18,6 @@ import com.msd.robot.domain.RobotRepository
 import com.msd.robot.domain.exception.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -273,13 +271,12 @@ internal class EventSenderTest(
         )
 
         eventTestUtils.checkHeaders(miningCommand.transactionUUID, EventType.MINING, domainEvent)
-        eventTestUtils.checkMiningPayload(false, "Robot not found", null, 0, ResourceType.NONE, domainEvent.payload)
+        eventTestUtils.checkMiningPayload(false, "Robot not found", null, 0, "NONE", domainEvent.payload)
 
         miningContainer.stop()
     }
 
     @Test
-    @Disabled
     fun `when NotEnoughEnergyException is thrown while mining an event is send to 'mining' topic`() {
         // given
         startMiningContainer()
@@ -300,7 +297,7 @@ internal class EventSenderTest(
         )
 
         eventTestUtils.checkHeaders(miningCommand.transactionUUID, EventType.MINING, domainEvent)
-        eventTestUtils.checkMiningPayload(false, "Not enough energy", 20, 0, ResourceType.NONE, domainEvent.payload)
+        eventTestUtils.checkMiningPayload(false, "Not enough energy", 20, 0, "NONE", domainEvent.payload)
 
         miningContainer.stop()
     }
@@ -326,13 +323,12 @@ internal class EventSenderTest(
         )
 
         eventTestUtils.checkHeaders(miningCommand.transactionUUID, EventType.MINING, domainEvent)
-        eventTestUtils.checkMiningPayload(false, "Map Service did not return any resource on the planet $planetId", 20, 0, ResourceType.NONE, domainEvent.payload)
+        eventTestUtils.checkMiningPayload(false, "Map Service did not return any resource on the planet $planetId", 20, 0, "NONE", domainEvent.payload)
 
         miningContainer.stop()
     }
 
     @Test
-    @Disabled
     // TODO find out why the fuck this test and the other disabled test fails and slows down all other tests when ResourceType is not NONE
     fun `when LevelTooLowException is thrown while mining an event is send to 'mining' topic`() {
         // given
@@ -353,7 +349,7 @@ internal class EventSenderTest(
         )
 
         eventTestUtils.checkHeaders(miningCommand.transactionUUID, EventType.MINING, domainEvent)
-        eventTestUtils.checkMiningPayload(false, "Level too low", 20, 0, ResourceType.PLATIN, domainEvent.payload)
+        eventTestUtils.checkMiningPayload(false, "Level too low", 20, 0, "NONE", domainEvent.payload)
 
         miningContainer.stop()
     }

@@ -516,7 +516,6 @@ class RobotApplicationServiceTest {
     @Test
     fun `Invalid Command in batch leads to ExceptionHandler being called and no damage`() {
         // given
-        val robots = listOf(robot1, robot2, robot3, robot4, robot5, robot6)
         val fightingCommands = listOf(
             FightingCommand(robot1.id, robot4.id, UUID.randomUUID()),
             FightingCommand(robot2.id, UUID.randomUUID(), UUID.randomUUID()), // invalid robot id

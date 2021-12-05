@@ -3,7 +3,6 @@ package com.msd.event.application
 import com.msd.command.application.command.*
 import com.msd.core.FailureException
 import com.msd.domain.DomainEvent
-import com.msd.domain.ResourceType
 import com.msd.event.application.dto.*
 import com.msd.robot.domain.RobotRepository
 import org.springframework.data.repository.findByIdOrNull
@@ -174,7 +173,7 @@ class EventSender(
                 false, e.message!!, robot?.energy
             )
             is MiningCommand -> MiningEventDTO(
-                false, e.message!!, robot?.energy, 0, ResourceType.NONE
+                false, e.message!!, robot?.energy, 0, "NONE"
             )
             is FightingCommand -> {
                 val target = robotRepository.findByIdOrNull(command.targetRobotUUID)

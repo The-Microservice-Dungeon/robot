@@ -309,7 +309,7 @@ class RobotApplicationService(
                     "Robot ${it.robot.id} mined successfully",
                     it.robot.energy,
                     it.robot.inventory.getStorageUsageForResource(it.resource),
-                    it.resource
+                    it.resource.toString()
                 ),
                 it.transactionId
             )

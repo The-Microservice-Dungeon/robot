@@ -1,7 +1,6 @@
 package com.msd.testUtil
 
 import com.msd.domain.DomainEvent
-import com.msd.domain.ResourceType
 import com.msd.event.application.EventType
 import com.msd.event.application.dto.*
 import com.msd.planet.application.PlanetDTO
@@ -213,7 +212,7 @@ class EventTestUtils {
         expectedMessage: String,
         expectedRemainingEnergy: Int?,
         expectedUpdatedInventory: Int?,
-        expectedResource: ResourceType,
+        expectedResource: String,
         payload: MiningEventDTO
     ) {
         assertAll(
