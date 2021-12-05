@@ -2,6 +2,7 @@ package com.msd.robot.application
 
 import com.msd.application.GameMapService
 import com.msd.application.NoResourceOnPlanetException
+import com.msd.application.dto.GameMapPlanetDto
 import com.msd.command.*
 import com.msd.command.application.*
 import com.msd.command.application.command.*
@@ -124,17 +125,7 @@ class RobotApplicationService(
         try {
             robot.move(planet, cost)
             robotDomainService.saveRobot(robot)
-            eventSender.sendEvent(
-                MovementEventDTO(
-                    true,
-                    "Movement successful",
-                    robot.energy,
-                    planetMapper.planetToPlanetDTO(robot.planet, cost, PlanetType.DEFAULT), // TODO planet type?
-                    robotDomainService.getRobotsOnPlanet(robot.planet.planetId).map { it.id }
-                ),
-                EventType.MOVEMENT,
-                moveCommand.transactionUUID
-            )
+            sendMovementEvents(robot, cost, moveCommand, planetDto)
         } catch (pbe: PlanetBlockedException) {
             robotDomainService.saveRobot(robot)
             throw pbe
@@ -159,6 +150,42 @@ class RobotApplicationService(
             ),
             EventType.MOVEMENT,
             transactionUUID
+        )
+    }
+
+    /**
+     * Sends the events due after a successful movement command execution
+     *
+     * @param robot: The robot that moved
+     * @param cost: The energy costs of the movement
+     * @param moveCommand: The move command that was executed
+     * @param planetDto: The planet to which the robot moved, as returned from the Map Service
+     */
+    private fun sendMovementEvents(
+        robot: Robot,
+        cost: Int,
+        moveCommand: MovementCommand,
+        planetDto: GameMapPlanetDto
+    ) {
+        eventSender.sendEvent(
+            MovementEventDTO(
+                true,
+                "Movement successful",
+                robot.energy,
+                planetMapper.planetToPlanetDTO(robot.planet, cost, PlanetType.DEFAULT), // TODO planet type?
+                robotDomainService.getRobotsOnPlanet(robot.planet.planetId).map { it.id }
+            ),
+            EventType.MOVEMENT,
+            moveCommand.transactionUUID
+        )
+        eventSender.sendEvent(
+            NeighboursEventDTO(
+                planetDto.neighbours.map {
+                    NeighboursEventDTO.NeighbourDTO(it.planetId, it.movementDifficulty, it.direction)
+                }
+            ),
+            EventType.NEIGHBOURS,
+            moveCommand.transactionUUID
         )
     }
 
