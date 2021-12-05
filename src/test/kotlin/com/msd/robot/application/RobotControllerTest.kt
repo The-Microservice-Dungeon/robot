@@ -7,6 +7,8 @@ import com.msd.robot.application.dtos.RestorationDTO
 import com.msd.robot.application.dtos.RobotDto
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
+import com.msd.robot.domain.UpgradeType
+import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -288,5 +290,43 @@ class RobotControllerTest(
         }
 
         assertEquals(robot1.damageLevel, 0)
+    }
+
+    @Test
+    fun `Sending Upgrade Command correctly increases the given upgrade level`() {
+        // given
+        val robot1 = robotRepository.save(Robot(player1Id, Planet(UUID.randomUUID())))
+
+        UpgradeType.values().forEach {
+            val upgradeDto = """
+            {
+                "transaction_id": "${UUID.randomUUID()}",
+                "upgrade-type": "$it",
+                "target-level": 1
+            }
+            """.trimIndent()
+
+            // when
+            mockMvc.post("/robots/${robot1.id}/upgrades") {
+                contentType = MediaType.APPLICATION_JSON
+                content = upgradeDto
+            }.andDo {
+                print()
+            }.andExpect {
+                status { HttpStatus.OK }
+            }
+        }
+
+        val robot = robotRepository.findByIdOrNull(robot1.id)!!
+
+        assertAll(
+            { assertEquals(1, robot.damageLevel) },
+            { assertEquals(1, robot.healthLevel) },
+            { assertEquals(1, robot.energyLevel) },
+            { assertEquals(1, robot.inventory.storageLevel) },
+            { assertEquals(1, robot.miningLevel) },
+            { assertEquals(1, robot.miningSpeedLevel) },
+            { assertEquals(1, robot.energyRegenLevel) }
+        )
     }
 }
