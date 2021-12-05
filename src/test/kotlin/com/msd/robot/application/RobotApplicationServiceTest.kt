@@ -6,6 +6,7 @@ import com.msd.command.application.command.*
 import com.msd.domain.ResourceType
 import com.msd.event.application.EventSender
 import com.msd.item.domain.AttackItemType
+import com.msd.planet.application.PlanetMapperImpl
 import com.msd.planet.domain.Planet
 import com.msd.robot.application.exception.TargetPlanetNotReachableException
 import com.msd.robot.domain.*
@@ -52,6 +53,9 @@ class RobotApplicationServiceTest {
     @MockK
     lateinit var eventSender: EventSender
 
+    @MockK
+    lateinit var planetMapper: PlanetMapperImpl
+
     lateinit var robotApplicationService: RobotApplicationService
     lateinit var robotDomainService: RobotDomainService
 
@@ -62,7 +66,7 @@ class RobotApplicationServiceTest {
     fun setup() {
         MockKAnnotations.init(this)
         robotDomainService = RobotDomainService(robotRepository, gameMapMockService)
-        robotApplicationService = RobotApplicationService(gameMapMockService, robotDomainService, eventSender)
+        robotApplicationService = RobotApplicationService(gameMapMockService, robotDomainService, eventSender, planetMapper)
 
         planet1 = Planet(UUID.randomUUID())
         planet2 = Planet(UUID.randomUUID())

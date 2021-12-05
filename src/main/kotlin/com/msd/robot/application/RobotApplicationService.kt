@@ -8,11 +8,10 @@ import com.msd.command.application.command.*
 import com.msd.core.FailureException
 import com.msd.domain.ResourceType
 import com.msd.event.application.EventSender
-import com.msd.event.application.dto.FightingEventDTO
-import com.msd.event.application.dto.ItemFightingEventDTO
-import com.msd.event.application.dto.MiningEventDTO
-import com.msd.event.application.dto.ResourceDistributionEventDTO
+import com.msd.event.application.dto.*
+import com.msd.planet.application.PlanetMapper
 import com.msd.planet.domain.Planet
+import com.msd.planet.domain.PlanetType
 import com.msd.robot.domain.LevelTooLowException
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
@@ -27,7 +26,8 @@ import kotlin.math.floor
 class RobotApplicationService(
     val gameMapService: GameMapService,
     val robotDomainService: RobotDomainService,
-    val eventSender: EventSender
+    val eventSender: EventSender,
+    val planetMapper: PlanetMapper
 ) {
 
     /**
@@ -111,6 +111,16 @@ class RobotApplicationService(
         val planet = planetDto.toPlanet()
         robot.move(planet, cost)
         robotDomainService.saveRobot(robot)
+        eventSender.sendEvent(
+            MovementEventDTO(
+                true,
+                "Movement successful",
+                robot.energy,
+                planetMapper.planetToPlanetDTO(robot.planet, cost, PlanetType.DEFAULT), // TODO planet type?
+                robotDomainService.getRobotsOnPlanet(robot.planet.planetId).map { it.id }
+            ),
+            moveCommand.transactionUUID
+        )
     }
 
     /**

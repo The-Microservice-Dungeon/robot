@@ -1,5 +1,6 @@
 package com.msd.testUtil
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.domain.DomainEvent
 import com.msd.event.application.EventType
 import com.msd.event.application.dto.*
@@ -16,6 +17,7 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker
 import org.springframework.kafka.test.utils.KafkaTestUtils
 import java.util.*
 import java.util.concurrent.BlockingQueue
+import java.util.concurrent.TimeUnit
 
 class EventTestUtils {
 
@@ -43,6 +45,16 @@ class EventTestUtils {
         )
 
         return container
+    }
+
+    inline fun <reified T> getNextEventOfTopic(consumerRecords: BlockingQueue<ConsumerRecord<String, String>>, topic: String): DomainEvent<T> {
+        val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
+        assertNotNull(singleRecord!!)
+        assertEquals(topic, singleRecord.topic())
+        return DomainEvent.build(
+            jacksonObjectMapper().readValue(singleRecord.value(), T::class.java),
+            singleRecord.headers()
+        )
     }
 
     fun checkHeaders(

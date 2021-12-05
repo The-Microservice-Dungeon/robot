@@ -138,6 +138,7 @@ class EventSender(
             is FightingEventDTO -> topicConfig.ROBOT_FIGHTING
             is ResourceDistributionEventDTO -> topicConfig.ROBOT_RESOURCE_DISTRIBUTION
             is ItemFightingEventDTO -> topicConfig.ROBOT_ITEM_FIGHTING
+            is MovementEventDTO -> topicConfig.ROBOT_MOVEMENT
             else -> TODO()
         }
     }
@@ -149,6 +150,7 @@ class EventSender(
             is FightingEventDTO -> EventType.FIGHTING
             is ResourceDistributionEventDTO -> EventType.RESOURCE_DISTRIBUTION
             is ItemFightingEventDTO -> EventType.ITEM_FIGHTING
+            is MovementEventDTO -> EventType.MOVEMENT
             else -> TODO()
         }
     }

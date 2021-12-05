@@ -4,10 +4,16 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.application.AbstractKafkaProducerTest
 import com.msd.application.dto.GameMapPlanetDto
+import com.msd.domain.DomainEvent
+import com.msd.event.application.EventType
 import com.msd.event.application.ProducerTopicConfiguration
+import com.msd.event.application.dto.FightingEventDTO
+import com.msd.event.application.dto.MovementEventDTO
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
+import com.msd.planet.application.PlanetDTO
 import com.msd.planet.domain.Planet
+import com.msd.planet.domain.PlanetType
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
 import com.msd.robot.domain.UpgradeType
@@ -30,6 +36,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
 import java.util.*
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -39,7 +46,7 @@ import java.util.concurrent.LinkedBlockingQueue
     brokerProperties = ["listeners=PLAINTEXT://\${spring.kafka.bootstrap-servers}", "port=9092"]
 )
 @ActiveProfiles(profiles = ["no-async"])
-class CommandControllerProducerTest(
+class CommandControllerTest(
     @Autowired private var mockMvc: MockMvc,
     @Autowired private var commandController: CommandController,
     @Autowired private var robotRepository: RobotRepository,
@@ -151,7 +158,7 @@ class CommandControllerProducerTest(
     @Test
     fun `fighting works correctly`() {
         // given
-        startMovementContainer()
+        startFightingContainer()
 
         val command1 = "fight ${robot1.id} ${robot5.id} ${UUID.randomUUID()}"
         val command2 = "fight ${robot2.id} ${robot6.id} ${UUID.randomUUID()}"
@@ -183,6 +190,33 @@ class CommandControllerProducerTest(
                 }
             }
         )
+
+        assertAll(
+            commands.map {
+                {
+                    val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
+                    assertNotNull(singleRecord!!)
+                    assertEquals(topicConfig.ROBOT_FIGHTING, singleRecord.topic())
+                    val domainEvent = DomainEvent.build(
+                        jacksonObjectMapper().readValue(singleRecord.value(), FightingEventDTO::class.java),
+                        singleRecord.headers()
+                    )
+                    eventTestUtils.checkHeaders(UUID.fromString(it.split(" ").last()), EventType.FIGHTING, domainEvent)
+                    eventTestUtils.checkFightingPayload(
+                        true,
+                        "Attacking successful",
+                        UUID.fromString(it.split(" ")[1]),
+                        UUID.fromString(it.split(" ")[2]),
+                        9,
+                        19,
+                        domainEvent.payload
+                    )
+                }
+            }
+        )
+
+        // clean up
+        fightingContainer.stop()
     }
 
     @Test
@@ -207,6 +241,8 @@ class CommandControllerProducerTest(
     @Test
     fun `movement works correctly`() {
         // given
+        startMovementContainer()
+
         val targetPlanetDto = GameMapPlanetDto(planet2Id, 3)
 
         mockGameServiceWebClient.enqueue(
@@ -224,10 +260,27 @@ class CommandControllerProducerTest(
             status { isAccepted() }
             content { string("Command batch accepted") }
         }.andDo { print() }
+
         // then
         val robot = robotRepository.findByIdOrNull(robot1.id)!!
         assertEquals(planet2Id, robot.planet.planetId)
         assertEquals(17, robot.energy)
+
+        // events
+        val domainEvent = eventTestUtils.getNextEventOfTopic<MovementEventDTO>(consumerRecords, topicConfig.ROBOT_MOVEMENT)
+        eventTestUtils.checkHeaders(UUID.fromString(command.split(" ").last()), EventType.MOVEMENT, domainEvent)
+        eventTestUtils.checkMovementPaylod(
+            true,
+            "Movement successful",
+            17,
+            PlanetDTO(targetPlanetDto.id, targetPlanetDto.movementDifficulty, PlanetType.DEFAULT, null),
+            listOf(robot1.id, robot3.id, robot4.id, robot7.id, robot8.id),
+            domainEvent.payload
+        )
+
+        // TODO Neighbors Event checken
+
+        movementContainer.stop()
     }
 
     @Test
@@ -257,6 +310,7 @@ class CommandControllerProducerTest(
 
     @Test
     fun `robots can't move from blocked planet`() {
+        startMovementContainer()
         // given
         val targetPlanetDto = GameMapPlanetDto(planet2Id, 3)
 
@@ -266,7 +320,7 @@ class CommandControllerProducerTest(
                 .setBody(jacksonObjectMapper().writeValueAsString(targetPlanetDto))
         )
 
-        val command1 = "block ${robot2.id} ${UUID.randomUUID()}"
+        val command1 = "block ${robot1.id} ${UUID.randomUUID()}"
         val command2 = "move ${robot2.id} $planet2Id ${UUID.randomUUID()}"
         val commands = listOf(command1, command2)
 
@@ -280,8 +334,23 @@ class CommandControllerProducerTest(
                 content { string("Command batch accepted") }
             }.andDo { print() }
         }
+
         // then
-        assertEquals(planet1Id, robot2.planet.planetId)
+        assertEquals(planet1Id, robotRepository.findByIdOrNull(robot2.id)!!.planet.planetId)
+        assertEquals(17, robotRepository.findByIdOrNull(robot2.id)!!.energy)
+        // events
+        val domainEvent = eventTestUtils.getNextEventOfTopic<MovementEventDTO>(consumerRecords, topicConfig.ROBOT_MOVEMENT)
+        eventTestUtils.checkHeaders(UUID.fromString(commands[1].split(" ").last()), EventType.MOVEMENT, domainEvent)
+        eventTestUtils.checkMovementPaylod(
+            false,
+            "Can't move out of a blocked planet",
+            17,
+            null,
+            listOf(),
+            domainEvent.payload
+        )
+
+        movementContainer.stop()
     }
 
     @Test

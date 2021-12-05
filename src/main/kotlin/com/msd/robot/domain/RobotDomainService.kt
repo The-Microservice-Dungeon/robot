@@ -186,6 +186,16 @@ class RobotDomainService(
     }
 
     /**
+     * Wrapper for the repository method to find all robots on a specific planet
+     *
+     * @param planetId: The ID of the planet
+     * @return the robots on the planet
+     */
+    fun getRobotsOnPlanet(planetId: UUID): List<Robot> {
+        return robotRepository.findAllByPlanet_PlanetId(planetId)
+    }
+
+    /**
      * Saves the specified Robot.
      *
      * @param robot   the `Robot` which should be saved
