@@ -47,7 +47,10 @@ class EventTestUtils {
         return container
     }
 
-    inline fun <reified T> getNextEventOfTopic(consumerRecords: BlockingQueue<ConsumerRecord<String, String>>, topic: String): DomainEvent<T> {
+    inline fun <reified T> getNextEventOfTopic(
+        consumerRecords: BlockingQueue<ConsumerRecord<String, String>>,
+        topic: String
+    ): DomainEvent<T> {
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
         assertEquals(topic, singleRecord.topic())
@@ -243,6 +246,31 @@ class EventTestUtils {
             },
             {
                 assertEquals(expectedResource, payload.resourceType)
+            }
+        )
+    }
+
+    fun checkItemFightingPayload(
+        expectedSuccess: Boolean,
+        expectedMessage: String,
+        expectedRemainingItemCount: Int?,
+        expectedAssociatedFightsIds: List<UUID>,
+        payload: ItemFightingEventDTO
+    ) {
+        assertAll(
+            "check item fighting payload correct",
+            {
+                assertEquals(expectedSuccess, payload.success)
+            },
+            {
+                assertEquals(expectedMessage, payload.message)
+            },
+            {
+                assertEquals(expectedRemainingItemCount, payload.remainingItemCount)
+            },
+            {
+                assert(expectedAssociatedFightsIds.containsAll(payload.associatedFights))
+                assert(payload.associatedFights.containsAll(expectedAssociatedFightsIds))
             }
         )
     }

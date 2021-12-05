@@ -8,6 +8,7 @@ import com.msd.event.application.EventSender
 import com.msd.event.application.EventType
 import com.msd.event.application.ProducerTopicConfiguration
 import com.msd.event.application.dto.*
+import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
 import com.msd.planet.domain.Planet
@@ -496,6 +497,128 @@ internal class EventSenderTest(
             20,
             domainEvent.payload
         )
+    }
+
+    @Test
+    fun `when RobotNotFoundException is thrown while using fighting item, due to target being not found, an event is send to 'item-fighting' topic`() {
+        // given
+        startItemFightingContainer()
+        val robot = robotRepository.findByIdOrNull(robotId)
+        robot!!.inventory.addItem(AttackItemType.ROCKET)
+        robot.inventory.addItem(AttackItemType.ROCKET)
+        robotRepository.save(robot)
+
+        val fightingItemUsageCommand = FightingItemUsageCommand(robotId, AttackItemType.ROCKET, UUID.randomUUID(), UUID.randomUUID())
+        val robotNotFoundException = RobotNotFoundException("Target Robot not found")
+        // when
+        eventSender.handleException(robotNotFoundException, fightingItemUsageCommand)
+        // then
+        val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
+        assertNotNull(singleRecord!!)
+        assertEquals(topicConfig.ROBOT_ITEM_FIGHTING, singleRecord.topic())
+
+        val domainEvent = DomainEvent.build(
+            jacksonObjectMapper().readValue(singleRecord.value(), ItemFightingEventDTO::class.java),
+            singleRecord.headers()
+        )
+
+        eventTestUtils.checkHeaders(fightingItemUsageCommand.transactionUUID, EventType.ITEM_FIGHTING, domainEvent)
+        eventTestUtils.checkItemFightingPayload(false, "Target Robot not found", 2, listOf(), domainEvent.payload)
+    }
+
+    @Test
+    fun `when RobotNotFoundException is thrown while using fighting item, due to attacker being not found, an event is send to 'item-fighting' topic`() {
+        // given
+        startItemFightingContainer()
+
+        val fightingItemUsageCommand = FightingItemUsageCommand(UUID.randomUUID(), AttackItemType.ROCKET, UUID.randomUUID(), UUID.randomUUID())
+        val robotNotFoundException = RobotNotFoundException("Attacker Robot not found")
+        // when
+        eventSender.handleException(robotNotFoundException, fightingItemUsageCommand)
+        // then
+        val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
+        assertNotNull(singleRecord!!)
+        assertEquals(topicConfig.ROBOT_ITEM_FIGHTING, singleRecord.topic())
+
+        val domainEvent = DomainEvent.build(
+            jacksonObjectMapper().readValue(singleRecord.value(), ItemFightingEventDTO::class.java),
+            singleRecord.headers()
+        )
+
+        eventTestUtils.checkHeaders(fightingItemUsageCommand.transactionUUID, EventType.ITEM_FIGHTING, domainEvent)
+        eventTestUtils.checkItemFightingPayload(false, "Attacker Robot not found", null, listOf(), domainEvent.payload)
+    }
+
+    @Test
+    fun `when UnknownPlanetException is thrown while using fighting item an event is send to 'item-fighting' topic`() {
+        // given
+        startItemFightingContainer()
+        val planetId = UUID.randomUUID()
+
+        val fightingItemUsageCommand = FightingItemUsageCommand(robotId, AttackItemType.LONG_RANGE_BOMBARDMENT, planetId, UUID.randomUUID())
+        val unknownPlanetException = UnknownPlanetException(planetId)
+        // when
+        eventSender.handleException(unknownPlanetException, fightingItemUsageCommand)
+        // then
+        val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
+        assertNotNull(singleRecord!!)
+        assertEquals(topicConfig.ROBOT_ITEM_FIGHTING, singleRecord.topic())
+
+        val domainEvent = DomainEvent.build(
+            jacksonObjectMapper().readValue(singleRecord.value(), ItemFightingEventDTO::class.java),
+            singleRecord.headers()
+        )
+
+        eventTestUtils.checkHeaders(fightingItemUsageCommand.transactionUUID, EventType.ITEM_FIGHTING, domainEvent)
+        eventTestUtils.checkItemFightingPayload(false, "Map Service doesn't have a planet with the id $planetId", 0, listOf(), domainEvent.payload)
+    }
+
+    @Test
+    fun `when TargetRobotOutOfReachException is thrown while using fighting item an event is send 'item-fighting' topic`() {
+        // given
+        startItemFightingContainer()
+        val planetId = UUID.randomUUID()
+
+        val fightingItemUsageCommand = FightingItemUsageCommand(robotId, AttackItemType.ROCKET, planetId, UUID.randomUUID())
+        val targetRobotOutOfReachException = TargetRobotOutOfReachException("Target out of reach")
+        // when
+        eventSender.handleException(targetRobotOutOfReachException, fightingItemUsageCommand)
+        // then
+        val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
+        assertNotNull(singleRecord!!)
+        assertEquals(topicConfig.ROBOT_ITEM_FIGHTING, singleRecord.topic())
+
+        val domainEvent = DomainEvent.build(
+            jacksonObjectMapper().readValue(singleRecord.value(), ItemFightingEventDTO::class.java),
+            singleRecord.headers()
+        )
+
+        eventTestUtils.checkHeaders(fightingItemUsageCommand.transactionUUID, EventType.ITEM_FIGHTING, domainEvent)
+        eventTestUtils.checkItemFightingPayload(false, "Target out of reach", 0, listOf(), domainEvent.payload)
+    }
+
+    @Test
+    fun `when NotEnoughItemsException is thrown while using fighting item an event is send to 'item-fighting' topic`() {
+        // given
+        startItemFightingContainer()
+        val planetId = UUID.randomUUID()
+
+        val fightingItemUsageCommand = FightingItemUsageCommand(robotId, AttackItemType.ROCKET, planetId, UUID.randomUUID())
+        val notEnoughItemsException = NotEnoughItemsException("Not enough items", AttackItemType.ROCKET)
+        // when
+        eventSender.handleException(notEnoughItemsException, fightingItemUsageCommand)
+        // then
+        val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
+        assertNotNull(singleRecord!!)
+        assertEquals(topicConfig.ROBOT_ITEM_FIGHTING, singleRecord.topic())
+
+        val domainEvent = DomainEvent.build(
+            jacksonObjectMapper().readValue(singleRecord.value(), ItemFightingEventDTO::class.java),
+            singleRecord.headers()
+        )
+
+        eventTestUtils.checkHeaders(fightingItemUsageCommand.transactionUUID, EventType.ITEM_FIGHTING, domainEvent)
+        eventTestUtils.checkItemFightingPayload(false, "Not enough items\n Missing item: ${fightingItemUsageCommand.itemType}", 0, listOf(), domainEvent.payload)
     }
 
     @Test
