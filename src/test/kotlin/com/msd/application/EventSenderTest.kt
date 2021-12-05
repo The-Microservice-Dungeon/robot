@@ -16,6 +16,7 @@ import com.msd.robot.domain.LevelTooLowException
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
 import com.msd.robot.domain.exception.*
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -52,6 +53,11 @@ internal class EventSenderTest(
         robotRepository.save(robot)
     }
 
+    @AfterEach
+    fun teardown() {
+        shutDownAllContainers()
+    }
+
     @Test
     fun `when a PlanetBlockedException is handled when moving an Event is thrown in the 'movement' topic`() {
         // given
@@ -72,7 +78,6 @@ internal class EventSenderTest(
         )
         eventTestUtils.checkHeaders(movementCommand.transactionUUID, EventType.MOVEMENT, domainEvent)
         eventTestUtils.checkMovementPaylod(false, "Planet is blocked", 20, null, listOf(), domainEvent.payload)
-        movementContainer.stop()
     }
 
     @Test
@@ -96,7 +101,6 @@ internal class EventSenderTest(
 
         eventTestUtils.checkHeaders(movementCommand.transactionUUID, EventType.MOVEMENT, domainEvent)
         eventTestUtils.checkMovementPaylod(false, "Not enough Energy", 20, null, listOf(), domainEvent.payload)
-        movementContainer.stop()
     }
 
     @Test
@@ -120,7 +124,6 @@ internal class EventSenderTest(
 
         eventTestUtils.checkHeaders(movementCommand.transactionUUID, EventType.MOVEMENT, domainEvent)
         eventTestUtils.checkMovementPaylod(false, "Planet not reachable", 20, null, listOf(), domainEvent.payload)
-        movementContainer.stop()
     }
 
     @Test
@@ -152,7 +155,6 @@ internal class EventSenderTest(
             listOf(),
             domainEvent.payload
         )
-        movementContainer.stop()
     }
 
     @Test
@@ -176,7 +178,6 @@ internal class EventSenderTest(
 
         eventTestUtils.checkHeaders(movementCommand.transactionUUID, EventType.MOVEMENT, domainEvent)
         eventTestUtils.checkMovementPaylod(false, "Robot Not Found", null, null, listOf(), domainEvent.payload)
-        movementContainer.stop()
     }
 
     @Test
@@ -200,7 +201,6 @@ internal class EventSenderTest(
 
         eventTestUtils.checkHeaders(blockCommand.transactionUUID, EventType.PLANET_BLOCKED, domainEvent)
         eventTestUtils.checkBlockPayload(false, "Robot has not enough Energy", null, 20, domainEvent.payload)
-        blockedContainer.stop()
     }
 
     @Test
@@ -224,7 +224,6 @@ internal class EventSenderTest(
 
         eventTestUtils.checkHeaders(blockCommand.transactionUUID, EventType.PLANET_BLOCKED, domainEvent)
         eventTestUtils.checkBlockPayload(false, "Robot not Found", null, null, domainEvent.payload)
-        blockedContainer.stop()
     }
 
     @Test
@@ -248,7 +247,6 @@ internal class EventSenderTest(
 
         eventTestUtils.checkHeaders(regenCommand.transactionUUID, EventType.REGENERATION, domainEvent)
         eventTestUtils.checkRegenerationPayload(false, "Robot not Found", null, domainEvent.payload)
-        regenerationContainer.stop()
     }
 
     @Test
@@ -271,9 +269,7 @@ internal class EventSenderTest(
         )
 
         eventTestUtils.checkHeaders(miningCommand.transactionUUID, EventType.MINING, domainEvent)
-        eventTestUtils.checkMiningPayload(false, "Robot not found", null, 0, "NONE", domainEvent.payload)
-
-        miningContainer.stop()
+        eventTestUtils.checkMiningPayload(false, "Robot not found", null, 0, "COAL", domainEvent.payload)
     }
 
     @Test
@@ -297,9 +293,7 @@ internal class EventSenderTest(
         )
 
         eventTestUtils.checkHeaders(miningCommand.transactionUUID, EventType.MINING, domainEvent)
-        eventTestUtils.checkMiningPayload(false, "Not enough energy", 20, 0, "NONE", domainEvent.payload)
-
-        miningContainer.stop()
+        eventTestUtils.checkMiningPayload(false, "Not enough energy", 20, 0, "COAL", domainEvent.payload)
     }
 
     @Test
@@ -323,13 +317,17 @@ internal class EventSenderTest(
         )
 
         eventTestUtils.checkHeaders(miningCommand.transactionUUID, EventType.MINING, domainEvent)
-        eventTestUtils.checkMiningPayload(false, "Map Service did not return any resource on the planet $planetId", 20, 0, "NONE", domainEvent.payload)
-
-        miningContainer.stop()
+        eventTestUtils.checkMiningPayload(
+            false,
+            "Map Service did not return any resource on the planet $planetId",
+            20,
+            0,
+            "NONE",
+            domainEvent.payload
+        )
     }
 
     @Test
-    // TODO find out why the fuck this test and the other disabled test fails and slows down all other tests when ResourceType is not NONE
     fun `when LevelTooLowException is thrown while mining an event is send to 'mining' topic`() {
         // given
         startMiningContainer()
@@ -349,9 +347,7 @@ internal class EventSenderTest(
         )
 
         eventTestUtils.checkHeaders(miningCommand.transactionUUID, EventType.MINING, domainEvent)
-        eventTestUtils.checkMiningPayload(false, "Level too low", 20, 0, "NONE", domainEvent.payload)
-
-        miningContainer.stop()
+        eventTestUtils.checkMiningPayload(false, "Level too low", 20, 0, "PLATIN", domainEvent.payload)
     }
 
     @Test
@@ -383,7 +379,6 @@ internal class EventSenderTest(
             null,
             domainEvent.payload
         )
-        fightingContainer.stop()
     }
 
     @Test
@@ -415,7 +410,6 @@ internal class EventSenderTest(
             20,
             domainEvent.payload
         )
-        fightingContainer.stop()
     }
 
     @Test
@@ -449,7 +443,6 @@ internal class EventSenderTest(
             20,
             domainEvent.payload
         )
-        fightingContainer.stop()
     }
 
     @Test
@@ -483,7 +476,6 @@ internal class EventSenderTest(
             20,
             domainEvent.payload
         )
-        fightingContainer.stop()
     }
 
     @Test
@@ -512,7 +504,6 @@ internal class EventSenderTest(
             listOf(),
             domainEvent.payload
         )
-        itemRepairContainer.stop()
     }
 
     @Test
@@ -540,7 +531,6 @@ internal class EventSenderTest(
             listOf(),
             domainEvent.payload
         )
-        itemRepairContainer.stop()
     }
 
     @Test
@@ -568,7 +558,6 @@ internal class EventSenderTest(
             null,
             domainEvent.payload
         )
-        itemMovementContainer.stop()
     }
 
     @Test
@@ -596,7 +585,6 @@ internal class EventSenderTest(
             null,
             domainEvent.payload
         )
-        itemMovementContainer.stop()
     }
 
     @Test
@@ -624,6 +612,5 @@ internal class EventSenderTest(
             null,
             domainEvent.payload
         )
-        itemMovementContainer.stop()
     }
 }

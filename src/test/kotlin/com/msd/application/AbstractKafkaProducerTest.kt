@@ -29,6 +29,8 @@ abstract class AbstractKafkaProducerTest(
     internal lateinit var itemRepairContainer: KafkaMessageListenerContainer<String, String>
     internal lateinit var itemMovementContainer: KafkaMessageListenerContainer<String, String>
 
+    private val runningContainers = mutableListOf<KafkaMessageListenerContainer<String, String>>()
+
     @BeforeEach
     open fun setup() {
         consumerRecords = LinkedBlockingQueue()
@@ -38,6 +40,7 @@ abstract class AbstractKafkaProducerTest(
         movementContainer =
             eventTestUtils.createMessageListenerContainer(embeddedKafka, topicConfig.ROBOT_MOVEMENT, consumerRecords)
         movementContainer.start()
+        runningContainers.add(movementContainer)
         ContainerTestUtils.waitForAssignment(movementContainer, embeddedKafka.partitionsPerTopic)
     }
 
@@ -45,6 +48,7 @@ abstract class AbstractKafkaProducerTest(
         neighboursContainer =
             eventTestUtils.createMessageListenerContainer(embeddedKafka, topicConfig.ROBOT_NEIGHBOURS, consumerRecords)
         neighboursContainer.start()
+        runningContainers.add(neighboursContainer)
         ContainerTestUtils.waitForAssignment(neighboursContainer, embeddedKafka.partitionsPerTopic)
     }
 
@@ -52,6 +56,7 @@ abstract class AbstractKafkaProducerTest(
         blockedContainer =
             eventTestUtils.createMessageListenerContainer(embeddedKafka, topicConfig.ROBOT_BLOCKED, consumerRecords)
         blockedContainer.start()
+        runningContainers.add(blockedContainer)
         ContainerTestUtils.waitForAssignment(blockedContainer, embeddedKafka.partitionsPerTopic)
     }
 
@@ -59,6 +64,7 @@ abstract class AbstractKafkaProducerTest(
         miningContainer =
             eventTestUtils.createMessageListenerContainer(embeddedKafka, topicConfig.ROBOT_MINING, consumerRecords)
         miningContainer.start()
+        runningContainers.add(miningContainer)
         ContainerTestUtils.waitForAssignment(miningContainer, embeddedKafka.partitionsPerTopic)
     }
 
@@ -66,6 +72,7 @@ abstract class AbstractKafkaProducerTest(
         fightingContainer =
             eventTestUtils.createMessageListenerContainer(embeddedKafka, topicConfig.ROBOT_FIGHTING, consumerRecords)
         fightingContainer.start()
+        runningContainers.add(fightingContainer)
         ContainerTestUtils.waitForAssignment(fightingContainer, embeddedKafka.partitionsPerTopic)
     }
 
@@ -77,6 +84,7 @@ abstract class AbstractKafkaProducerTest(
                 consumerRecords
             )
         resourceDistributionContainer.start()
+        runningContainers.add(resourceDistributionContainer)
         ContainerTestUtils.waitForAssignment(resourceDistributionContainer, embeddedKafka.partitionsPerTopic)
     }
 
@@ -88,6 +96,7 @@ abstract class AbstractKafkaProducerTest(
                 consumerRecords
             )
         regenerationContainer.start()
+        runningContainers.add(regenerationContainer)
         ContainerTestUtils.waitForAssignment(regenerationContainer, embeddedKafka.partitionsPerTopic)
     }
 
@@ -98,6 +107,7 @@ abstract class AbstractKafkaProducerTest(
             consumerRecords
         )
         itemFightingContainer.start()
+        runningContainers.add(itemFightingContainer)
         ContainerTestUtils.waitForAssignment(itemFightingContainer, embeddedKafka.partitionsPerTopic)
     }
 
@@ -105,6 +115,7 @@ abstract class AbstractKafkaProducerTest(
         itemRepairContainer =
             eventTestUtils.createMessageListenerContainer(embeddedKafka, topicConfig.ROBOT_ITEM_REPAIR, consumerRecords)
         itemRepairContainer.start()
+        runningContainers.add(itemRepairContainer)
         ContainerTestUtils.waitForAssignment(itemRepairContainer, embeddedKafka.partitionsPerTopic)
     }
 
@@ -115,6 +126,14 @@ abstract class AbstractKafkaProducerTest(
             consumerRecords
         )
         itemMovementContainer.start()
+        runningContainers.add(itemMovementContainer)
         ContainerTestUtils.waitForAssignment(itemMovementContainer, embeddedKafka.partitionsPerTopic)
+    }
+
+    protected fun shutDownAllContainers() {
+        runningContainers.forEach {
+            it.stop()
+        }
+        runningContainers.clear()
     }
 }
