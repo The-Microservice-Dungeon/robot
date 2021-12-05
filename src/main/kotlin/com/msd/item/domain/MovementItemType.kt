@@ -11,7 +11,7 @@ enum class MovementItemType(val func: (Robot, RobotRepository, GameMapService) -
 
 private fun useWormhole(robot: Robot, repository: RobotRepository, gameMapService: GameMapService): Planet {
     val planetDTO = gameMapService.getAllPlanets().random()
-    val planet = Planet(planetDTO.id, planetDTO.resource.resourceType)
+    val planet = Planet(planetDTO.id, planetDTO.resource?.resourceType)
     robot.move(planet, 0)
     repository.save(robot)
     return planet

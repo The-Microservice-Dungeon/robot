@@ -8,7 +8,7 @@ class GameMapPlanetDto(
     val id: UUID,
     @JsonProperty("movement_difficulty")
     val movementDifficulty: Int,
-    val resource: ResourceDto
+    val resource: ResourceDto? = null
 ) {
 
     fun toPlanet(): Planet {
