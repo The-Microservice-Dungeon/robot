@@ -229,7 +229,7 @@ class RobotControllerTest(
             contentType = MediaType.APPLICATION_JSON
             content = upgradeDto
         }.andExpect {
-            status { HttpStatus.OK }
+            status { isBadRequest() }
         }.andDo {
             print()
         }.andReturn()
