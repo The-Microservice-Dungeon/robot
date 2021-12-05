@@ -261,4 +261,32 @@ class RobotControllerTest(
         // then
         assertEquals("Request could not be accepted", result.response.contentAsString)
     }
+
+    @Test
+    fun `Sending Upgrade Command that would skip upgrade levels returns 400 and does not increase the upgrade level`() {
+        // given
+        val robot1 = robotRepository.save(Robot(player1Id, Planet(UUID.randomUUID())))
+
+        val upgradeDto = """
+            {
+                "transaction_id": "${UUID.randomUUID()}",
+                "upgrade-type": "DAMAGE",
+                "target-level": 2
+            }
+        """.trimIndent()
+
+        assertEquals(robot1.damageLevel, 0)
+
+        // when
+        mockMvc.post("/robots/${robot1.id}/upgrades") {
+            contentType = MediaType.APPLICATION_JSON
+            content = upgradeDto
+        }.andDo {
+            print()
+        }.andExpect {
+            status { isBadRequest() }
+        }
+
+        assertEquals(robot1.damageLevel, 0)
+    }
 }
