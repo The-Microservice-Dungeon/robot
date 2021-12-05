@@ -289,6 +289,7 @@ class RobotControllerTest(
             status { isBadRequest() }
         }
 
+        // then
         assertEquals(robot1.damageLevel, 0)
     }
 
@@ -319,7 +320,7 @@ class RobotControllerTest(
             content = upgradeDto
         }.andDo {
             print()
-        }.andExpect {
+        }.andExpect { // then
             status { isBadRequest() }
         }
     }
@@ -329,7 +330,7 @@ class RobotControllerTest(
         // given
         val robot1 = robotRepository.save(Robot(player1Id, Planet(UUID.randomUUID())))
 
-        // then
+        // when
         UpgradeType.values().forEach {
             val upgradeDto = """
             {
@@ -349,9 +350,9 @@ class RobotControllerTest(
             }
         }
 
-        // then
         val robot = robotRepository.findByIdOrNull(robot1.id)!!
 
+        // then
         assertAll(
             { assertEquals(1, robot.damageLevel) },
             { assertEquals(1, robot.healthLevel) },
