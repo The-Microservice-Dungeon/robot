@@ -236,4 +236,29 @@ class RobotControllerTest(
         assertEquals("Request could not be accepted", result.response.contentAsString)
         assertEquals(robot1.damageLevel, 0)
     }
+
+    @Test
+    fun `Sending Upgrade Command with invalid UpgradeType returns 400`() {
+        // given
+        val robot1 = robotRepository.save(Robot(player1Id, Planet(UUID.randomUUID())))
+
+        val upgradeDto = """
+            {
+                "transaction_id": "${UUID.randomUUID()}",
+                "upgrade-type": "Invalid UpgradeType",
+                "target-level": 1
+            }
+        """.trimIndent()
+
+        // when
+        val result = mockMvc.post("/robots/${robot1.id}/upgrades") {
+            contentType = MediaType.APPLICATION_JSON
+            content = upgradeDto
+        }.andDo {
+            print()
+        }.andReturn()
+
+        // then
+        assertEquals("Request could not be accepted", result.response.contentAsString)
+    }
 }
