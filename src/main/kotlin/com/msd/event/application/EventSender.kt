@@ -103,8 +103,8 @@ class EventSender(
     /**
      * Send the Kafka DomainEvent with the given transactionId and put the given GenericEventDTO in
      */
-    fun sendEvent(event: GenericEventDTO, transactionId: UUID): UUID {
-        val domainEvent = buildDomainEvent(event, getEventTypeByEvent(event), transactionId)
+    fun sendEvent(event: GenericEventDTO, eventType: EventType, transactionId: UUID): UUID {
+        val domainEvent = buildDomainEvent(event, eventType, transactionId)
         kafkaMessageProducer.send(
             getTopicByEvent(event),
             domainEvent
@@ -112,10 +112,10 @@ class EventSender(
         return UUID.fromString(domainEvent.id)
     }
 
-    fun sendGenericEvent(event: GenericEventDTO) {
+    fun sendGenericEvent(event: GenericEventDTO, eventType: EventType) {
         kafkaMessageProducer.send(
             getTopicByEvent(event),
-            buildDomainEvent(event, getEventTypeByEvent(event), UUID.fromString("00000000-0000-0000-0000-000000000000"))
+            buildDomainEvent(event, eventType, UUID.fromString("00000000-0000-0000-0000-000000000000"))
         )
     }
 
@@ -141,18 +141,6 @@ class EventSender(
             is ResourceDistributionEventDTO -> topicConfig.ROBOT_RESOURCE_DISTRIBUTION
             is ItemFightingEventDTO -> topicConfig.ROBOT_ITEM_FIGHTING
             is MovementEventDTO -> topicConfig.ROBOT_MOVEMENT
-            else -> TODO()
-        }
-    }
-
-    // TODO do we need this method? It only gets used when sending a successful event, we now what the EventType we need there
-    private fun getEventTypeByEvent(event: GenericEventDTO): EventType {
-        return when (event) {
-            is MiningEventDTO -> EventType.MINING
-            is FightingEventDTO -> EventType.FIGHTING
-            is ResourceDistributionEventDTO -> EventType.RESOURCE_DISTRIBUTION
-            is ItemFightingEventDTO -> EventType.ITEM_FIGHTING
-            is MovementEventDTO -> EventType.MOVEMENT
             else -> TODO()
         }
     }

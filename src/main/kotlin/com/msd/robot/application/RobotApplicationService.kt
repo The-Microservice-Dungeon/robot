@@ -8,6 +8,7 @@ import com.msd.command.application.command.*
 import com.msd.core.FailureException
 import com.msd.domain.ResourceType
 import com.msd.event.application.EventSender
+import com.msd.event.application.EventType
 import com.msd.event.application.dto.*
 import com.msd.planet.application.PlanetMapper
 import com.msd.planet.domain.Planet
@@ -119,6 +120,7 @@ class RobotApplicationService(
                 planetMapper.planetToPlanetDTO(robot.planet, cost, PlanetType.DEFAULT), // TODO planet type?
                 robotDomainService.getRobotsOnPlanet(robot.planet.planetId).map { it.id }
             ),
+            EventType.MOVEMENT,
             moveCommand.transactionUUID
         )
     }
@@ -201,6 +203,7 @@ class RobotApplicationService(
                         target.health,
                         attacker.energy
                     ),
+                    EventType.FIGHTING,
                     it.transactionUUID
                 )
                 battleFields.add(attacker.planet.planetId)
@@ -222,7 +225,8 @@ class RobotApplicationService(
                         it.inventory.getStorageUsageForResource(ResourceType.GEM),
                         it.inventory.getStorageUsageForResource(ResourceType.GOLD),
                         it.inventory.getStorageUsageForResource(ResourceType.PLATIN),
-                    )
+                    ),
+                    EventType.RESOURCE_DISTRIBUTION
                 )
             }
         }
@@ -264,6 +268,7 @@ class RobotApplicationService(
                             targetRobot.health,
                             robot.energy
                         ),
+                        EventType.FIGHTING,
                         it.transactionUUID
                     )
                 }
@@ -274,6 +279,7 @@ class RobotApplicationService(
                         robot.inventory.getItemAmountByType(it.itemType),
                         causedFightingEvents
                     ),
+                    EventType.ITEM_FIGHTING,
                     it.transactionUUID
                 )
                 battleFields.add(battlefield)
@@ -321,6 +327,7 @@ class RobotApplicationService(
                     it.robot.inventory.getStorageUsageForResource(it.resource),
                     it.resource.toString()
                 ),
+                EventType.MINING,
                 it.transactionId
             )
         }
