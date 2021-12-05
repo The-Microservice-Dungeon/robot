@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.repository.findByIdOrNull
 import java.util.*
@@ -31,7 +32,7 @@ import java.util.*
 @ExtendWith(MockKExtension::class)
 @SpringBootTest
 class RobotApplicationServiceTest(
-    val planetMapper: PlanetMapper
+    @Autowired val planetMapper: PlanetMapper
 ) {
 
     lateinit var robot1: Robot
