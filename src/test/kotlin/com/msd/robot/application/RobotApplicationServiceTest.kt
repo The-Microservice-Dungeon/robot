@@ -6,7 +6,7 @@ import com.msd.command.application.command.*
 import com.msd.domain.ResourceType
 import com.msd.event.application.EventSender
 import com.msd.item.domain.AttackItemType
-import com.msd.planet.application.PlanetMapperImpl
+import com.msd.planet.application.PlanetMapper
 import com.msd.planet.domain.Planet
 import com.msd.robot.application.exception.TargetPlanetNotReachableException
 import com.msd.robot.domain.*
@@ -24,11 +24,15 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.repository.findByIdOrNull
 import java.util.*
 
 @ExtendWith(MockKExtension::class)
-class RobotApplicationServiceTest {
+@SpringBootTest
+class RobotApplicationServiceTest(
+    val planetMapper: PlanetMapper
+) {
 
     lateinit var robot1: Robot
     lateinit var robot2: Robot
@@ -52,9 +56,6 @@ class RobotApplicationServiceTest {
 
     @MockK
     lateinit var eventSender: EventSender
-
-    @MockK
-    lateinit var planetMapper: PlanetMapperImpl
 
     lateinit var robotApplicationService: RobotApplicationService
     lateinit var robotDomainService: RobotDomainService

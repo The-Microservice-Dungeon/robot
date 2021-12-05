@@ -216,7 +216,7 @@ class CommandControllerTest(
         )
 
         // clean up
-        fightingContainer.stop()
+        shutDownAllContainers()
     }
 
     @Test
@@ -280,7 +280,8 @@ class CommandControllerTest(
 
         // TODO Neighbors Event checken
 
-        movementContainer.stop()
+        // clean up
+        shutDownAllContainers()
     }
 
     @Test
@@ -350,7 +351,8 @@ class CommandControllerTest(
             domainEvent.payload
         )
 
-        movementContainer.stop()
+        // clean up
+        shutDownAllContainers()
     }
 
     @Test
