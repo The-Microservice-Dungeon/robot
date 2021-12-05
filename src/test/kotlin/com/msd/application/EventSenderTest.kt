@@ -3,6 +3,7 @@ package com.msd.application
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.command.application.command.*
 import com.msd.domain.DomainEvent
+import com.msd.domain.ResourceType
 import com.msd.event.application.EventSender
 import com.msd.event.application.EventType
 import com.msd.event.application.ProducerTopicConfiguration
@@ -10,6 +11,7 @@ import com.msd.event.application.dto.*
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
 import com.msd.planet.domain.Planet
+import com.msd.planet.domain.PlanetRepository
 import com.msd.robot.application.exception.TargetPlanetNotReachableException
 import com.msd.robot.application.exception.UnknownPlanetException
 import com.msd.robot.domain.LevelTooLowException
@@ -22,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.kafka.test.EmbeddedKafkaBroker
 import org.springframework.kafka.test.context.EmbeddedKafka
 import org.springframework.test.annotation.DirtiesContext
@@ -40,6 +43,7 @@ internal class EventSenderTest(
     @Autowired private val eventSender: EventSender,
     @Autowired private val embeddedKafka: EmbeddedKafkaBroker,
     @Autowired private val robotRepository: RobotRepository,
+    @Autowired private val planetRepository: PlanetRepository,
     @Autowired private val topicConfig: ProducerTopicConfiguration
 ) : AbstractKafkaProducerTest(embeddedKafka, topicConfig) {
 
@@ -253,6 +257,8 @@ internal class EventSenderTest(
     fun `when RobotNotFoundException is thrown while mining an event is send to 'mining' topic`() {
         // given
         startMiningContainer()
+        val planet = Planet(UUID.randomUUID(), ResourceType.COAL)
+        planetRepository.save(planet)
 
         val miningCommand = MiningCommand(UUID.randomUUID(), UUID.randomUUID())
         val robotNotFoundException = RobotNotFoundException("Robot not found")
@@ -269,13 +275,18 @@ internal class EventSenderTest(
         )
 
         eventTestUtils.checkHeaders(miningCommand.transactionUUID, EventType.MINING, domainEvent)
-        eventTestUtils.checkMiningPayload(false, "Robot not found", null, 0, "COAL", domainEvent.payload)
+        eventTestUtils.checkMiningPayload(false, "Robot not found", null, 0, "NONE", domainEvent.payload)
     }
 
     @Test
     fun `when NotEnoughEnergyException is thrown while mining an event is send to 'mining' topic`() {
         // given
         startMiningContainer()
+        val planet = Planet(UUID.randomUUID(), ResourceType.COAL)
+        planetRepository.save(planet)
+        val robot = robotRepository.findByIdOrNull(robotId)
+        robot!!.move(planet, 0)
+        robotRepository.save(robot)
 
         val miningCommand = MiningCommand(robotId, UUID.randomUUID())
         val notEnoughEnergyException = NotEnoughEnergyException("Not enough energy")
@@ -300,10 +311,14 @@ internal class EventSenderTest(
     fun `when NoResourceOnPlanetException is thrown while mining an event is send to 'mining' topic`() {
         // given
         startMiningContainer()
-        val planetId = UUID.randomUUID()
+        val planet = Planet(UUID.randomUUID(), null)
+        planetRepository.save(planet)
+        val robot = robotRepository.findByIdOrNull(robotId)
+        robot!!.move(planet, 0)
+        robotRepository.save(robot)
 
         val miningCommand = MiningCommand(robotId, UUID.randomUUID())
-        val noResourceOnPlanetException = NoResourceOnPlanetException(planetId)
+        val noResourceOnPlanetException = NoResourceOnPlanetException(planet.planetId)
         // when
         eventSender.handleException(noResourceOnPlanetException, miningCommand)
         // then
@@ -319,7 +334,7 @@ internal class EventSenderTest(
         eventTestUtils.checkHeaders(miningCommand.transactionUUID, EventType.MINING, domainEvent)
         eventTestUtils.checkMiningPayload(
             false,
-            "Map Service did not return any resource on the planet $planetId",
+            "Map Service did not return any resource on the planet ${planet.planetId}",
             20,
             0,
             "NONE",
@@ -331,6 +346,11 @@ internal class EventSenderTest(
     fun `when LevelTooLowException is thrown while mining an event is send to 'mining' topic`() {
         // given
         startMiningContainer()
+        val planet = Planet(UUID.randomUUID(), ResourceType.PLATIN)
+        planetRepository.save(planet)
+        val robot = robotRepository.findByIdOrNull(robotId)
+        robot!!.move(planet, 0)
+        robotRepository.save(robot)
 
         val miningCommand = MiningCommand(robotId, UUID.randomUUID())
         val levelTooLowException = LevelTooLowException("Level too low")

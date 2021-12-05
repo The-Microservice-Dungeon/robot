@@ -8,9 +8,9 @@ import javax.persistence.Id
 @Entity
 data class Planet(
     @Id
-    val planetId: UUID
+    val planetId: UUID,
+    var resourceType: ResourceType? = null
 ) {
 
     var blocked: Boolean = false
-    var resourceType: ResourceType? = null
 }

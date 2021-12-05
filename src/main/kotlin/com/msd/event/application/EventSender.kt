@@ -4,6 +4,7 @@ import com.msd.command.application.command.*
 import com.msd.core.FailureException
 import com.msd.domain.DomainEvent
 import com.msd.event.application.dto.*
+import com.msd.planet.domain.PlanetRepository
 import com.msd.robot.domain.RobotRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -15,7 +16,8 @@ import java.util.*
 class EventSender(
     private val kafkaMessageProducer: KafkaMessageProducer,
     private val robotRepository: RobotRepository,
-    private val topicConfig: ProducerTopicConfiguration
+    private val topicConfig: ProducerTopicConfiguration,
+    private val planetRepository: PlanetRepository
 ) {
 
     private val eventVersion = 1
@@ -174,9 +176,15 @@ class EventSender(
             is EnergyRegenCommand -> EnergyRegenEventDTO(
                 false, e.message!!, robot?.energy
             )
-            is MiningCommand -> MiningEventDTO(
-                false, e.message!!, robot?.energy, 0, "NONE"
-            )
+            is MiningCommand -> {
+                val planetResource = if (robot != null)
+                    planetRepository.findByIdOrNull(robot.planet.planetId)?.resourceType?.toString() ?: "NONE"
+                else
+                    "NONE"
+                MiningEventDTO(
+                    false, e.message!!, robot?.energy, 0, planetResource
+                )
+            }
             is FightingCommand -> {
                 val target = robotRepository.findByIdOrNull(command.targetRobotUUID)
                 FightingEventDTO(
