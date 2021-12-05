@@ -326,6 +326,34 @@ class RobotControllerTest(
     }
 
     @Test
+    fun `Sending Upgrade Command that would lower upgrade levels returns 400 `() {
+        // given
+        val robot1 = robotRepository.save(Robot(player1Id, Planet(UUID.randomUUID())))
+        robot1.upgrade(UpgradeType.DAMAGE, 1)
+        robotRepository.save(robot1)
+
+        assertEquals(robot1.damageLevel, 1)
+
+        val upgradeDto = """
+            {
+                "transaction_id": "${UUID.randomUUID()}",
+                "upgrade-type": "DAMAGE",
+                "target-level": 0
+            }
+        """.trimIndent()
+
+        // when
+        mockMvc.post("/robots/${robot1.id}/upgrades") {
+            contentType = MediaType.APPLICATION_JSON
+            content = upgradeDto
+        }.andDo {
+            print()
+        }.andExpect { // then
+            status { isBadRequest() }
+        }
+    }
+
+    @Test
     fun `Sending Upgrade Command correctly increases the given upgrade level`() {
         // given
         val robot1 = robotRepository.save(Robot(player1Id, Planet(UUID.randomUUID())))
