@@ -7,7 +7,6 @@ import com.msd.application.dto.GameMapPlanetDto
 import com.msd.domain.DomainEvent
 import com.msd.event.application.EventType
 import com.msd.event.application.ProducerTopicConfiguration
-import com.msd.event.application.dto.BlockEventDTO
 import com.msd.event.application.dto.FightingEventDTO
 import com.msd.event.application.dto.MovementEventDTO
 import com.msd.item.domain.MovementItemType
@@ -320,7 +319,6 @@ class CommandControllerTest(
     @Test
     fun `robots can't move from blocked planet`() {
         // given
-        startPlanetBlockedContainer()
         startMovementContainer()
         consumerRecords.clear()
 
@@ -352,7 +350,6 @@ class CommandControllerTest(
         assertEquals(planet1Id, robotRepository.findByIdOrNull(robot2.id)!!.planet.planetId)
         assertEquals(17, robotRepository.findByIdOrNull(robot2.id)!!.energy)
         // events
-        val blockedEvent = eventTestUtils.getNextEventOfTopic<BlockEventDTO>(consumerRecords, topicConfig.ROBOT_BLOCKED)
         val domainEvent = eventTestUtils.getNextEventOfTopic<MovementEventDTO>(consumerRecords, topicConfig.ROBOT_MOVEMENT)
         eventTestUtils.checkHeaders(moveCommandId, EventType.MOVEMENT, domainEvent)
         eventTestUtils.checkMovementPaylod(
