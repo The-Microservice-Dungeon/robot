@@ -1,6 +1,8 @@
 package com.msd.application
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.msd.application.dto.GameMapPlanetDto
+import com.msd.robot.application.exception.TargetPlanetNotReachableException
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.*
@@ -87,7 +89,7 @@ class GameMapServiceTest {
         val exception = assertThrows<ClientException> {
             gameMapService.retrieveTargetPlanetIfRobotCanReach(randomUUID(), randomUUID())
         }
-        assertEquals("Could not connect to GameMap client", exception.message)
+        assertEquals("Could not connect to Map Service", exception.message)
     }
 
     @Test

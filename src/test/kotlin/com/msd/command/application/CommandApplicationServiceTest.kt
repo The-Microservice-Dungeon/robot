@@ -1,5 +1,6 @@
 package com.msd.command.application
 
+import com.msd.command.application.command.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 import org.junit.jupiter.api.assertThrows
@@ -41,7 +42,7 @@ class CommandApplicationServiceTest {
                 assert(commands.count { it is MovementCommand } == 1)
             },
             {
-                assert(commands.count { it is AttackCommand } == 1)
+                assert(commands.count { it is FightingCommand } == 1)
             },
             {
                 assert(commands.count { it is MiningCommand } == 1)
@@ -50,7 +51,7 @@ class CommandApplicationServiceTest {
                 assert(commands.count { it is EnergyRegenCommand } == 1)
             },
             {
-                assert(commands.count { it is AttackItemUsageCommand } == 4) // 4 !!!
+                assert(commands.count { it is FightingItemUsageCommand } == 4) // 4 !!!
             },
             {
                 assert(commands.count { it is MovementItemsUsageCommand } == 1)

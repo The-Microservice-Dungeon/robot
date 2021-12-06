@@ -2,9 +2,9 @@ package com.msd.robot.domain
 
 import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
-import com.msd.robot.domain.exceptions.NotEnoughEnergyException
-import com.msd.robot.domain.exceptions.PlanetBlockedException
-import com.msd.robot.domain.exceptions.UpgradeException
+import com.msd.robot.domain.exception.NotEnoughEnergyException
+import com.msd.robot.domain.exception.PlanetBlockedException
+import com.msd.robot.domain.exception.UpgradeException
 import java.lang.IllegalArgumentException
 import java.util.*
 import javax.persistence.*
@@ -196,7 +196,7 @@ class Robot(
      */
     fun block() {
         this.reduceEnergy(round(2 + 0.1 * maxEnergy).toInt())
-        this.planet.blocked = true // TODO make sure this gets reset every round
+        this.planet.blocked = true
     }
 
     /**
@@ -274,10 +274,18 @@ class Robot(
     }
 
     /**
-     * Regenerates this [Robot's] [Robot] `energy`.
+     * Regenerates this [Robot's] [Robot] `energy`. The amount restored corresponds to the `energyRegen` value.
      */
     fun regenerateEnergy() {
         energy += energyRegen
+    }
+
+    /**
+     * Fully restores a `Robot's` `energy`. This method unlike `regenerateEnergy` is supposed to represent the energy
+     * regeneration at a space station.
+     */
+    fun restoreEnergy() {
+        energy = maxEnergy
     }
 
     /**

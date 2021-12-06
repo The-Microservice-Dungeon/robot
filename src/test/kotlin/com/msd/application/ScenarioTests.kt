@@ -3,7 +3,9 @@ package com.msd.application
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.msd.application.dto.GameMapPlanetDto
 import com.msd.command.application.CommandDTO
+import com.msd.event.application.ProducerTopicConfiguration
 import com.msd.robot.application.dtos.RobotDto
 import com.msd.robot.application.dtos.RobotSpawnDto
 import okhttp3.mockwebserver.MockResponse
@@ -15,6 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
+import org.springframework.kafka.test.EmbeddedKafkaBroker
+import org.springframework.kafka.test.context.EmbeddedKafka
+import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
@@ -24,10 +29,17 @@ import java.util.*
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @ActiveProfiles(profiles = ["no-async"])
+@DirtiesContext
+@EmbeddedKafka(
+    partitions = 1,
+    brokerProperties = ["listeners=PLAINTEXT://\${spring.kafka.bootstrap-servers}", "port=9092"]
+)
 class ScenarioTests(
     @Autowired private val mockMvc: MockMvc,
-    @Autowired private val mapper: ObjectMapper
-) {
+    @Autowired private val mapper: ObjectMapper,
+    @Autowired private val embeddedKafka: EmbeddedKafkaBroker,
+    @Autowired private val topicConfig: ProducerTopicConfiguration
+) : AbstractKafkaProducerTest(embeddedKafka, topicConfig) {
 
     val planet1 = UUID.randomUUID()
     val planet2 = UUID.randomUUID()
@@ -61,6 +73,10 @@ class ScenarioTests(
      */
     @Test
     fun firstScenario() {
+        startMovementContainer()
+        startFightingContainer()
+        startResourceDistributionContainer()
+
         // //////////////////////  1. Spawn the robots  //////////////////////////////
         // player1, on planet1
         var robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, planet1)

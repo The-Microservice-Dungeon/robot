@@ -1,14 +1,17 @@
 package com.msd.robot.domain
 
 import com.msd.application.GameMapService
+import com.msd.application.dto.GameMapPlanetDto
 import com.msd.domain.ResourceType
+import com.msd.event.application.dto.RepairEventRobotDTO
 import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.ItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
-import com.msd.robot.domain.exceptions.NotEnoughItemsException
-import com.msd.robot.domain.exceptions.OutOfReachException
-import com.msd.robot.domain.exceptions.RobotNotFoundException
+import com.msd.robot.application.RestorationType
+import com.msd.robot.domain.exception.NotEnoughItemsException
+import com.msd.robot.domain.exception.RobotNotFoundException
+import com.msd.robot.domain.exception.TargetRobotOutOfReachException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.util.*
@@ -24,11 +27,11 @@ class RobotDomainService(
      *
      * @param attacker      The robot attacking
      * @param target        The target of the attack
-     * @throws OutOfReachException If the robots are not on the same planet
+     * @throws TargetRobotOutOfReachException If the robots are not on the same planet
      */
     fun fight(attacker: Robot, target: Robot) {
         if (attacker.planet.planetId != target.planet.planetId)
-            throw OutOfReachException("The attacking robot and the defending robot are not on the same planet")
+            throw TargetRobotOutOfReachException("The attacking robot and the defending robot are not on the same planet")
 
         attacker.attack(target)
 
@@ -41,10 +44,11 @@ class RobotDomainService(
      * planet and that dead robots get deleted from the repository.
      *
      * This method should not throw any exceptions.
+     * @return the list of robots whose inventory has changed
      */
-    fun postFightCleanup(planetId: UUID) {
+    fun postFightCleanup(planetId: UUID): List<Robot> {
         val resourcesToBeDistributed = deleteDeadRobots(planetId)
-        distributeDroppedResources(planetId, resourcesToBeDistributed)
+        return distributeDroppedResources(planetId, resourcesToBeDistributed)
     }
 
     /**
@@ -79,18 +83,29 @@ class RobotDomainService(
      * @param planetId      Id of the planet on which the resources get distributed. This is needed to determine which
      *                      robots get them.
      * @param resourcesToBeDistributed  The resources which need to get distributed.
+     *
+     * @return the list of robots whose inventory has changed
      */
     private fun distributeDroppedResources(
         planetId: UUID,
         resourcesToBeDistributed: MutableMap<ResourceType, Int>
-    ) {
+    ): List<Robot> {
+        if (
+            resourcesToBeDistributed[ResourceType.PLATIN] == 0 &&
+            resourcesToBeDistributed[ResourceType.GOLD] == 0 &&
+            resourcesToBeDistributed[ResourceType.GEM] == 0 &&
+            resourcesToBeDistributed[ResourceType.IRON] == 0 &&
+            resourcesToBeDistributed[ResourceType.COAL] == 0
+        ) return listOf()
         val robotsAliveOnPlanet = robotRepository.findAllByPlanet_PlanetId(planetId)
 
         // reversed, so the most valuable resources get distributed first
         resourcesToBeDistributed.entries.sortedBy { it.key }.reversed().forEach {
             distributeDroppedResourcesOfTypeToRobots(it, robotsAliveOnPlanet)
         }
+
         robotRepository.saveAll(robotsAliveOnPlanet)
+        return robotsAliveOnPlanet
     }
 
     /**
@@ -176,7 +191,17 @@ class RobotDomainService(
      */
     fun getRobot(robotId: UUID): Robot {
         return robotRepository.findByIdOrNull(robotId)
-            ?: throw RobotNotFoundException("Can't find robot with id $robotId")
+            ?: throw RobotNotFoundException("Robot with ID $robotId not found")
+    }
+
+    /**
+     * Wrapper for the repository method to find all robots on a specific planet
+     *
+     * @param planetId: The ID of the planet
+     * @return the robots on the planet
+     */
+    fun getRobotsOnPlanet(planetId: UUID): List<Robot> {
+        return robotRepository.findAllByPlanet_PlanetId(planetId)
     }
 
     /**
@@ -210,12 +235,13 @@ class RobotDomainService(
      * @param item        the `RepairItemType` which should be used.
      * @throws NotEnoughItemsException when the specified `Robot` doesn't own the specified item.
      */
-    fun useRepairItem(robotId: UUID, item: RepairItemType) {
+    fun useRepairItem(robotId: UUID, item: RepairItemType): List<RepairEventRobotDTO> {
         val robot = this.getRobot(robotId)
         if (robot.inventory.getItemAmountByType(item) > 0) {
-            item.func(robot, robotRepository)
+            val robots = item.func(robot, robotRepository)
             robot.inventory.removeItem(item)
             robotRepository.save(robot)
+            return robots
         } else
             throw NotEnoughItemsException("This Robot doesn't have the required Item", item)
     }
@@ -232,13 +258,13 @@ class RobotDomainService(
      *
      * @return the UUID of the planet on which robots could have died.
      */
-    fun useAttackItem(userId: UUID, target: UUID, item: AttackItemType): UUID {
+    fun useAttackItem(userId: UUID, target: UUID, item: AttackItemType): Pair<UUID, List<Robot>> {
         val user = getRobot(userId)
         if (user.inventory.getItemAmountByType(item) > 0) {
-            val battlefield = item.use(user, target, robotRepository)
+            val battlefieldAndtargetRobots = item.use(user, target, robotRepository)
             user.inventory.removeItem(item)
             robotRepository.save(user)
-            return battlefield
+            return battlefieldAndtargetRobots
         } else
             throw NotEnoughItemsException("This Robot doesn't have the required Item", item)
     }
@@ -253,12 +279,13 @@ class RobotDomainService(
      * @param itemType    the [MovementItemType] of the used item.
      * @throws NotEnoughItemsException when the `Robot` doesn't own enough of the specified `itemType`
      */
-    fun useMovementItem(robotId: UUID, itemType: MovementItemType) {
+    fun useMovementItem(robotId: UUID, itemType: MovementItemType): Pair<Robot, GameMapPlanetDto> {
         val robot = this.getRobot(robotId)
         if (robot.inventory.getItemAmountByType(itemType) > 0) {
-            itemType.func(robot, robotRepository, gameMapService)
+            val planetDTO = itemType.func(robot, robotRepository, gameMapService)
             robot.inventory.removeItem(itemType)
             robotRepository.save(robot)
+            return Pair(robot, planetDTO)
         } else
             throw NotEnoughItemsException("This Robot doesn't have the required Item", itemType)
     }
@@ -295,5 +322,21 @@ class RobotDomainService(
         val takenResources = robot.inventory.takeAllResources()
         robotRepository.save(robot)
         return takenResources
+    }
+
+    /**
+     * Restore either the `energy` or `health` of a [Robot] fully. The type restored depends on the [RestorationType] passed.
+     *
+     * @param robotId         the id of the `Robot` that will be restored
+     * @param restorationType the type that should be restored
+     * @throws RobotNotFoundException  when the id doesn't match any `Robot`
+     */
+    fun restoreRobot(robotId: UUID, restorationType: RestorationType) {
+        val robot = this.getRobot(robotId)
+        when (restorationType) {
+            RestorationType.HEALTH -> robot.repair()
+            RestorationType.ENERGY -> robot.restoreEnergy()
+        }
+        robotRepository.save(robot)
     }
 }

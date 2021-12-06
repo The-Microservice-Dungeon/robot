@@ -1,10 +1,11 @@
 package com.msd.item.domain
 
+import com.msd.event.application.dto.RepairEventRobotDTO
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
 import java.util.*
 
-enum class RepairItemType(val func: (Robot, RobotRepository) -> Unit) : ItemType {
+enum class RepairItemType(val func: (Robot, RobotRepository) -> List<RepairEventRobotDTO>) : ItemType {
     REPAIR_SWARM(::useRepairSwarm)
 }
 
@@ -16,10 +17,11 @@ enum class RepairItemType(val func: (Robot, RobotRepository) -> Unit) : ItemType
  * @param robot             the `Robot` which should use the item
  * @param robotRepository   the [RobotRepository] containing all Robots. Necessary so all Robots can be correctly saved
  */
-private fun useRepairSwarm(robot: Robot, robotRepository: RobotRepository) {
+private fun useRepairSwarm(robot: Robot, robotRepository: RobotRepository): List<RepairEventRobotDTO> {
     val robots = robotRepository.findAllByPlayerAndPlanet_PlanetId(robot.player, robot.planet.planetId)
     robots.forEach {
         it.repairBy(20)
     }
     robotRepository.saveAll(robots)
+    return robots.map { RepairEventRobotDTO(it.id, it.health) }
 }

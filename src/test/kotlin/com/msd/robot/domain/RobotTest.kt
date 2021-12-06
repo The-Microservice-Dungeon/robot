@@ -2,9 +2,9 @@ package com.msd.robot.domain
 
 import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
-import com.msd.robot.domain.exceptions.NotEnoughEnergyException
-import com.msd.robot.domain.exceptions.PlanetBlockedException
-import com.msd.robot.domain.exceptions.UpgradeException
+import com.msd.robot.domain.exception.NotEnoughEnergyException
+import com.msd.robot.domain.exception.PlanetBlockedException
+import com.msd.robot.domain.exception.UpgradeException
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -319,5 +319,15 @@ class RobotTest {
         robot1.repair()
         // then
         assertEquals(robot1.maxHealth, robot1.health)
+    }
+
+    @Test
+    fun `energyRestore fully restores a Robot's energy`() {
+        // given
+        robot1.move(Planet(UUID.randomUUID()), 15)
+        // when
+        robot1.restoreEnergy()
+        // then
+        assertEquals(20, robot1.energy)
     }
 }
