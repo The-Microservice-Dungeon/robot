@@ -3,9 +3,12 @@ package com.msd.application
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.msd.application.dto.GameMapNeighbourDto
 import com.msd.application.dto.GameMapPlanetDto
 import com.msd.command.application.CommandDTO
 import com.msd.event.application.ProducerTopicConfiguration
+import com.msd.planet.application.PlanetMapper
+import com.msd.planet.domain.MapDirection
 import com.msd.robot.application.dtos.RobotDto
 import com.msd.robot.application.dtos.RobotSpawnDto
 import okhttp3.mockwebserver.MockResponse
@@ -38,7 +41,8 @@ class ScenarioTests(
     @Autowired private val mockMvc: MockMvc,
     @Autowired private val mapper: ObjectMapper,
     @Autowired private val embeddedKafka: EmbeddedKafkaBroker,
-    @Autowired private val topicConfig: ProducerTopicConfiguration
+    @Autowired private val topicConfig: ProducerTopicConfiguration,
+    @Autowired private val planetMapper: PlanetMapper
 ) : AbstractKafkaProducerTest(embeddedKafka, topicConfig) {
 
     val planet1 = UUID.randomUUID()
@@ -74,11 +78,12 @@ class ScenarioTests(
     @Test
     fun firstScenario() {
         startMovementContainer()
+        startNeighboursContainer()
         startFightingContainer()
         startResourceDistributionContainer()
 
         // //////////////////////  1. Spawn the robots  //////////////////////////////
-        // player1, on planet1
+        // player1, all robots on planet1
         var robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, planet1)
         val robot1 = mapper.readValue(
             mockMvc.post("/robots") {
@@ -106,7 +111,7 @@ class ScenarioTests(
             RobotDto::class.java
         )
 
-        // player2, on planet2
+        // player2, all robots on on planet2
         robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player2, planet2)
         val robot4 = mapper.readValue(
             mockMvc.post("/robots") {
@@ -125,12 +130,18 @@ class ScenarioTests(
             RobotDto::class.java
         )
 
-        // //////////////////// 2. Move the robots to the same planet /////////////////////////
-        // All robots move to the same planet, planet3
-        val targetPlanetDto = GameMapPlanetDto(planet3, 3)
+        // ////////////////////////////////// 2. Move the robots to the same planet /////////////////////////
+        // All robots move to planet3
+        val planet3Dto = GameMapPlanetDto(
+            planet3, 3, null,
+            listOf(
+                GameMapNeighbourDto(planet1, 3, MapDirection.NORTH),
+                GameMapNeighbourDto(planet2, 3, MapDirection.SOUTH)
+            )
+        )
         for (i in 1..5)
             mockGameServiceWebClient.enqueue(
-                MockResponse().setResponseCode(200).setBody(jacksonObjectMapper().writeValueAsString(targetPlanetDto))
+                MockResponse().setResponseCode(200).setBody(jacksonObjectMapper().writeValueAsString(planet3Dto))
             )
 
         val moveCommands = listOf(
@@ -146,7 +157,7 @@ class ScenarioTests(
             content = mapper.writeValueAsString(commandDto)
         }
 
-        // ///////////////////// 3. Fight ////////////////////////
+        // /////////////////////////////////////// 3. Fight //////////////////////////////////////////////
         var fightCommands = listOf(
             "fight ${robot1.id} ${robot4.id} ${UUID.randomUUID()}",
             "fight ${robot2.id} ${robot4.id} ${UUID.randomUUID()}",
@@ -186,5 +197,9 @@ class ScenarioTests(
 
         assert(player1Robots.map { it.id }.containsAll(listOf(robot2.id, robot3.id)))
         assert(player2Robots.map { it.id }.isEmpty())
+
+        consumerRecords.forEach {
+            println(it.topic())
+        }
     }
 }

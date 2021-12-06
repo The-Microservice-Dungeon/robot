@@ -130,8 +130,6 @@ class RobotApplicationService(
             robotDomainService.saveRobot(robot)
             throw pbe
         }
-        robotDomainService.saveRobot(robot)
-        sendMovementEvent(robot, cost, moveCommand.transactionUUID)
     }
 
     private fun sendMovementEvent(

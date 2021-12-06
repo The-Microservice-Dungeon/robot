@@ -1,8 +1,9 @@
 package com.msd.application
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.msd.application.dto.GameMapNeighbourDto
 import com.msd.application.dto.GameMapPlanetDto
-import com.msd.robot.application.exception.TargetPlanetNotReachableException
+import com.msd.planet.domain.MapDirection
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.*
@@ -33,7 +34,12 @@ class GameMapServiceTest {
     @Test
     fun `Returns correct GameMapPlanetDto`() {
         // given
-        val targetPlanetDto = GameMapPlanetDto(randomUUID(), 3)
+        val startPlanetDto = GameMapNeighbourDto(randomUUID(), 3, MapDirection.NORTH)
+        val targetPlanetDto = GameMapPlanetDto(
+            randomUUID(),
+            3,
+            neighbours = listOf(startPlanetDto)
+        )
 
         mockGameServiceWebClient.enqueue(
             MockResponse()
@@ -42,14 +48,14 @@ class GameMapServiceTest {
         )
 
         // when
-        val responsePlanetDto = gameMapService.retrieveTargetPlanetIfRobotCanReach(randomUUID(), targetPlanetDto.id)
+        val responsePlanetDto = gameMapService.retrieveTargetPlanetIfRobotCanReach(startPlanetDto.planetId, targetPlanetDto.id)
 
         // then
         assertEquals(targetPlanetDto.id, responsePlanetDto.id)
     }
 
     @Test
-    fun `Throws InvalidMoveException if the GameMap Service returns a 400`() {
+    fun `Throws ClientException if the GameMap Service returns a 400`() {
         // given
         mockGameServiceWebClient.enqueue(
             MockResponse()
@@ -57,7 +63,7 @@ class GameMapServiceTest {
         )
 
         // then
-        assertThrows<TargetPlanetNotReachableException> {
+        assertThrows<ClientException> {
             gameMapService.retrieveTargetPlanetIfRobotCanReach(randomUUID(), randomUUID())
         }
     }

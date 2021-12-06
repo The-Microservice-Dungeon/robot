@@ -32,7 +32,6 @@ class GameMapService {
 
     object GameMapServiceMetaData {
         const val GAME_MAP_SERVICE_URL = "http://localhost:8080" // TODO change port in the future
-        const val NEIGHBOR_CHECK_URI = "/getNeighbor"
         const val PLANETS_URI = "/planets"
         const val NEIGHBOR_CHECK_START_PLANET_PARAM = "startPlanet"
         const val NEIGHBOR_CHECK_TARGET_PLANET_PARAM = "targetPlanet"
@@ -68,27 +67,22 @@ class GameMapService {
     fun retrieveTargetPlanetIfRobotCanReach(startPlanetID: UUID, targetPlanetID: UUID): GameMapPlanetDto {
         val uriSpec = gameMapClient.get()
         val querySpec = uriSpec.uri {
-            it.path(GameMapServiceMetaData.NEIGHBOR_CHECK_URI)
-                .queryParam(GameMapServiceMetaData.NEIGHBOR_CHECK_START_PLANET_PARAM, startPlanetID.toString())
-                .queryParam(GameMapServiceMetaData.NEIGHBOR_CHECK_TARGET_PLANET_PARAM, targetPlanetID.toString())
-                .build()
+            it.path("${GameMapServiceMetaData.PLANETS_URI}/$targetPlanetID").build()
         }
         try {
             val response = querySpec.exchangeToMono { response ->
                 if (response.statusCode() == HttpStatus.OK)
                     response.bodyToMono<String>()
-
-                // Right now we assume a 4xx being returned if the two planets are no neighbors
-                else if (response.statusCode().is4xxClientError)
-                    throw TargetPlanetNotReachableException("The robot cannot move to the planet with ID $targetPlanetID")
-
                 else
                     throw ClientException(
-                        "GameMap Client returned internal error when retrieving targetPlanet " +
-                            "for movement"
+                        "GameMap Client returned internal error when retrieving targetPlanet for movement"
                     )
             }.block()!!
-            return jacksonObjectMapper().readValue(response)
+            val planetDto: GameMapPlanetDto = jacksonObjectMapper().readValue(response)
+            if (planetDto.neighbours.find { it.planetId == startPlanetID } != null)
+                return planetDto
+            else
+                throw TargetPlanetNotReachableException("The robot cannot move to the planet with ID $targetPlanetID")
         } catch (wcre: WebClientRequestException) {
             throw ClientException("Could not connect to Map Service")
         }

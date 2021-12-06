@@ -3,6 +3,7 @@ package com.msd.command.application
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.application.AbstractKafkaProducerTest
+import com.msd.application.dto.GameMapNeighbourDto
 import com.msd.application.dto.GameMapPlanetDto
 import com.msd.domain.DomainEvent
 import com.msd.event.application.EventType
@@ -11,6 +12,7 @@ import com.msd.event.application.dto.*
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
 import com.msd.planet.application.PlanetDTO
+import com.msd.planet.domain.MapDirection
 import com.msd.planet.domain.Planet
 import com.msd.planet.domain.PlanetType
 import com.msd.robot.domain.Robot
@@ -249,7 +251,11 @@ class CommandControllerTest(
         // given
         startMovementContainer()
 
-        val targetPlanetDto = GameMapPlanetDto(planet2Id, 3)
+        // robot1's current planet is the neighbour of the target planet
+        val targetPlanetDto = GameMapPlanetDto(
+            planet2Id, 3,
+            neighbours = listOf(GameMapNeighbourDto(robot1.planet.planetId, 3, MapDirection.NORTH))
+        )
 
         mockGameServiceWebClient.enqueue(
             MockResponse()
@@ -338,9 +344,13 @@ class CommandControllerTest(
         startMovementContainer()
         consumerRecords.clear()
 
-        val targetPlanetDto = GameMapPlanetDto(planet2Id, 3)
         val moveCommandId = UUID.randomUUID()
 
+        // robot1s current planet is the neighbour of the target planet
+        val targetPlanetDto = GameMapPlanetDto(
+            planet2Id, 3,
+            neighbours = listOf(GameMapNeighbourDto(robot1.planet.planetId, 3, MapDirection.NORTH))
+        )
         mockGameServiceWebClient.enqueue(
             MockResponse()
                 .setResponseCode(200)
