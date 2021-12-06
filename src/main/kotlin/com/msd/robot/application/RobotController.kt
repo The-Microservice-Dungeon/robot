@@ -30,16 +30,6 @@ class RobotController(
         return ResponseEntity.status(HttpStatus.CREATED).body(robotMapper.robotToRobotDto(robot))
     }
 
-//    @PostMapping
-//    fun spawnRobots(@RequestBody spawnDtos: List<RobotSpawnDto>): ResponseEntity<List<RobotDto>> {
-//        val robots = mutableListOf<RobotDto>()
-//        spawnDtos.forEach {
-//            val robot = robotApplicationService.spawn(it.player, it.planet)
-//            robots.add(robotMapper.robotToRobotDto(robot))
-//        }
-//        return ResponseEntity.status(HttpStatus.CREATED).body(robots)
-//    }
-
     /**
      * Get all robots of the specified player.
      *

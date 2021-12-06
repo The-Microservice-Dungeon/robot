@@ -10,6 +10,7 @@ import com.msd.application.dto.ResourceDto
 import com.msd.command.application.CommandDTO
 import com.msd.domain.ResourceType
 import com.msd.event.application.ProducerTopicConfiguration
+import com.msd.item.domain.AttackItemType
 import com.msd.planet.domain.MapDirection
 import com.msd.robot.application.dtos.RobotDto
 import com.msd.robot.application.dtos.RobotSpawnDto
@@ -17,6 +18,7 @@ import com.msd.robot.domain.RobotRepository
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -262,59 +264,66 @@ class ScenarioTests(
         // Robot3: Damage Level 2
         // Robot4: Health Level 1
 
-        mockMvc.post("/robots/$robot1.id/upgrades") {
+        mockMvc.post("/robots/${robot1.id}/upgrades") {
             contentType = MediaType.APPLICATION_JSON
-            content = """
+            content = """{
                 "transaction_id": "${UUID.randomUUID()}",
                 "upgrade-type": "MINING_SPEED",
                 "target-level": 1
-            """
+            }"""
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
-        mockMvc.post("/robots/$robot1.id/upgrades") {
+        mockMvc.post("/robots/${robot1.id}/upgrades") {
             contentType = MediaType.APPLICATION_JSON
-            content = """
+            content = """{
                 "transaction_id": "${UUID.randomUUID()}",
                 "upgrade-type": "MINING_SPEED",
                 "target-level": 2
-            """
+            }"""
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
-        mockMvc.post("/robots/$robot2.id/upgrades") {
+        mockMvc.post("/robots/${robot2.id}/upgrades") {
             contentType = MediaType.APPLICATION_JSON
-            content = """
+            content = """{
                 "transaction_id": "${UUID.randomUUID()}",
                 "upgrade-type": "MINING_SPEED",
                 "target-level": 1
-            """
+            }"""
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
-        mockMvc.post("/robots/$robot3.id/upgrades") {
+        mockMvc.post("/robots/${robot3.id}/upgrades") {
             contentType = MediaType.APPLICATION_JSON
-            content = """
+            content = """{
                 "transaction_id": "${UUID.randomUUID()}",
                 "upgrade-type": "DAMAGE",
                 "target-level": 1
-            """
+            }"""
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
-        mockMvc.post("/robots/$robot3.id/upgrades") {
+        mockMvc.post("/robots/${robot3.id}/upgrades") {
             contentType = MediaType.APPLICATION_JSON
-            content = """
+            content = """{
                 "transaction_id": "${UUID.randomUUID()}",
                 "upgrade-type": "DAMAGE",
                 "target-level": 2
-            """
+            }"""
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
-        mockMvc.post("/robots/$robot4.id/upgrades") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """
+        robots.forEach {
+            mockMvc.post("/robots/${it.id}/upgrades") {
+                contentType = MediaType.APPLICATION_JSON
+                content = """{
                 "transaction_id": "${UUID.randomUUID()}",
                 "upgrade-type": "HEALTH",
                 "target-level": 1
-            """
-        }.andExpect { status { HttpStatus.OK } }.andReturn()
+            }"""
+            }.andExpect { status { HttpStatus.OK } }.andReturn()
+        }
+
+        assertEquals(10, robotRepo.findByIdOrNull(robot1.id)!!.miningSpeed)
+        assertEquals(5, robotRepo.findByIdOrNull(robot2.id)!!.miningSpeed)
+        assertEquals(5, robotRepo.findByIdOrNull(robot3.id)!!.attackDamage)
+        assertEquals(25, robotRepo.findByIdOrNull(robot4.id)!!.health)
 
         // /////////////////////////////////////////   Mining   ///////////////////////////////////////////////
         println("Mining on planet: ${robot1.planet}")
@@ -366,9 +375,48 @@ class ScenarioTests(
                 println("\t$it: " + robot.inventory.getStorageUsageForResource(it))
             }
         }
-        // ////////////////////////////////////////  Getting Items  ///////////////////////////////////////////
 
-        // //////////////////////////////////////////  Fighting   /////////////////////////////////////////////
+        // ////////////////////////////////////////  Getting Items  ///////////////////////////////////////////
+        mockMvc.post("/robots/${robot1.id}/inventory/items") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """{
+                "transactionId": "${UUID.randomUUID()}",
+                "itemType": "ROCKET"
+            }"""
+        }.andExpect { status { HttpStatus.OK } }.andReturn()
+
+        mockMvc.post("/robots/${robot2.id}/inventory/items") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """{
+                "transactionId": "${UUID.randomUUID()}",
+                "itemType": "ROCKET"
+            }"""
+        }.andExpect { status { HttpStatus.OK } }.andReturn()
+
+        println(
+            mockMvc.post("/robots/${robot3.id}/inventory/items") {
+                contentType = MediaType.APPLICATION_JSON
+                content = """{
+                "transactionId": "${UUID.randomUUID()}",
+                "itemType": "LONG_RANGE_BOMBARDMENT"
+            }"""
+            }.andExpect { status { HttpStatus.OK } }.andReturn().response.contentAsString
+        )
+
+        assertEquals(1, robotRepo.findByIdOrNull(robot1.id)!!.inventory.getItemAmountByType(AttackItemType.ROCKET))
+        assertEquals(1, robotRepo.findByIdOrNull(robot2.id)!!.inventory.getItemAmountByType(AttackItemType.ROCKET))
+        assertEquals(1, robotRepo.findByIdOrNull(robot3.id)!!.inventory.getItemAmountByType(AttackItemType.LONG_RANGE_BOMBARDMENT))
+
+        // //////////////////////////////////////////  Item Fighting   /////////////////////////////////////////////
+        val attackCommands = listOf(
+            "use-item-fighting ${robot1.id} ROCKET ${robot4.id} ${UUID.randomUUID()}",
+            "use-item-fighting ${robot2.id} ROCKET ${robot4.id} ${UUID.randomUUID()}",
+            "use-item-fighting ${robot3.id} LONG_RANGE_BOMBARDMENT $planet1 ${UUID.randomUUID()}",
+        )
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(attackCommands))
+        }.andExpect { status { HttpStatus.OK } }.andReturn()
 
         consumerRecords.forEach {
             println(it.topic() + ": " + it.value())
