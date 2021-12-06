@@ -206,9 +206,12 @@ class ScenarioTests(
         assert(player1Robots.map { it.id }.containsAll(listOf(robot2.id, robot3.id)))
         assert(player2Robots.map { it.id }.isEmpty())
 
+        // ///////////////////////////////////// Thrown Events  ////////////////////////////////////////
         consumerRecords.forEach {
             println(it.topic() + ": " + it.value())
         }
+
+        assertEquals(31, consumerRecords.size)
     }
 
     @Test
@@ -393,33 +396,60 @@ class ScenarioTests(
             }"""
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
-        println(
-            mockMvc.post("/robots/${robot3.id}/inventory/items") {
-                contentType = MediaType.APPLICATION_JSON
-                content = """{
-                "transactionId": "${UUID.randomUUID()}",
-                "itemType": "LONG_RANGE_BOMBARDMENT"
-            }"""
-            }.andExpect { status { HttpStatus.OK } }.andReturn().response.contentAsString
-        )
+        mockMvc.post("/robots/${robot3.id}/inventory/items") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """{
+            "transactionId": "${UUID.randomUUID()}",
+            "itemType": "LONG_RANGE_BOMBARDMENT"
+        }"""
+        }.andExpect { status { HttpStatus.OK } }.andReturn()
+
+        mockMvc.post("/robots/${robot4.id}/inventory/items") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """{
+            "transactionId": "${UUID.randomUUID()}",
+            "itemType": "ROCKET"
+        }"""
+        }.andExpect { status { HttpStatus.OK } }.andReturn()
 
         assertEquals(1, robotRepo.findByIdOrNull(robot1.id)!!.inventory.getItemAmountByType(AttackItemType.ROCKET))
         assertEquals(1, robotRepo.findByIdOrNull(robot2.id)!!.inventory.getItemAmountByType(AttackItemType.ROCKET))
         assertEquals(1, robotRepo.findByIdOrNull(robot3.id)!!.inventory.getItemAmountByType(AttackItemType.LONG_RANGE_BOMBARDMENT))
+        assertEquals(1, robotRepo.findByIdOrNull(robot4.id)!!.inventory.getItemAmountByType(AttackItemType.ROCKET))
 
         // //////////////////////////////////////////  Item Fighting   /////////////////////////////////////////////
         val attackCommands = listOf(
             "use-item-fighting ${robot1.id} ROCKET ${robot4.id} ${UUID.randomUUID()}",
             "use-item-fighting ${robot2.id} ROCKET ${robot4.id} ${UUID.randomUUID()}",
             "use-item-fighting ${robot3.id} LONG_RANGE_BOMBARDMENT $planet1 ${UUID.randomUUID()}",
+            "use-item-fighting ${robot4.id} ROCKET ${robot4.id} ${UUID.randomUUID()}"
         )
         mockMvc.post("/commands") {
             contentType = MediaType.APPLICATION_JSON
             content = mapper.writeValueAsString(CommandDTO(attackCommands))
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
+        // Robot4 died, so lost 7 resources from its inventory
+        assertEquals(null, robotRepo.findByIdOrNull(robot4.id))
+        // +0
+        assertEquals(20, robotRepo.findByIdOrNull(robot1.id)!!.inventory.getStorageUsageForResource(ResourceType.COAL))
+        // +2
+        assertEquals(20, robotRepo.findByIdOrNull(robot2.id)!!.inventory.getStorageUsageForResource(ResourceType.COAL))
+        // +5
+        assertEquals(12, robotRepo.findByIdOrNull(robot3.id)!!.inventory.getStorageUsageForResource(ResourceType.COAL))
+
+        // //////////////////////////////////////// Thrown Events  //////////////////////////////////////////////////
         consumerRecords.forEach {
             println(it.topic() + ": " + it.value())
         }
+
+        /*
+            16 Mining Events (4 * 4 Mine Commands)
+            7 Fighting Events ( 3 * Rocket + 4 Long Range Bombardment)
+            4 Item Fighting Events
+            3 Resource Distribution Events ( 3 remaining robots on planet)
+            = 30
+         */
+        assertEquals(30, consumerRecords.size)
     }
 }
