@@ -37,6 +37,9 @@ class CommandApplicationService {
         if (commands.find { it is FightingItemUsageCommand } != null)
             if (commands.filterIsInstance<FightingItemUsageCommand>().count() != commands.size)
                 throw CommandBatchParsingException("AttackItemUsageCommand need to be homogeneous.")
+        if (commands.find { it is MineCommand } != null)
+            if (commands.filterIsInstance<MineCommand>().count() != commands.size)
+                throw CommandBatchParsingException("MineCommands need to be homogeneous.")
         return commands
     }
 
@@ -144,7 +147,7 @@ class CommandApplicationService {
     fun get2PartConstructorByVerb(verb: String): (UUID, UUID) -> Command {
         return when (verb) {
             CommandVerbs.BLOCK.verb -> ::BlockCommand
-            CommandVerbs.MINE.verb -> ::MiningCommand
+            CommandVerbs.MINE.verb -> ::MineCommand
             CommandVerbs.REGENERATE.verb -> ::EnergyRegenCommand
             else -> throw RuntimeException("Internal Error")
         }

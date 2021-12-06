@@ -18,6 +18,7 @@ import com.msd.robot.domain.LevelTooLowException
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
 import com.msd.robot.domain.UpgradeType
+import com.msd.robot.domain.exception.InventoryFullException
 import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.RobotNotFoundException
 import org.springframework.scheduling.annotation.Async
@@ -580,7 +581,11 @@ class RobotApplicationService(
             val remainder = ((it.miningSpeed.toDouble() / accumulatedMiningSpeed) * amount) - correspondingAmount
             amountDistributed += correspondingAmount
             robotsDecimalPlaces[it] = remainder
-            it.inventory.addResource(resource, correspondingAmount)
+            try {
+                it.inventory.addResource(resource, correspondingAmount)
+            } catch (ife: InventoryFullException) {
+                // TODO?
+            }
         }
         return Pair(amountDistributed, robotsDecimalPlaces)
     }
@@ -608,8 +613,12 @@ class RobotApplicationService(
         val sortedDecimalPlaces = robotsDecimalPlaces.entries.sortedBy { it.value }.reversed()
         val index = 0
         while (amountDistributed < remainingAmount) {
-            sortedDecimalPlaces[index].key.inventory.addResource(resource, 1)
-            amountDistributed += 1
+            try {
+                sortedDecimalPlaces[index].key.inventory.addResource(resource, 1)
+                amountDistributed += 1
+            } catch (ife: InventoryFullException) {
+                // TODO?
+            }
         }
     }
 }

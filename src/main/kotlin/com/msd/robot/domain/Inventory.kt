@@ -11,6 +11,7 @@ import com.msd.robot.domain.exception.UpgradeException
 import java.util.*
 import javax.persistence.ElementCollection
 import javax.persistence.Entity
+import javax.persistence.FetchType
 import javax.persistence.Id
 
 @Entity
@@ -33,7 +34,7 @@ class Inventory {
     var usedStorage = 0
         private set
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     private val resourceMap = mutableMapOf(
         ResourceType.COAL to 0,
         ResourceType.IRON to 0,

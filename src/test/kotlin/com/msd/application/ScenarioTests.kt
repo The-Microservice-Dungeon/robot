@@ -5,12 +5,15 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.msd.application.dto.GameMapNeighbourDto
 import com.msd.application.dto.GameMapPlanetDto
+import com.msd.application.dto.MineResponseDto
+import com.msd.application.dto.ResourceDto
 import com.msd.command.application.CommandDTO
+import com.msd.domain.ResourceType
 import com.msd.event.application.ProducerTopicConfiguration
-import com.msd.planet.application.PlanetMapper
 import com.msd.planet.domain.MapDirection
 import com.msd.robot.application.dtos.RobotDto
 import com.msd.robot.application.dtos.RobotSpawnDto
+import com.msd.robot.domain.RobotRepository
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.AfterAll
@@ -19,6 +22,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.data.repository.findByIdOrNull
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.kafka.test.EmbeddedKafkaBroker
 import org.springframework.kafka.test.context.EmbeddedKafka
@@ -42,7 +47,7 @@ class ScenarioTests(
     @Autowired private val mapper: ObjectMapper,
     @Autowired private val embeddedKafka: EmbeddedKafkaBroker,
     @Autowired private val topicConfig: ProducerTopicConfiguration,
-    @Autowired private val planetMapper: PlanetMapper
+    @Autowired private val robotRepo: RobotRepository
 ) : AbstractKafkaProducerTest(embeddedKafka, topicConfig) {
 
     val planet1 = UUID.randomUUID()
@@ -73,10 +78,10 @@ class ScenarioTests(
      * 1. Scenario:
      *
      * User creates 5 robots of two different players, moves them onto the same planet and lets
-     * them fight each other until two robots get destroyed.
+     * them fight each other until three robots get destroyed.
      */
     @Test
-    fun firstScenario() {
+    fun `Movement and fighting Scenario`() {
         startMovementContainer()
         startNeighboursContainer()
         startFightingContainer()
@@ -182,6 +187,7 @@ class ScenarioTests(
                 contentType = MediaType.APPLICATION_JSON
                 content = mapper.writeValueAsString(commandDto)
             }
+        // robot 1 and 5 should be dead now
 
         // 4. Retrieve and check robot status
         val player1Robots: List<RobotDto> = mapper.readValue(
@@ -199,7 +205,173 @@ class ScenarioTests(
         assert(player2Robots.map { it.id }.isEmpty())
 
         consumerRecords.forEach {
-            println(it.topic())
+            println(it.topic() + ": " + it.value())
+        }
+    }
+
+    @Test
+    fun `Upgraded robots mining resources and fighting over them with items, resources get dropped`() {
+        startItemFightingContainer()
+        startFightingContainer()
+        startResourceDistributionContainer()
+        startMiningContainer()
+
+        // player1, all robots on planet1
+        var robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, planet1)
+        val robot1 = mapper.readValue(
+            mockMvc.post("/robots") {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(robotSpawnDto)
+            }.andReturn().response.contentAsString,
+            RobotDto::class.java
+        )
+
+        robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, planet1)
+        val robot2 = mapper.readValue(
+            mockMvc.post("/robots") {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(robotSpawnDto)
+            }.andReturn().response.contentAsString,
+            RobotDto::class.java
+        )
+
+        robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, planet1)
+        val robot3 = mapper.readValue(
+            mockMvc.post("/robots") {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(robotSpawnDto)
+            }.andReturn().response.contentAsString,
+            RobotDto::class.java
+        )
+
+        // player2, robot on on planet1
+        robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player2, planet1)
+        val robot4 = mapper.readValue(
+            mockMvc.post("/robots") {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(robotSpawnDto)
+            }.andReturn().response.contentAsString,
+            RobotDto::class.java
+        )
+
+        val robots = listOf(robot1, robot2, robot3, robot4)
+
+        // ///////////////////////////////////////    Upgrading   /////////////////////////////////////////////
+        // Robot1: MiningSpeed Level 2
+        // Robot2: MiningSpeed Level 1
+        // Robot3: Damage Level 2
+        // Robot4: Health Level 1
+
+        mockMvc.post("/robots/$robot1.id/upgrades") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                "transaction_id": "${UUID.randomUUID()}",
+                "upgrade-type": "MINING_SPEED",
+                "target-level": 1
+            """
+        }.andExpect { status { HttpStatus.OK } }.andReturn()
+
+        mockMvc.post("/robots/$robot1.id/upgrades") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                "transaction_id": "${UUID.randomUUID()}",
+                "upgrade-type": "MINING_SPEED",
+                "target-level": 2
+            """
+        }.andExpect { status { HttpStatus.OK } }.andReturn()
+
+        mockMvc.post("/robots/$robot2.id/upgrades") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                "transaction_id": "${UUID.randomUUID()}",
+                "upgrade-type": "MINING_SPEED",
+                "target-level": 1
+            """
+        }.andExpect { status { HttpStatus.OK } }.andReturn()
+
+        mockMvc.post("/robots/$robot3.id/upgrades") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                "transaction_id": "${UUID.randomUUID()}",
+                "upgrade-type": "DAMAGE",
+                "target-level": 1
+            """
+        }.andExpect { status { HttpStatus.OK } }.andReturn()
+
+        mockMvc.post("/robots/$robot3.id/upgrades") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                "transaction_id": "${UUID.randomUUID()}",
+                "upgrade-type": "DAMAGE",
+                "target-level": 2
+            """
+        }.andExpect { status { HttpStatus.OK } }.andReturn()
+
+        mockMvc.post("/robots/$robot4.id/upgrades") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                "transaction_id": "${UUID.randomUUID()}",
+                "upgrade-type": "HEALTH",
+                "target-level": 1
+            """
+        }.andExpect { status { HttpStatus.OK } }.andReturn()
+
+        // /////////////////////////////////////////   Mining   ///////////////////////////////////////////////
+        println("Mining on planet: ${robot1.planet}")
+
+        val miningCommands = listOf(
+            "mine ${robot1.id} ${UUID.randomUUID()}",
+            "mine ${robot2.id} ${UUID.randomUUID()}",
+            "mine ${robot3.id} ${UUID.randomUUID()}",
+            "mine ${robot4.id} ${UUID.randomUUID()}"
+        )
+
+        val planet1GameMapDto = GameMapPlanetDto(planet1, 3, ResourceDto(ResourceType.COAL))
+        val miningResponse = MineResponseDto(19) // 10 + 5 + 2 + 2
+        for (i in 1..3) {
+            mockGameServiceWebClient.enqueue(
+                MockResponse().setResponseCode(200)
+                    .setBody(jacksonObjectMapper().writeValueAsString(planet1GameMapDto))
+                    .setHeader("Content-Type", "application/json")
+            )
+            mockGameServiceWebClient.enqueue(
+                MockResponse().setResponseCode(200)
+                    .setBody(jacksonObjectMapper().writeValueAsString(miningResponse))
+                    .setHeader("Content-Type", "application/json")
+            )
+        }
+
+        // Last Mining returns less resources than requested
+        mockGameServiceWebClient.enqueue(
+            MockResponse().setResponseCode(200)
+                .setBody(jacksonObjectMapper().writeValueAsString(planet1GameMapDto))
+                .setHeader("Content-Type", "application/json")
+        )
+        mockGameServiceWebClient.enqueue(
+            MockResponse().setResponseCode(200)
+                .setBody(jacksonObjectMapper().writeValueAsString(MineResponseDto(10)))
+                .setHeader("Content-Type", "application/json")
+        )
+
+        for (i in 1..4)
+            mockMvc.post("/commands") {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(CommandDTO(miningCommands))
+            }.andExpect { status { HttpStatus.OK } }.andReturn()
+
+        robots.forEach {
+            println("Robot (${it.id}) resources: ")
+            val robot = robotRepo.findByIdOrNull(it.id)!!
+            ResourceType.values().forEach {
+                println("\t$it: " + robot.inventory.getStorageUsageForResource(it))
+            }
+        }
+        // ////////////////////////////////////////  Getting Items  ///////////////////////////////////////////
+
+        // //////////////////////////////////////////  Fighting   /////////////////////////////////////////////
+
+        consumerRecords.forEach {
+            println(it.topic() + ": " + it.value())
         }
     }
 }
