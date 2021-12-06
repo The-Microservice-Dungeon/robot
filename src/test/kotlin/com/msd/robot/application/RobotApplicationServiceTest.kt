@@ -760,9 +760,9 @@ class RobotApplicationServiceTest(
         robotApplicationService.executeMining(mineCommands)
 
         // then
-        assertEquals(6, robot1.inventory.getStorageUsageForResource(ResourceType.COAL))
+        assertEquals(5, robot1.inventory.getStorageUsageForResource(ResourceType.COAL))
         assertEquals(7, robot3.inventory.getStorageUsageForResource(ResourceType.COAL))
-        assertEquals(9, robot4.inventory.getStorageUsageForResource(ResourceType.COAL))
+        assertEquals(10, robot4.inventory.getStorageUsageForResource(ResourceType.COAL))
     }
 
     @Test

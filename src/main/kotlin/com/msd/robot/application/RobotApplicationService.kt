@@ -42,6 +42,7 @@ class RobotApplicationService(
      *
      * @param commands  List of commands that need to be executed.
      */
+
     @Async
     fun executeCommands(commands: List<Command>) {
         if (commands[0] is FightingCommand)
@@ -611,14 +612,16 @@ class RobotApplicationService(
     ) {
         var amountDistributed = 0
         val sortedDecimalPlaces = robotsDecimalPlaces.entries.sortedBy { it.value }.reversed()
-        val index = 0
-        while (amountDistributed < remainingAmount) {
+        var index = 0
+        val fullRobots = mutableMapOf<Robot, Boolean>()
+        while (amountDistributed < remainingAmount && fullRobots.count() < sortedDecimalPlaces.size) {
             try {
-                sortedDecimalPlaces[index].key.inventory.addResource(resource, 1)
+                sortedDecimalPlaces[index % sortedDecimalPlaces.size].key.inventory.addResource(resource, 1)
                 amountDistributed += 1
             } catch (ife: InventoryFullException) {
-                // TODO?
+                fullRobots[sortedDecimalPlaces[index % sortedDecimalPlaces.size].key] = true
             }
+            index++
         }
     }
 }
