@@ -2,6 +2,9 @@ package com.msd.robot.domain
 
 import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
+import com.msd.robot.domain.exception.NotEnoughEnergyException
+import com.msd.robot.domain.exception.PlanetBlockedException
+import com.msd.robot.domain.exception.UpgradeException
 import java.lang.IllegalArgumentException
 import java.util.*
 import javax.persistence.*
@@ -193,7 +196,7 @@ class Robot(
      */
     fun block() {
         this.reduceEnergy(round(2 + 0.1 * maxEnergy).toInt())
-        this.planet.blocked = true // TODO make sure this gets reset every round
+        this.planet.blocked = true
     }
 
     /**

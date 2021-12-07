@@ -2,10 +2,10 @@ package com.msd.item.domain
 
 import com.msd.domain.InvalidTargetException
 import com.msd.planet.domain.Planet
-import com.msd.robot.application.RobotNotFoundException
-import com.msd.robot.domain.OutOfReachException
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
+import com.msd.robot.domain.exception.RobotNotFoundException
+import com.msd.robot.domain.exception.TargetRobotOutOfReachException
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
@@ -70,7 +70,7 @@ class AttackItemTypeTest {
         every { robotRepository.findByIdOrNull(robot4.id) } returns robot4
 
         // then
-        assertThrows<OutOfReachException>("The target robot is not on the same planet as the using robot") {
+        assertThrows<TargetRobotOutOfReachException>("The target robot is not on the same planet as the using robot") {
             AttackItemType.ROCKET.use(robot1, robot4.id, robotRepository)
         }
     }
@@ -95,7 +95,7 @@ class AttackItemTypeTest {
         val battlefield = AttackItemType.ROCKET.use(robot1, robot3.id, robotRepository)
 
         // then
-        assert(battlefield == robot1.planet.planetId)
+        assert(battlefield.first == robot1.planet.planetId)
     }
 
     @Test
@@ -132,7 +132,7 @@ class AttackItemTypeTest {
         val battlefield = AttackItemType.LONG_RANGE_BOMBARDMENT.use(robot1, planet2.planetId, robotRepository)
 
         // then
-        assert(battlefield == planet2.planetId)
+        assert(battlefield.first == planet2.planetId)
     }
 
     @Test
@@ -181,7 +181,7 @@ class AttackItemTypeTest {
         val battlefield = AttackItemType.SELF_DESTRUCTION.use(robot1, robot1.id, robotRepository)
 
         // then
-        assert(battlefield == robot1.planet.planetId)
+        assert(battlefield.first == robot1.planet.planetId)
     }
 
     @Test
@@ -220,6 +220,6 @@ class AttackItemTypeTest {
         val battlefield = AttackItemType.NUKE.use(robot1, robot2.planet.planetId, robotRepository)
 
         // then
-        assert(battlefield == robot2.planet.planetId)
+        assert(battlefield.first == robot2.planet.planetId)
     }
 }

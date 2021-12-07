@@ -5,6 +5,8 @@ import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
 import com.msd.planet.domain.Planet
+import com.msd.robot.domain.exception.InventoryFullException
+import com.msd.robot.domain.exception.NotEnoughResourcesException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

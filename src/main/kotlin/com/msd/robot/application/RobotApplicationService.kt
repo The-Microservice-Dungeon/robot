@@ -1,16 +1,25 @@
 package com.msd.robot.application
 
-import com.msd.application.ExceptionConverter
 import com.msd.application.GameMapService
 import com.msd.application.NoResourceOnPlanetException
+import com.msd.application.dto.GameMapPlanetDto
 import com.msd.command.*
 import com.msd.command.application.*
+import com.msd.command.application.command.*
+import com.msd.core.FailureException
 import com.msd.domain.ResourceType
+import com.msd.event.application.EventSender
+import com.msd.event.application.EventType
+import com.msd.event.application.dto.*
+import com.msd.planet.application.PlanetMapper
 import com.msd.planet.domain.Planet
+import com.msd.planet.domain.PlanetType
 import com.msd.robot.domain.LevelTooLowException
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
 import com.msd.robot.domain.UpgradeType
+import com.msd.robot.domain.exception.PlanetBlockedException
+import com.msd.robot.domain.exception.RobotNotFoundException
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import java.util.*
@@ -20,12 +29,13 @@ import kotlin.math.floor
 class RobotApplicationService(
     val gameMapService: GameMapService,
     val robotDomainService: RobotDomainService,
-    val exceptionConverter: ExceptionConverter
+    val eventSender: EventSender,
+    val planetMapper: PlanetMapper
 ) {
 
     /**
      * Takes a list of commands and passes them on to the corresponding method.
-     * [AttackCommand]s and [AttackItemUsageCommand]s are homogeneous and have to be handled as one single batch.
+     * [FightingCommand]s and [FightingItemUsageCommand]s are homogeneous and have to be handled as one single batch.
      * All other commands can be heterogeneous and thus can be passed to the corresponding methods individually.
      * This method is executed asynchronous and does not block the calling controller.
      *
@@ -33,11 +43,11 @@ class RobotApplicationService(
      */
     @Async
     fun executeCommands(commands: List<Command>) {
-        if (commands[0] is AttackCommand)
+        if (commands[0] is FightingCommand)
         // Attack commands are always homogenous, so this cast is valid
-            executeAttacks(commands as List<AttackCommand>)
-        else if (commands[0] is AttackItemUsageCommand)
-            useAttackItems(commands as List<AttackItemUsageCommand>)
+            executeAttacks(commands as List<FightingCommand>)
+        else if (commands[0] is FightingItemUsageCommand)
+            useAttackItems(commands as List<FightingItemUsageCommand>)
         else if (commands[0] is MineCommand)
             executeMining(commands as List<MineCommand>)
         else
@@ -59,8 +69,8 @@ class RobotApplicationService(
                     is RepairItemUsageCommand -> useRepairItem(it)
                     is MovementItemsUsageCommand -> useMovementItem(it)
                 }
-            } catch (re: RuntimeException) {
-                exceptionConverter.handle(re, it.transactionUUID)
+            } catch (fe: FailureException) {
+                eventSender.handleException(fe, it)
             }
         }
     }
@@ -72,7 +82,17 @@ class RobotApplicationService(
      * @param command   the `MovementItemsUsageCommand` specifying which `Robot` should use which `item`
      */
     private fun useMovementItem(command: MovementItemsUsageCommand) {
-        robotDomainService.useMovementItem(command.robotUUID, command.itemType)
+        val (robot, planetDTO) = robotDomainService.useMovementItem(command.robotUUID, command.itemType)
+        val moveEventId = sendMovementEvent(robot, planetDTO.movementDifficulty, command.transactionUUID)
+        eventSender.sendEvent(
+            ItemMovementEventDTO(
+                true,
+                "Item usage successful",
+                moveEventId
+            ),
+            EventType.ITEM_MOVEMENT,
+            command.transactionUUID
+        )
     }
 
     /**
@@ -102,8 +122,70 @@ class RobotApplicationService(
             gameMapService.retrieveTargetPlanetIfRobotCanReach(robot.planet.planetId, moveCommand.targetPlanetUUID)
         val cost = planetDto.movementDifficulty
         val planet = planetDto.toPlanet()
-        robot.move(planet, cost)
+        try {
+            robot.move(planet, cost)
+            robotDomainService.saveRobot(robot)
+            sendMovementEvents(robot, cost, moveCommand, planetDto)
+        } catch (pbe: PlanetBlockedException) {
+            robotDomainService.saveRobot(robot)
+            throw pbe
+        }
         robotDomainService.saveRobot(robot)
+        sendMovementEvent(robot, cost, moveCommand.transactionUUID)
+    }
+
+    private fun sendMovementEvent(
+        robot: Robot,
+        cost: Int,
+        transactionUUID: UUID
+    ): UUID {
+        return eventSender.sendEvent(
+            MovementEventDTO(
+                true,
+                "Movement successful",
+                robot.energy,
+                planetMapper.planetToPlanetDTO(robot.planet, cost, PlanetType.DEFAULT), // TODO planet type?
+                robotDomainService.getRobotsOnPlanet(robot.planet.planetId).map { it.id }
+            ),
+            EventType.MOVEMENT,
+            transactionUUID
+        )
+    }
+
+    /**
+     * Sends the events due after a successful movement command execution
+     *
+     * @param robot: The robot that moved
+     * @param cost: The energy costs of the movement
+     * @param moveCommand: The move command that was executed
+     * @param planetDto: The planet to which the robot moved, as returned from the Map Service
+     */
+    private fun sendMovementEvents(
+        robot: Robot,
+        cost: Int,
+        moveCommand: MovementCommand,
+        planetDto: GameMapPlanetDto
+    ) {
+        eventSender.sendEvent(
+            MovementEventDTO(
+                true,
+                "Movement successful",
+                robot.energy,
+                planetMapper.planetToPlanetDTO(robot.planet, cost, PlanetType.DEFAULT), // TODO planet type?
+                robotDomainService.getRobotsOnPlanet(robot.planet.planetId).map { it.id }
+            ),
+            EventType.MOVEMENT,
+            moveCommand.transactionUUID
+        )
+        eventSender.sendEvent(
+            NeighboursEventDTO(
+                planetDto.neighbours.map {
+                    NeighboursEventDTO.NeighbourDTO(it.planetId, it.movementDifficulty, it.direction)
+                }
+            ),
+            EventType.NEIGHBOURS,
+            moveCommand.transactionUUID
+        )
     }
 
     /**
@@ -117,6 +199,16 @@ class RobotApplicationService(
         val robot = robotDomainService.getRobot(blockCommand.robotUUID)
         robot.block()
         robotDomainService.saveRobot(robot)
+        eventSender.sendEvent(
+            BlockEventDTO(
+                true,
+                "Planet with ID: ${robot.planet.planetId} has been blocked",
+                robot.planet.planetId,
+                robot.energy
+            ),
+            EventType.PLANET_BLOCKED,
+            blockCommand.transactionUUID
+        )
     }
 
     /**
@@ -131,6 +223,15 @@ class RobotApplicationService(
         val robot = robotDomainService.getRobot(energyRegenCommand.robotUUID)
         robot.regenerateEnergy()
         robotDomainService.saveRobot(robot)
+        eventSender.sendEvent(
+            RegenerationEventDTO(
+                true,
+                "Robot regenerated ${robot.energyRegen} energy",
+                robot.energy
+            ),
+            EventType.REGENERATION,
+            energyRegenCommand.transactionUUID
+        )
     }
 
     /**
@@ -156,24 +257,59 @@ class RobotApplicationService(
      * This method should never throw any exception. Exceptions occurring during the execution of a single command get
      * handled right then and should not disturb the execution of the following commands.
      *
-     * @param attackCommands    A list of AttackCommands that need to be executed
+     * @param fightingCommands    A list of AttackCommands that need to be executed
      */
-    fun executeAttacks(attackCommands: List<AttackCommand>) {
+    fun executeAttacks(fightingCommands: List<FightingCommand>) {
         val battleFields = mutableSetOf<UUID>()
-        attackCommands.forEach {
+        executeFights(fightingCommands, battleFields)
+        postFightCleanup(battleFields)
+    }
+
+    private fun executeFights(
+        fightingCommands: List<FightingCommand>,
+        battleFields: MutableSet<UUID>
+    ) {
+        fightingCommands.forEach {
             try {
                 val attacker = robotDomainService.getRobot(it.robotUUID)
                 val target = robotDomainService.getRobot(it.targetRobotUUID)
 
                 robotDomainService.fight(attacker, target)
+                eventSender.sendEvent(
+                    FightingEventDTO(
+                        true,
+                        "Attacking successful",
+                        it.robotUUID,
+                        it.targetRobotUUID,
+                        target.health,
+                        attacker.energy
+                    ),
+                    EventType.FIGHTING,
+                    it.transactionUUID
+                )
                 battleFields.add(attacker.planet.planetId)
-            } catch (re: RuntimeException) {
-                exceptionConverter.handle(re, it.transactionUUID)
+            } catch (fe: FailureException) {
+                eventSender.handleException(fe, it)
             }
         }
+    }
 
+    private fun postFightCleanup(battleFields: MutableSet<UUID>) {
         battleFields.forEach { planetId ->
-            robotDomainService.postFightCleanup(planetId)
+            val affectedRobots = robotDomainService.postFightCleanup(planetId)
+            affectedRobots.forEach {
+                eventSender.sendGenericEvent(
+                    ResourceDistributionEventDTO(
+                        it.id,
+                        it.inventory.getStorageUsageForResource(ResourceType.COAL),
+                        it.inventory.getStorageUsageForResource(ResourceType.IRON),
+                        it.inventory.getStorageUsageForResource(ResourceType.GEM),
+                        it.inventory.getStorageUsageForResource(ResourceType.GOLD),
+                        it.inventory.getStorageUsageForResource(ResourceType.PLATIN),
+                    ),
+                    EventType.RESOURCE_DISTRIBUTION
+                )
+            }
         }
     }
 
@@ -183,30 +319,65 @@ class RobotApplicationService(
      * @param command the [RepairItemUsageCommand] which specifies which `Robot` should use which item
      */
     fun useRepairItem(command: RepairItemUsageCommand) {
-        robotDomainService.useRepairItem(command.robotUUID, command.itemType)
+        val robots = robotDomainService.useRepairItem(command.robotUUID, command.itemType)
+        eventSender.sendEvent(
+            ItemRepairEventDTO(
+                true,
+                "Robot has used ${command.itemType}",
+                robots
+            ),
+            EventType.ITEM_REPAIR,
+            command.transactionUUID
+        )
     }
 
     /**
-     * Execute all [AttackItemUsageCommands][AttackItemUsageCommand]. The failure of one command execution does not
+     * Execute all [AttackItemUsageCommands][FightingItemUsageCommand]. The failure of one command execution does not
      * impair the other command executions. After all commands have been executed, the battlefields get cleaned up,
      * i.e. all dead robots get removed and their resources distributed between the remaining robots on the planet.
      *
      * @param usageCommands: The AttackItemUsageCommands that should be executed
      */
-    fun useAttackItems(usageCommands: List<AttackItemUsageCommand>) {
+    fun useAttackItems(usageCommands: List<FightingItemUsageCommand>) {
         val battleFields = mutableSetOf<UUID>()
         usageCommands.forEach {
             try {
-                val battlefield = robotDomainService.useAttackItem(it.robotUUID, it.targetUUID, it.itemType)
+                val robot = robotDomainService.getRobot(it.robotUUID)
+                val (battlefield, targetRobots) = robotDomainService.useAttackItem(
+                    it.robotUUID,
+                    it.targetUUID,
+                    it.itemType
+                )
+                val causedFightingEvents = targetRobots.map { targetRobot ->
+                    eventSender.sendEvent(
+                        FightingEventDTO(
+                            true,
+                            "Attacking successful",
+                            it.robotUUID,
+                            targetRobot.id,
+                            targetRobot.health,
+                            robot.energy
+                        ),
+                        EventType.FIGHTING,
+                        it.transactionUUID
+                    )
+                }
+                eventSender.sendEvent(
+                    ItemFightingEventDTO(
+                        true,
+                        "Item usage successful",
+                        robot.inventory.getItemAmountByType(it.itemType),
+                        causedFightingEvents
+                    ),
+                    EventType.ITEM_FIGHTING,
+                    it.transactionUUID
+                )
                 battleFields.add(battlefield)
-            } catch (re: RuntimeException) {
-                exceptionConverter.handle(re, it.transactionUUID)
+            } catch (fe: FailureException) {
+                eventSender.handleException(fe, it)
             }
         }
-
-        battleFields.forEach { planetId ->
-            robotDomainService.postFightCleanup(planetId)
-        }
+        postFightCleanup(battleFields)
     }
 
     /**
@@ -235,6 +406,20 @@ class RobotApplicationService(
 
         amountsByGroupedPlanet.forEach { (planet, amount) ->
             mineResourcesOnPlanet(validMineCommands, planet, amount)
+        }
+
+        validMineCommands.forEach {
+            eventSender.sendEvent(
+                MiningEventDTO(
+                    true,
+                    "Robot ${it.robot.id} mined successfully",
+                    it.robot.energy,
+                    it.robot.inventory.getStorageUsageForResource(it.resource),
+                    it.resource.toString()
+                ),
+                EventType.MINING,
+                it.transactionId
+            )
         }
     }
 
@@ -279,7 +464,7 @@ class RobotApplicationService(
      * @param planetsToResources: A map of planets assigning each a resourceType or a null value, representing no
      *                            resource present on the planet.
      * @return a list of [ValidMineCommand]s, representing only the MineCommands which are valid and having replaced
-*              the IDs with the corresponding entities.
+     *              the IDs with the corresponding entities.
      */
     private fun replaceIdsWithObjectsInValidMineCommands(
         mineCommands: List<MineCommand>,
@@ -299,8 +484,8 @@ class RobotApplicationService(
                 if (!robot.canMine(resource))
                     throw LevelTooLowException("The mining level of the robot is too low to mine the resource $resource")
                 validMineCommands.add(validMineCommand)
-            } catch (re: RuntimeException) {
-                exceptionConverter.handle(re, mineCommand.transactionUUID)
+            } catch (re: FailureException) {
+                eventSender.handleException(re, mineCommand)
             }
         }
         return validMineCommands
@@ -343,8 +528,8 @@ class RobotApplicationService(
         try {
             val minedAmount = gameMapService.mine(planet, amount)
             distributeMinedResources(miningRobotsOnPlanet, minedAmount, resource)
-        } catch (re: RuntimeException) {
-            exceptionConverter.handleAll(re, validMineCommands.map { it.transactionId })
+        } catch (re: FailureException) {
+            eventSender.handleAll(re, validMineCommands.map { MineCommand(it.robot.id, it.transactionId) })
         }
     }
 

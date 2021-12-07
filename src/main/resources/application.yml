@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: robot
+  kafka:
+    group-id: robot
+    enabled: true
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_ADDRESS}
+    topic:
+      consumer:
+        round: gameServiceRound
+    consumer:
+      auto-offset-reset: earliest
+  datasource:
+    url: jdbc:${DB_NAME}:file:./db/robot
+    driver-class-name: org.h2.Driver
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: create
+topics:
+  robot-movement: movement
+  robot-neighbours: neighbours
+  robot-blocked: planet-blocked
+  robot-mining: mining
+  robot-fighting: fighting
+  robot-regeneration: regeneration
+  robot-item-fighting: item-fighting
+  robot-item-repair: item-repair
+  robot-item-movement: item-movement
+  robot-resource-distribution: resource-distribution

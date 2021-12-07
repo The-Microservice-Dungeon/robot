@@ -1,7 +1,8 @@
 package com.msd.application
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.msd.robot.application.TargetPlanetNotReachableException
+import com.msd.application.dto.GameMapPlanetDto
+import com.msd.robot.application.exception.TargetPlanetNotReachableException
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.*

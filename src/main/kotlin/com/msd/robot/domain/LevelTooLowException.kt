@@ -1,3 +1,5 @@
 package com.msd.robot.domain
 
-class LevelTooLowException(s: String) : RuntimeException(s)
+import com.msd.core.FailureException
+
+class LevelTooLowException(s: String) : FailureException(s)
