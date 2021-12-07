@@ -236,7 +236,7 @@ class RobotControllerTest(
 
         // then
         assertEquals("Request could not be accepted", result.response.contentAsString)
-        assertEquals(robot1.damageLevel, 0)
+        assertEquals(robotRepository.findByIdOrNull(robot1.id)!!.damageLevel, 0)
     }
 
     @Test
@@ -265,7 +265,7 @@ class RobotControllerTest(
     }
 
     @Test
-    fun `Sending Upgrade Command that would skip upgrade levels returns 400 and does not increase the upgrade level`() {
+    fun `Sending Upgrade Command that would skip upgrade levels returns 409 and does not increase the upgrade level`() {
         // given
         val robot1 = robotRepository.save(Robot(player1Id, Planet(UUID.randomUUID())))
 
@@ -286,15 +286,15 @@ class RobotControllerTest(
         }.andDo {
             print()
         }.andExpect {
-            status { isBadRequest() }
+            status { isConflict() }
         }
 
         // then
-        assertEquals(robot1.damageLevel, 0)
+        assertEquals(robotRepository.findByIdOrNull(robot1.id)!!.damageLevel, 0)
     }
 
     @Test
-    fun `Sending Upgrade Command that would set upgrade levels over 5 returns 400 `() {
+    fun `Sending Upgrade Command that would set upgrade levels over 5 returns 409 and does not increase the upgrade level`() {
         // given
         val robot1 = robotRepository.save(Robot(player1Id, Planet(UUID.randomUUID())))
 
@@ -321,12 +321,14 @@ class RobotControllerTest(
         }.andDo {
             print()
         }.andExpect { // then
-            status { isBadRequest() }
+            status { isConflict() }
         }
+
+        assertEquals(robotRepository.findByIdOrNull(robot1.id)!!.damageLevel, 5)
     }
 
     @Test
-    fun `Sending Upgrade Command that would lower upgrade levels returns 400 `() {
+    fun `Sending Upgrade Command that would lower upgrade levels returns 409 and does not increase the upgrade level `() {
         // given
         val robot1 = robotRepository.save(Robot(player1Id, Planet(UUID.randomUUID())))
         robot1.upgrade(UpgradeType.DAMAGE, 1)
@@ -349,8 +351,10 @@ class RobotControllerTest(
         }.andDo {
             print()
         }.andExpect { // then
-            status { isBadRequest() }
+            status { isConflict() }
         }
+
+        assertEquals(robotRepository.findByIdOrNull(robot1.id)!!.damageLevel, 1)
     }
 
     @Test
