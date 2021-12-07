@@ -4,13 +4,20 @@ spring:
   kafka:
     group-id: robot
     enabled: true
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_ADDRESS}
     topic:
       consumer:
         round: gameServiceRound
     consumer:
       auto-offset-reset: earliest
-
+  datasource:
+    url: jdbc:${DB_NAME}:file:./db/robot
+    driver-class-name: org.h2.Driver
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: create
 topics:
   robot-movement: movement
   robot-neighbours: neighbours
