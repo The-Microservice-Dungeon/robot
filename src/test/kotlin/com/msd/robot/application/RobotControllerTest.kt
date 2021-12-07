@@ -265,6 +265,28 @@ class RobotControllerTest(
     }
 
     @Test
+    fun `Sending Upgrade Command returns 404 when specified robot UUID is not found`() {
+        // given
+        val upgradeDto = """
+            {
+                "transaction_id": "${UUID.randomUUID()}",
+                "upgrade-type": "DAMAGE",
+                "target-level": 1
+            }
+        """.trimIndent()
+
+        // when
+        mockMvc.post("/robots/${UUID.randomUUID()}/upgrades") {
+            contentType = MediaType.APPLICATION_JSON
+            content = upgradeDto
+        }.andDo {
+            print()
+        }.andExpect { // then
+            status { isNotFound() }
+        }
+    }
+
+    @Test
     fun `Sending Upgrade Command that would skip upgrade levels returns 409 and does not increase the upgrade level`() {
         // given
         val robot1 = robotRepository.save(Robot(player1Id, Planet(UUID.randomUUID())))
