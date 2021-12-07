@@ -29,3 +29,28 @@ topics:
   robot-item-repair: item-repair
   robot-item-movement: item-movement
   robot-resource-distribution: resource-distribution
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+  application:
+    name: robot
+  kafka:
+    group-id: robot
+    enabled: true
+    bootstrap-servers: localhost:9092
+    topic:
+      consumer:
+        round: gameServiceRound
+    consumer:
+      auto-offset-reset: earliest
+  datasource:
+    url: jdbc:h2:file:./db/robot
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+  jpa:
+    hibernate:
+      ddl-auto: create
