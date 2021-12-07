@@ -92,6 +92,7 @@ class ScenarioTests(
         startNeighboursContainer()
         startFightingContainer()
         startResourceDistributionContainer()
+        consumerRecords.clear()
 
         // //////////////////////  1. Spawn the robots  //////////////////////////////
         // player1, all robots on planet1
@@ -215,7 +216,7 @@ class ScenarioTests(
             println(it.topic() + ": " + it.value())
         }
 
-        assertEquals(31, consumerRecords.size)
+        assertEquals(45, consumerRecords.size)
     }
 
     @Test
@@ -224,6 +225,8 @@ class ScenarioTests(
         startFightingContainer()
         startResourceDistributionContainer()
         startMiningContainer()
+
+        consumerRecords.clear()
 
         // player1, all robots on planet1
         var robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, planet1)
@@ -465,6 +468,8 @@ class ScenarioTests(
         startMovementContainer()
         startRegenerationContainer()
         startItemRepairContainer()
+
+        consumerRecords.clear()
 
         var robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, planet1)
         val robot1 = mapper.readValue(
