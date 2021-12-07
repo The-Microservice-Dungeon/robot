@@ -12,9 +12,11 @@ import com.msd.domain.ResourceType
 import com.msd.event.application.ProducerTopicConfiguration
 import com.msd.item.domain.AttackItemType
 import com.msd.planet.domain.MapDirection
+import com.msd.planet.domain.PlanetRepository
 import com.msd.robot.application.dtos.RobotDto
 import com.msd.robot.application.dtos.RobotSpawnDto
 import com.msd.robot.domain.RobotRepository
+import com.msd.robot.domain.UpgradeValues
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.AfterAll
@@ -49,7 +51,8 @@ class ScenarioTests(
     @Autowired private val mapper: ObjectMapper,
     @Autowired private val embeddedKafka: EmbeddedKafkaBroker,
     @Autowired private val topicConfig: ProducerTopicConfiguration,
-    @Autowired private val robotRepo: RobotRepository
+    @Autowired private val robotRepo: RobotRepository,
+    @Autowired private val planetRepo: PlanetRepository
 ) : AbstractKafkaProducerTest(embeddedKafka, topicConfig) {
 
     val planet1 = UUID.randomUUID()
@@ -58,6 +61,7 @@ class ScenarioTests(
 
     val player1 = UUID.randomUUID()
     val player2 = UUID.randomUUID()
+    val player3 = UUID.randomUUID()
 
     companion object {
         val mockGameServiceWebClient = MockWebServer()
@@ -451,5 +455,127 @@ class ScenarioTests(
             = 30
          */
         assertEquals(30, consumerRecords.size)
+    }
+
+    @Test
+    fun `Robots block, fight, then regenerate, repair or flee with movement-item`() {
+        startFightingContainer()
+        startPlanetBlockedContainer()
+        startItemMovementContainer()
+        startMovementContainer()
+        startRegenerationContainer()
+        startItemRepairContainer()
+
+        var robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, planet1)
+        val robot1 = mapper.readValue(
+            mockMvc.post("/robots") {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(robotSpawnDto)
+            }.andReturn().response.contentAsString,
+            RobotDto::class.java
+        )
+
+        robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player2, planet1)
+        val robot2 = mapper.readValue(
+            mockMvc.post("/robots") {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(robotSpawnDto)
+            }.andReturn().response.contentAsString,
+            RobotDto::class.java
+        )
+
+        robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player2, planet1)
+        val robot3 = mapper.readValue(
+            mockMvc.post("/robots") {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(robotSpawnDto)
+            }.andReturn().response.contentAsString,
+            RobotDto::class.java
+        )
+
+        // ///////////////////////////////////////// Blocking ////////////////////////////////////////////////
+        val blockCommand = "block ${robot1.id} ${UUID.randomUUID()}"
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(listOf(blockCommand)))
+        }.andExpect { status { HttpStatus.OK } }.andReturn()
+
+        assertEquals(planet1, planetRepo.findAllByBlocked(true).first().planetId)
+
+        // ///////////////////////////////////////// Fighting ////////////////////////////////////////////////
+        val fightCommands = listOf(
+            "fight ${robot1.id} ${robot2.id} ${UUID.randomUUID()}",
+            "fight ${robot2.id} ${robot3.id} ${UUID.randomUUID()}",
+            "fight ${robot3.id} ${robot1.id} ${UUID.randomUUID()}"
+        )
+        for (i in 1..3)
+            mockMvc.post("/commands") {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(CommandDTO(fightCommands))
+            }.andExpect { status { HttpStatus.OK } }.andReturn()
+
+        assertEquals(7, robotRepo.findByIdOrNull(robot1.id)!!.health)
+        assertEquals(20 - 4 - 3, robotRepo.findByIdOrNull(robot1.id)!!.energy) // blocking + fighting
+        assertEquals(7, robotRepo.findByIdOrNull(robot2.id)!!.health)
+        assertEquals(20 - 3, robotRepo.findByIdOrNull(robot2.id)!!.energy)
+        assertEquals(7, robotRepo.findByIdOrNull(robot3.id)!!.health)
+        assertEquals(20 - 3, robotRepo.findByIdOrNull(robot3.id)!!.energy)
+
+        // /////////////////////////////////// Repairing + Regenerating ////////////////////////////////////////
+        mockMvc.post("/robots/${robot2.id}/inventory/items") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """{
+            "transactionId": "${UUID.randomUUID()}",
+            "itemType": "REPAIR_SWARM"
+        }"""
+        }.andExpect { status { HttpStatus.OK } }.andReturn()
+
+        val commands = listOf(
+            "regenerate ${robot1.id} ${UUID.randomUUID()}",
+            "use-item-repair ${robot2.id} REPAIR_SWARM ${UUID.randomUUID()}"
+        )
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(commands))
+        }.andExpect { status { HttpStatus.OK } }.andReturn()
+
+        assertEquals(13 + UpgradeValues.energyRegenByLevel[0], robotRepo.findByIdOrNull(robot1.id)!!.energy)
+        assertEquals(10, robotRepo.findByIdOrNull(robot2.id)!!.health)
+        assertEquals(10, robotRepo.findByIdOrNull(robot3.id)!!.health)
+
+        // ////////////////////////////////// Wormhole ///////////////////////////////////////////
+        mockMvc.post("/robots/${robot1.id}/inventory/items") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """{
+            "transactionId": "${UUID.randomUUID()}",
+            "itemType": "WORMHOLE"
+        }"""
+        }.andExpect { status { HttpStatus.OK } }.andReturn()
+
+        val wormholeCommand = listOf(
+            "use-item-movement ${robot1.id} WORMHOLE ${UUID.randomUUID()}"
+        )
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(wormholeCommand))
+        }.andExpect { status { HttpStatus.OK } }.andReturn()
+
+        // Movement doesnt work because planet is blocked
+        assertEquals(planet1, robotRepo.findByIdOrNull(robot1.id)!!.planet.planetId)
+
+        // /////////////////////////////////// Events ////////////////////////////////////
+        consumerRecords.forEach {
+            println(it.topic() + ": " + it.value())
+        }
+
+        /*
+        9 fight events
+        1 block event
+        1 repair item event
+        1 movement event
+        1 item movement event
+        1 regenerate event
+         */
+        // assertEquals(14, consumerRecords.size)
     }
 }

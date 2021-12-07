@@ -10,6 +10,7 @@ import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
 import com.msd.robot.application.RestorationType
 import com.msd.robot.domain.exception.NotEnoughItemsException
+import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.robot.domain.exception.TargetRobotOutOfReachException
 import org.springframework.data.repository.findByIdOrNull
@@ -238,7 +239,7 @@ class RobotDomainService(
     fun useRepairItem(robotId: UUID, item: RepairItemType): List<RepairEventRobotDTO> {
         val robot = this.getRobot(robotId)
         if (robot.inventory.getItemAmountByType(item) > 0) {
-            val robots = item.func(robot, robotRepository)
+            val robots = item.use(robot, robotRepository)
             robot.inventory.removeItem(item)
             robotRepository.save(robot)
             return robots
@@ -260,13 +261,12 @@ class RobotDomainService(
      */
     fun useAttackItem(userId: UUID, target: UUID, item: AttackItemType): Pair<UUID, List<Robot>> {
         val user = getRobot(userId)
-        if (user.inventory.getItemAmountByType(item) > 0) {
-            val battlefieldAndtargetRobots = item.use(user, target, robotRepository)
-            user.inventory.removeItem(item)
-            robotRepository.save(user)
-            return battlefieldAndtargetRobots
-        } else
+        if (user.inventory.getItemAmountByType(item) <= 0)
             throw NotEnoughItemsException("This Robot doesn't have the required Item", item)
+        val battlefieldAndtargetRobots = item.use(user, target, robotRepository)
+        user.inventory.removeItem(item)
+        robotRepository.save(user)
+        return battlefieldAndtargetRobots
     }
 
     /**
@@ -281,13 +281,14 @@ class RobotDomainService(
      */
     fun useMovementItem(robotId: UUID, itemType: MovementItemType): Pair<Robot, GameMapPlanetDto> {
         val robot = this.getRobot(robotId)
-        if (robot.inventory.getItemAmountByType(itemType) > 0) {
-            val planetDTO = itemType.func(robot, robotRepository, gameMapService)
-            robot.inventory.removeItem(itemType)
-            robotRepository.save(robot)
-            return Pair(robot, planetDTO)
-        } else
+        if (robot.inventory.getItemAmountByType(itemType) <= 0)
             throw NotEnoughItemsException("This Robot doesn't have the required Item", itemType)
+        if (robot.planet.blocked)
+            throw PlanetBlockedException("Can't move out of a blocked planet")
+        val planetDTO = itemType.use(robot, robotRepository, gameMapService)
+        robot.inventory.removeItem(itemType)
+        robotRepository.save(robot)
+        return Pair(robot, planetDTO)
     }
 
     /**

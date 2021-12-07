@@ -6,7 +6,7 @@ import com.msd.planet.domain.Planet
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
 
-enum class MovementItemType(val func: (Robot, RobotRepository, GameMapService) -> GameMapPlanetDto) : ItemType {
+enum class MovementItemType(val use: (Robot, RobotRepository, GameMapService) -> GameMapPlanetDto) : ItemType {
     WORMHOLE(::useWormhole),
 }
 
