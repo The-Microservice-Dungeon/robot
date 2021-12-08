@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit
     partitions = 1,
     brokerProperties = ["listeners=PLAINTEXT://\${spring.kafka.bootstrap-servers}", "port=9092"]
 )
-@ActiveProfiles(profiles = ["no-async"])
+@ActiveProfiles(profiles = ["no-async", "test"])
 @Transactional
 class CommandControllerTest(
     @Autowired private var mockMvc: MockMvc,
@@ -77,7 +77,7 @@ class CommandControllerTest(
         @BeforeAll
         @JvmStatic
         internal fun setUp() {
-            mockGameServiceWebClient.start(port = 8080)
+            mockGameServiceWebClient.start(port = 8081)
         }
 
         @AfterAll
