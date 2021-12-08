@@ -36,6 +36,12 @@ jobs:
         uses: gradle/wrapper-validation-action@v1.0.4
 
       - name: Unit Test
+        # since it's h2, it is kind of unnecessary
+        env:
+          DB_HOST: ''
+          DB_NAME: h2
+          DB_USER: sa
+          DB_PASSWORD: password
         run: ./gradlew test --build-cache --parallel
 
       - name: Login to GitHub Container Registry
