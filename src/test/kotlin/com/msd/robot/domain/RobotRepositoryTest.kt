@@ -8,10 +8,12 @@ import org.junit.jupiter.api.assertAll
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.test.context.ActiveProfiles
 import java.util.*
 import javax.persistence.EntityNotFoundException
 
 @SpringBootTest
+@ActiveProfiles(profiles = ["test"])
 class RobotRepositoryTest(
     @Autowired val robotRepository: RobotRepository
 ) {

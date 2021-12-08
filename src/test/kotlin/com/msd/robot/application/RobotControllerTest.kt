@@ -24,7 +24,7 @@ import java.util.*
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@ActiveProfiles(profiles = ["no-async"])
+@ActiveProfiles(profiles = ["no-async", " test"])
 class RobotControllerTest(
     @Autowired private var mockMvc: MockMvc,
     @Autowired private var robotRepository: RobotRepository,
