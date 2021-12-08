@@ -6,7 +6,7 @@ import org.springframework.context.annotation.PropertySource
 
 @Configuration
 @ConfigurationProperties(prefix = "microservice.map")
-@PropertySource(value = ["classpath:application.yml"], factory = YamlPropertySourceFactory::class)
+@PropertySource(value = ["classpath:application.yml"])
 class MicroserviceMapConfig {
 
     lateinit var address: String
