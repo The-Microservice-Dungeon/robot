@@ -8,20 +8,26 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
+import org.springframework.test.context.ActiveProfiles
 import java.util.UUID.*
 
-class GameMapServiceTest {
+@SpringBootTest
+@ActiveProfiles(profiles = ["test"])
+class GameMapServiceTest(
+    @Autowired val gameMapService: GameMapService
+) {
 
     companion object {
         val mockGameServiceWebClient = MockWebServer()
-        val gameMapService = GameMapService()
 
         @BeforeAll
         @JvmStatic
         internal fun setUp() {
-            mockGameServiceWebClient.start(port = 8080)
+            mockGameServiceWebClient.start(port = 8081)
         }
 
         @AfterAll

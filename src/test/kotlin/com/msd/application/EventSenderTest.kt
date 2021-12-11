@@ -28,6 +28,7 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.kafka.test.EmbeddedKafkaBroker
 import org.springframework.kafka.test.context.EmbeddedKafka
 import org.springframework.test.annotation.DirtiesContext
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -39,6 +40,7 @@ import java.util.concurrent.TimeUnit
     brokerProperties = ["listeners=PLAINTEXT://\${spring.kafka.bootstrap-servers}", "port=9092"]
 )
 @Transactional
+@ActiveProfiles(profiles = ["test"])
 internal class EventSenderTest(
     @Autowired private val eventSender: EventSender,
     @Autowired private val embeddedKafka: EmbeddedKafkaBroker,

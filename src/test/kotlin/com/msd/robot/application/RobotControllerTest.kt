@@ -7,6 +7,8 @@ import com.msd.robot.application.dtos.RestorationDTO
 import com.msd.robot.application.dtos.RobotDto
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
+import com.msd.robot.domain.UpgradeType
+import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -22,7 +24,7 @@ import java.util.*
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@ActiveProfiles(profiles = ["no-async"])
+@ActiveProfiles(profiles = ["no-async", " test"])
 class RobotControllerTest(
     @Autowired private var mockMvc: MockMvc,
     @Autowired private var robotRepository: RobotRepository,
@@ -205,5 +207,214 @@ class RobotControllerTest(
         robot1 = robotRepository.findByIdOrNull(robot1.id)!!
         assertEquals(20, robot1.energy)
         assertEquals(5, robot1.health)
+    }
+
+    @Test
+    fun `Sending Upgrade Command with invalid player transaction UUID returns 400 and does not increase the upgrade level`() {
+        // given
+        val robot1 = robotRepository.save(Robot(player1Id, Planet(UUID.randomUUID())))
+
+        val upgradeDto = """
+            {
+                "transaction_id": "Invalid UUID",
+                "upgrade-type": "DAMAGE",
+                "target-level": 1
+            }
+        """.trimIndent()
+
+        assertEquals(robot1.damageLevel, 0)
+
+        // when
+        val result = mockMvc.post("/robots/${robot1.id}/upgrades") {
+            contentType = MediaType.APPLICATION_JSON
+            content = upgradeDto
+        }.andExpect {
+            status { isBadRequest() }
+        }.andDo {
+            print()
+        }.andReturn()
+
+        // then
+        assertEquals("Request could not be accepted", result.response.contentAsString)
+        assertEquals(robotRepository.findByIdOrNull(robot1.id)!!.damageLevel, 0)
+    }
+
+    @Test
+    fun `Sending Upgrade Command with invalid UpgradeType returns 400`() {
+        // given
+        val robot1 = robotRepository.save(Robot(player1Id, Planet(UUID.randomUUID())))
+
+        val upgradeDto = """
+            {
+                "transaction_id": "${UUID.randomUUID()}",
+                "upgrade-type": "Invalid UpgradeType",
+                "target-level": 1
+            }
+        """.trimIndent()
+
+        // when
+        val result = mockMvc.post("/robots/${robot1.id}/upgrades") {
+            contentType = MediaType.APPLICATION_JSON
+            content = upgradeDto
+        }.andDo {
+            print()
+        }.andReturn()
+
+        // then
+        assertEquals("Request could not be accepted", result.response.contentAsString)
+    }
+
+    @Test
+    fun `Sending Upgrade Command returns 404 when specified robot UUID is not found`() {
+        // given
+        val upgradeDto = """
+            {
+                "transaction_id": "${UUID.randomUUID()}",
+                "upgrade-type": "DAMAGE",
+                "target-level": 1
+            }
+        """.trimIndent()
+
+        // when
+        mockMvc.post("/robots/${UUID.randomUUID()}/upgrades") {
+            contentType = MediaType.APPLICATION_JSON
+            content = upgradeDto
+        }.andDo {
+            print()
+        }.andExpect { // then
+            status { isNotFound() }
+        }
+    }
+
+    @Test
+    fun `Sending Upgrade Command that would skip upgrade levels returns 409 and does not increase the upgrade level`() {
+        // given
+        val robot1 = robotRepository.save(Robot(player1Id, Planet(UUID.randomUUID())))
+
+        val upgradeDto = """
+            {
+                "transaction_id": "${UUID.randomUUID()}",
+                "upgrade-type": "DAMAGE",
+                "target-level": 2
+            }
+        """.trimIndent()
+
+        assertEquals(robot1.damageLevel, 0)
+
+        // when
+        mockMvc.post("/robots/${robot1.id}/upgrades") {
+            contentType = MediaType.APPLICATION_JSON
+            content = upgradeDto
+        }.andDo {
+            print()
+        }.andExpect {
+            status { isConflict() }
+        }
+
+        // then
+        assertEquals(robotRepository.findByIdOrNull(robot1.id)!!.damageLevel, 0)
+    }
+
+    @Test
+    fun `Sending Upgrade Command that would set upgrade levels over 5 returns 409 and does not increase the upgrade level`() {
+        // given
+        val robot1 = robotRepository.save(Robot(player1Id, Planet(UUID.randomUUID())))
+
+        for (i in 1..5) {
+            robot1.upgrade(UpgradeType.DAMAGE, i)
+        }
+
+        robotRepository.save(robot1)
+
+        assertEquals(robot1.damageLevel, 5)
+
+        val upgradeDto = """
+            {
+                "transaction_id": "${UUID.randomUUID()}",
+                "upgrade-type": "DAMAGE",
+                "target-level": 6
+            }
+        """.trimIndent()
+
+        // when
+        mockMvc.post("/robots/${robot1.id}/upgrades") {
+            contentType = MediaType.APPLICATION_JSON
+            content = upgradeDto
+        }.andDo {
+            print()
+        }.andExpect { // then
+            status { isConflict() }
+        }
+
+        assertEquals(robotRepository.findByIdOrNull(robot1.id)!!.damageLevel, 5)
+    }
+
+    @Test
+    fun `Sending Upgrade Command that would lower upgrade levels returns 409 and does not increase the upgrade level `() {
+        // given
+        val robot1 = robotRepository.save(Robot(player1Id, Planet(UUID.randomUUID())))
+        robot1.upgrade(UpgradeType.DAMAGE, 1)
+        robotRepository.save(robot1)
+
+        assertEquals(robot1.damageLevel, 1)
+
+        val upgradeDto = """
+            {
+                "transaction_id": "${UUID.randomUUID()}",
+                "upgrade-type": "DAMAGE",
+                "target-level": 0
+            }
+        """.trimIndent()
+
+        // when
+        mockMvc.post("/robots/${robot1.id}/upgrades") {
+            contentType = MediaType.APPLICATION_JSON
+            content = upgradeDto
+        }.andDo {
+            print()
+        }.andExpect { // then
+            status { isConflict() }
+        }
+
+        assertEquals(robotRepository.findByIdOrNull(robot1.id)!!.damageLevel, 1)
+    }
+
+    @Test
+    fun `Sending Upgrade Command correctly increases the given upgrade level`() {
+        // given
+        val robot1 = robotRepository.save(Robot(player1Id, Planet(UUID.randomUUID())))
+
+        // when
+        UpgradeType.values().forEach {
+            val upgradeDto = """
+            {
+                "transaction_id": "${UUID.randomUUID()}",
+                "upgrade-type": "$it",
+                "target-level": 1
+            }
+            """.trimIndent()
+
+            mockMvc.post("/robots/${robot1.id}/upgrades") {
+                contentType = MediaType.APPLICATION_JSON
+                content = upgradeDto
+            }.andDo {
+                print()
+            }.andExpect {
+                status { HttpStatus.OK }
+            }
+        }
+
+        val robot = robotRepository.findByIdOrNull(robot1.id)!!
+
+        // then
+        assertAll(
+            { assertEquals(1, robot.damageLevel) },
+            { assertEquals(1, robot.healthLevel) },
+            { assertEquals(1, robot.energyLevel) },
+            { assertEquals(1, robot.inventory.storageLevel) },
+            { assertEquals(1, robot.miningLevel) },
+            { assertEquals(1, robot.miningSpeedLevel) },
+            { assertEquals(1, robot.energyRegenLevel) }
+        )
     }
 }

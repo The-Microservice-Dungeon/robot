@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.test.context.EmbeddedKafka
 import org.springframework.test.annotation.DirtiesContext
+import org.springframework.test.context.ActiveProfiles
 import java.util.*
 import javax.transaction.Transactional
 
@@ -20,6 +21,7 @@ import javax.transaction.Transactional
 @DirtiesContext
 @EmbeddedKafka(partitions = 1, brokerProperties = ["listeners=PLAINTEXT://localhost:9092", "port=9092"])
 @Transactional
+@ActiveProfiles(profiles = ["test"])
 internal class GameRoundEventConsumerTest(
     @Autowired val kafkaTemplate: KafkaTemplate<String, String>,
     @Autowired val gameRoundEventConsumer: GameRoundEventConsumer,

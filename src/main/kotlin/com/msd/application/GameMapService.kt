@@ -5,12 +5,14 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.msd.application.dto.GameMapPlanetDto
 import com.msd.application.dto.MineRequestDto
 import com.msd.application.dto.MineResponseDto
+import com.msd.config.properties.MicroserviceMapConfig
 import com.msd.domain.ResourceType
 import com.msd.robot.application.exception.TargetPlanetNotReachableException
 import com.msd.robot.application.exception.UnknownPlanetException
 import io.netty.channel.ChannelOption
 import io.netty.handler.timeout.ReadTimeoutHandler
 import io.netty.handler.timeout.WriteTimeoutHandler
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -26,15 +28,14 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 @Service
-class GameMapService {
+class GameMapService(
+    @Autowired val mapConfig: MicroserviceMapConfig
+) {
 
     private val gameMapClient: WebClient
 
     object GameMapServiceMetaData {
-        const val GAME_MAP_SERVICE_URL = "http://localhost:8080" // TODO change port in the future
         const val PLANETS_URI = "/planets"
-        const val NEIGHBOR_CHECK_START_PLANET_PARAM = "startPlanet"
-        const val NEIGHBOR_CHECK_TARGET_PLANET_PARAM = "targetPlanet"
     }
 
     init {
@@ -47,7 +48,7 @@ class GameMapService {
             }
 
         gameMapClient = WebClient.builder()
-            .baseUrl(GameMapServiceMetaData.GAME_MAP_SERVICE_URL)
+            .baseUrl(mapConfig.address)
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .clientConnector(ReactorClientHttpConnector(httpClient))
             .build()
