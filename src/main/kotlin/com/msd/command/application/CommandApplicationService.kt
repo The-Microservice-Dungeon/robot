@@ -31,15 +31,8 @@ class CommandApplicationService {
      */
     fun parseCommandsFromStrings(commandStrings: List<String>): List<Command> {
         val commands = commandStrings.map { parseCommand(it) }
-        if (commands.find { it is FightingCommand } != null)
-            if (commands.filterIsInstance<FightingCommand>().count() != commands.size)
-                throw CommandBatchParsingException("AttackCommands need to be homogeneous.")
-        if (commands.find { it is FightingItemUsageCommand } != null)
-            if (commands.filterIsInstance<FightingItemUsageCommand>().count() != commands.size)
-                throw CommandBatchParsingException("AttackItemUsageCommand need to be homogeneous.")
-        if (commands.find { it is MineCommand } != null)
-            if (commands.filterIsInstance<MineCommand>().count() != commands.size)
-                throw CommandBatchParsingException("MineCommands need to be homogeneous.")
+        if (commands.filter { it::class == commands[0]::class }.count() != commands.size)
+            throw CommandBatchParsingException("Command batches need to be homogeneous.")
         return commands
     }
 
