@@ -3,10 +3,10 @@ package com.msd.robot.application
 import com.msd.application.*
 import com.msd.application.dto.GameMapPlanetDto
 import com.msd.command.application.command.*
+import com.msd.core.FailureException
 import com.msd.domain.ResourceType
 import com.msd.event.application.EventSender
 import com.msd.item.domain.AttackItemType
-import com.msd.planet.application.PlanetMapper
 import com.msd.planet.domain.Planet
 import com.msd.robot.application.exception.TargetPlanetNotReachableException
 import com.msd.robot.domain.*
@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.test.context.ActiveProfiles
@@ -33,9 +32,7 @@ import java.util.*
 @ExtendWith(MockKExtension::class)
 @SpringBootTest
 @ActiveProfiles(profiles = ["test"])
-class RobotApplicationServiceTest(
-    @Autowired val planetMapper: PlanetMapper
-) {
+class RobotApplicationServiceTest() {
 
     lateinit var robot1: Robot
     lateinit var robot2: Robot
@@ -60,6 +57,9 @@ class RobotApplicationServiceTest(
     @MockK
     lateinit var eventSender: EventSender
 
+    @MockK
+    lateinit var successEventSender: SuccessEventSender
+
     lateinit var robotApplicationService: RobotApplicationService
     lateinit var robotDomainService: RobotDomainService
 
@@ -70,7 +70,7 @@ class RobotApplicationServiceTest(
     fun setup() {
         MockKAnnotations.init(this)
         robotDomainService = RobotDomainService(robotRepository, gameMapMockService)
-        robotApplicationService = RobotApplicationService(gameMapMockService, robotDomainService, eventSender, planetMapper)
+        robotApplicationService = RobotApplicationService(gameMapMockService, robotDomainService, eventSender, successEventSender)
 
         planet1 = Planet(UUID.randomUUID())
         planet2 = Planet(UUID.randomUUID())
@@ -92,6 +92,9 @@ class RobotApplicationServiceTest(
 
         every { robotRepository.save(any()) } returns robot1 // we don't use the return value of save calls
         every { eventSender.sendEvent(any(), any(), any()) } returns randomUUID
+        justRun { successEventSender.sendAttackItemEvents(any(), any(), any()) }
+        justRun { successEventSender.sendMovementEvent(any(), any(), any()) }
+        justRun { successEventSender.sendMovementEvents(any(), any(), any(), any()) }
         justRun { eventSender.sendGenericEvent(any(), any()) }
     }
 
@@ -100,8 +103,14 @@ class RobotApplicationServiceTest(
         // given
         val command = MovementCommand(unknownRobotId, planet1.planetId, UUID.randomUUID())
         every { robotRepository.findByIdOrNull(unknownRobotId) } returns null
+        val failureException = slot<FailureException>()
+        justRun { eventSender.handleException(capture(failureException), any()) }
+
+        // when
+        robotApplicationService.executeMoveCommands(listOf(command))
+
         // then
-        assertThrows<RobotNotFoundException> { robotApplicationService.move(command) }
+        assert(failureException.captured is RobotNotFoundException)
     }
 
     @Test
@@ -115,14 +124,15 @@ class RobotApplicationServiceTest(
                 any()
             )
         } throws TargetPlanetNotReachableException("")
+        val failureException = slot<FailureException>()
+        justRun { eventSender.handleException(capture(failureException), any()) }
 
         // when
-        assertThrows<TargetPlanetNotReachableException> {
-            robotApplicationService.move(command)
-        }
+        robotApplicationService.executeMoveCommands(listOf(command))
 
         // then
         assertEquals(planet1, robot1.planet)
+        assert(failureException.captured is TargetPlanetNotReachableException)
     }
 
     @Test
@@ -134,7 +144,7 @@ class RobotApplicationServiceTest(
 
         // when
         assertThrows<ClientException> {
-            robotApplicationService.move(command)
+            robotApplicationService.executeMoveCommands(listOf(command))
         }
 
         // then
@@ -151,14 +161,15 @@ class RobotApplicationServiceTest(
         val planetDto = GameMapPlanetDto(planet2.planetId, 3)
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { gameMapMockService.retrieveTargetPlanetIfRobotCanReach(any(), any()) } returns planetDto
+        val failureException = slot<FailureException>()
+        justRun { eventSender.handleException(capture(failureException), any()) }
 
         // when
-        assertThrows<NotEnoughEnergyException> {
-            robotApplicationService.move(command)
-        }
+        robotApplicationService.executeMoveCommands(listOf(command))
 
         // then
         assertEquals(planet1, robot1.planet)
+        assert(failureException.captured is NotEnoughEnergyException)
     }
 
     @Test
@@ -170,14 +181,15 @@ class RobotApplicationServiceTest(
         val planetDto = GameMapPlanetDto(planet2.planetId, 3)
         every { robotRepository.findByIdOrNull(robot3.id) } returns robot3
         every { gameMapMockService.retrieveTargetPlanetIfRobotCanReach(any(), any()) } returns planetDto
+        val failureException = slot<FailureException>()
+        justRun { eventSender.handleException(capture(failureException), any()) }
 
         // when
-        assertThrows<PlanetBlockedException> {
-            robotApplicationService.move(command)
-        }
+        robotApplicationService.executeMoveCommands(listOf(command))
 
         // then
         assertEquals(planet1, robot3.planet)
+        assert(failureException.captured is PlanetBlockedException)
     }
 
     @Test
@@ -191,7 +203,7 @@ class RobotApplicationServiceTest(
         every { robotRepository.findAllByPlanet_PlanetId(any()) } returns listOf()
 
         // when
-        robotApplicationService.move(command)
+        robotApplicationService.executeMoveCommands(listOf(command))
 
         // then
         assertEquals(planet2, robot1.planet)
@@ -202,15 +214,19 @@ class RobotApplicationServiceTest(
     fun `Unknown robotId when regenerating causes an exception to be thrown`() {
         // given
         every { robotRepository.findByIdOrNull(unknownRobotId) } returns null
+        val failureException = slot<FailureException>()
+        justRun { eventSender.handleException(capture(failureException), any()) }
         // then
-        assertThrows<RobotNotFoundException> {
-            robotApplicationService.regenerateEnergy(
+        robotApplicationService.executeEnergyRegenCommands(
+            listOf(
                 EnergyRegenCommand(
                     unknownRobotId,
                     UUID.randomUUID()
                 )
             )
-        }
+        )
+
+        assert(failureException.captured is RobotNotFoundException)
     }
 
     @Test
@@ -220,7 +236,7 @@ class RobotApplicationServiceTest(
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { robotRepository.save(robot1) } returns robot1
         // when
-        robotApplicationService.regenerateEnergy(EnergyRegenCommand(robot1.id, UUID.randomUUID()))
+        robotApplicationService.executeEnergyRegenCommands(listOf(EnergyRegenCommand(robot1.id, UUID.randomUUID())))
 
         // then
         assertEquals(18, robot1.energy)
@@ -235,7 +251,7 @@ class RobotApplicationServiceTest(
         every { robotRepository.save(any()) } returns robot1
 
         // when
-        robotApplicationService.block(command)
+        robotApplicationService.executeBlockCommands(listOf(command))
 
         // then
         assert(robot1.planet.blocked)
@@ -244,18 +260,20 @@ class RobotApplicationServiceTest(
 
     @Test
     fun `Robot cannot block planet if it has not enough energy`() {
+        val failureException = slot<FailureException>()
+        justRun { eventSender.handleException(capture(failureException), any()) }
         // given
         robot1.move(planet1, 19)
         val command = BlockCommand(robot1.id, UUID.randomUUID())
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
 
         // when
-        assertThrows<NotEnoughEnergyException> {
-            robotApplicationService.block(command)
-        }
+        robotApplicationService.executeBlockCommands(listOf(command))
 
         // then
         assert(!robot1.planet.blocked)
+        verify(exactly = 1) { eventSender.handleException(any(), any()) }
+        assert(failureException.captured is NotEnoughEnergyException)
     }
 
     @Test
