@@ -2,6 +2,7 @@ package com.msd.robot.application
 
 import com.msd.domain.ResourceType
 import com.msd.robot.application.dtos.*
+import com.msd.robot.application.mappers.RobotMapper
 import com.msd.robot.domain.RobotDomainService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -28,16 +29,6 @@ class RobotController(
         val robot = robotApplicationService.spawn(spawnDto.player, spawnDto.planet)
         return ResponseEntity.status(HttpStatus.CREATED).body(robotMapper.robotToRobotDto(robot))
     }
-
-//    @PostMapping
-//    fun spawnRobots(@RequestBody spawnDtos: List<RobotSpawnDto>): ResponseEntity<List<RobotDto>> {
-//        val robots = mutableListOf<RobotDto>()
-//        spawnDtos.forEach {
-//            val robot = robotApplicationService.spawn(it.player, it.planet)
-//            robots.add(robotMapper.robotToRobotDto(robot))
-//        }
-//        return ResponseEntity.status(HttpStatus.CREATED).body(robots)
-//    }
 
     /**
      * Get all robots of the specified player.

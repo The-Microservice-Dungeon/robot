@@ -45,7 +45,7 @@ class CommandApplicationServiceTest {
                 assert(commands.count { it is FightingCommand } == 1)
             },
             {
-                assert(commands.count { it is MiningCommand } == 1)
+                assert(commands.count { it is MineCommand } == 1)
             },
             {
                 assert(commands.count { it is EnergyRegenCommand } == 1)

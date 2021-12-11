@@ -169,7 +169,7 @@ class EventSender(
             is EnergyRegenCommand -> RegenerationEventDTO(
                 false, e.message!!, robot?.energy
             )
-            is MiningCommand -> {
+            is MineCommand -> {
                 val planetResource = if (robot != null)
                     planetRepository.findByIdOrNull(robot.planet.planetId)?.resourceType?.toString() ?: "NONE"
                 else

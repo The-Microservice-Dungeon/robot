@@ -45,7 +45,7 @@ class Robot(
     val attackDamage: Int
         get() = UpgradeValues.attackDamageByLevel[damageLevel]
 
-    @OneToOne(cascade = [CascadeType.ALL])
+    @OneToOne(cascade = [CascadeType.ALL], fetch = FetchType.EAGER)
     val inventory = Inventory()
 
     val miningSpeed: Int

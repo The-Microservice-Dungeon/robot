@@ -1,4 +1,4 @@
-package com.msd.robot.application
+package com.msd.robot.application.mappers
 
 import com.msd.domain.ResourceType
 import com.msd.robot.application.dtos.InventoryDto

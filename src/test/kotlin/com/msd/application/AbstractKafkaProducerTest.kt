@@ -3,6 +3,7 @@ package com.msd.application
 import com.msd.event.application.ProducerTopicConfiguration
 import com.msd.testUtil.EventTestUtils
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.kafka.listener.KafkaMessageListenerContainer
 import org.springframework.kafka.test.EmbeddedKafkaBroker
@@ -34,6 +35,11 @@ abstract class AbstractKafkaProducerTest(
     @BeforeEach
     open fun setup() {
         consumerRecords = LinkedBlockingQueue()
+    }
+
+    @AfterEach
+    open fun tearDown() {
+        shutDownAllContainers()
     }
 
     protected fun startMovementContainer() {

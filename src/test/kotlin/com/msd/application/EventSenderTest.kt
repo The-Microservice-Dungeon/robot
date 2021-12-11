@@ -19,7 +19,6 @@ import com.msd.robot.domain.LevelTooLowException
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
 import com.msd.robot.domain.exception.*
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -58,11 +57,6 @@ internal class EventSenderTest(
         val robot = Robot(UUID.randomUUID(), Planet(UUID.randomUUID()))
         robotId = robot.id
         robotRepository.save(robot)
-    }
-
-    @AfterEach
-    fun teardown() {
-        shutDownAllContainers()
     }
 
     @Test
@@ -263,7 +257,7 @@ internal class EventSenderTest(
         val planet = Planet(UUID.randomUUID(), ResourceType.COAL)
         planetRepository.save(planet)
 
-        val miningCommand = MiningCommand(UUID.randomUUID(), UUID.randomUUID())
+        val miningCommand = MineCommand(UUID.randomUUID(), UUID.randomUUID())
         val robotNotFoundException = RobotNotFoundException("Robot not found")
         // when
         eventSender.handleException(robotNotFoundException, miningCommand)
@@ -291,7 +285,7 @@ internal class EventSenderTest(
         robot!!.move(planet, 0)
         robotRepository.save(robot)
 
-        val miningCommand = MiningCommand(robotId, UUID.randomUUID())
+        val miningCommand = MineCommand(robotId, UUID.randomUUID())
         val notEnoughEnergyException = NotEnoughEnergyException("Not enough energy")
         // when
         eventSender.handleException(notEnoughEnergyException, miningCommand)
@@ -320,7 +314,7 @@ internal class EventSenderTest(
         robot!!.move(planet, 0)
         robotRepository.save(robot)
 
-        val miningCommand = MiningCommand(robotId, UUID.randomUUID())
+        val miningCommand = MineCommand(robotId, UUID.randomUUID())
         val noResourceOnPlanetException = NoResourceOnPlanetException(planet.planetId)
         // when
         eventSender.handleException(noResourceOnPlanetException, miningCommand)
@@ -355,7 +349,7 @@ internal class EventSenderTest(
         robot!!.move(planet, 0)
         robotRepository.save(robot)
 
-        val miningCommand = MiningCommand(robotId, UUID.randomUUID())
+        val miningCommand = MineCommand(robotId, UUID.randomUUID())
         val levelTooLowException = LevelTooLowException("Level too low")
         // when
         eventSender.handleException(levelTooLowException, miningCommand)

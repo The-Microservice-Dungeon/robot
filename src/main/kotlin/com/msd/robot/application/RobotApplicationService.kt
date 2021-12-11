@@ -18,6 +18,7 @@ import com.msd.robot.domain.LevelTooLowException
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
 import com.msd.robot.domain.UpgradeType
+import com.msd.robot.domain.exception.InventoryFullException
 import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.RobotNotFoundException
 import org.springframework.scheduling.annotation.Async
@@ -41,6 +42,7 @@ class RobotApplicationService(
      *
      * @param commands  List of commands that need to be executed.
      */
+
     @Async
     fun executeCommands(commands: List<Command>) {
         if (commands[0] is FightingCommand)
@@ -130,8 +132,6 @@ class RobotApplicationService(
             robotDomainService.saveRobot(robot)
             throw pbe
         }
-        robotDomainService.saveRobot(robot)
-        sendMovementEvent(robot, cost, moveCommand.transactionUUID)
     }
 
     private fun sendMovementEvent(
@@ -582,7 +582,11 @@ class RobotApplicationService(
             val remainder = ((it.miningSpeed.toDouble() / accumulatedMiningSpeed) * amount) - correspondingAmount
             amountDistributed += correspondingAmount
             robotsDecimalPlaces[it] = remainder
-            it.inventory.addResource(resource, correspondingAmount)
+            try {
+                it.inventory.addResource(resource, correspondingAmount)
+            } catch (ife: InventoryFullException) {
+                // TODO?
+            }
         }
         return Pair(amountDistributed, robotsDecimalPlaces)
     }
@@ -608,10 +612,16 @@ class RobotApplicationService(
     ) {
         var amountDistributed = 0
         val sortedDecimalPlaces = robotsDecimalPlaces.entries.sortedBy { it.value }.reversed()
-        val index = 0
-        while (amountDistributed < remainingAmount) {
-            sortedDecimalPlaces[index].key.inventory.addResource(resource, 1)
-            amountDistributed += 1
+        var index = 0
+        val fullRobots = mutableMapOf<Robot, Boolean>()
+        while (amountDistributed < remainingAmount && fullRobots.count() < sortedDecimalPlaces.size) {
+            try {
+                sortedDecimalPlaces[index % sortedDecimalPlaces.size].key.inventory.addResource(resource, 1)
+                amountDistributed += 1
+            } catch (ife: InventoryFullException) {
+                fullRobots[sortedDecimalPlaces[index % sortedDecimalPlaces.size].key] = true
+            }
+            index++
         }
     }
 }
