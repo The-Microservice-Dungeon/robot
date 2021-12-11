@@ -40,7 +40,7 @@ import java.util.*
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@ActiveProfiles(profiles = ["no-async"])
+@ActiveProfiles(profiles = ["no-async", "test"])
 @DirtiesContext
 @EmbeddedKafka(
     partitions = 1,
@@ -61,7 +61,6 @@ class ScenarioTests(
 
     val player1 = UUID.randomUUID()
     val player2 = UUID.randomUUID()
-    val player3 = UUID.randomUUID()
 
     companion object {
         val mockGameServiceWebClient = MockWebServer()
@@ -69,8 +68,7 @@ class ScenarioTests(
         @BeforeAll
         @JvmStatic
         internal fun setUp() {
-            mockGameServiceWebClient.start(port = 8080)
-            println("started server on port 8080")
+            mockGameServiceWebClient.start(port = 8081)
         }
 
         @AfterAll
