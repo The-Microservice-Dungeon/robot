@@ -32,7 +32,7 @@ import java.util.*
 @ExtendWith(MockKExtension::class)
 @SpringBootTest
 @ActiveProfiles(profiles = ["test"])
-class RobotApplicationServiceTest() {
+class RobotApplicationServiceTest {
 
     lateinit var robot1: Robot
     lateinit var robot2: Robot
@@ -93,7 +93,7 @@ class RobotApplicationServiceTest() {
         every { robotRepository.save(any()) } returns robot1 // we don't use the return value of save calls
         every { eventSender.sendEvent(any(), any(), any()) } returns randomUUID
         justRun { successEventSender.sendAttackItemEvents(any(), any(), any()) }
-        justRun { successEventSender.sendAllMovementEvents(any()) }
+        justRun { successEventSender.sendItemMovementEvents(any()) }
         justRun { successEventSender.sendMovementEvents(any(), any(), any(), any()) }
         justRun { eventSender.sendGenericEvent(any(), any()) }
     }

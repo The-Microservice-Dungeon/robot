@@ -21,7 +21,7 @@ class SuccessEventSender(
     val robotDomainService: RobotDomainService
 ) {
 
-    fun sendAllMovementEvents(robotPlanetPairs: MutableMap<MovementItemsUsageCommand, Pair<Robot, GameMapPlanetDto>>) {
+    fun sendItemMovementEvents(robotPlanetPairs: MutableMap<MovementItemsUsageCommand, Pair<Robot, GameMapPlanetDto>>) {
         robotPlanetPairs.forEach { (command, pair) ->
             val moveEventId = eventSender.sendEvent(
                 MovementEventDTO(

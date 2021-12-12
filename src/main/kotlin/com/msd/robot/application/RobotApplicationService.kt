@@ -69,7 +69,7 @@ class RobotApplicationService(
                 eventSender.handleException(fe, command)
             }
         }
-        successEventSender.sendAllMovementEvents(robotPlanetPairs)
+        successEventSender.sendItemMovementEvents(robotPlanetPairs)
     }
 
     /**
