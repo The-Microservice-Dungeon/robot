@@ -69,18 +69,7 @@ class RobotApplicationService(
                 eventSender.handleException(fe, command)
             }
         }
-        robotPlanetPairs.forEach { (command, pair) ->
-            val moveEventId = successEventSender.sendMovementEvent(pair.first, pair.second.movementDifficulty, command.transactionUUID)
-            eventSender.sendEvent(
-                ItemMovementEventDTO(
-                    true,
-                    "Item usage successful",
-                    moveEventId
-                ),
-                EventType.ITEM_MOVEMENT,
-                command.transactionUUID
-            )
-        }
+        successEventSender.sendAllMovementEvents(robotPlanetPairs)
     }
 
     /**

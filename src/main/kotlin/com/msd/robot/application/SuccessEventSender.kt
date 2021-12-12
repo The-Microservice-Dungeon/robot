@@ -3,12 +3,10 @@ package com.msd.robot.application
 import com.msd.application.dto.GameMapPlanetDto
 import com.msd.command.application.command.FightingItemUsageCommand
 import com.msd.command.application.command.MovementCommand
+import com.msd.command.application.command.MovementItemsUsageCommand
 import com.msd.event.application.EventSender
 import com.msd.event.application.EventType
-import com.msd.event.application.dto.FightingEventDTO
-import com.msd.event.application.dto.ItemFightingEventDTO
-import com.msd.event.application.dto.MovementEventDTO
-import com.msd.event.application.dto.NeighboursEventDTO
+import com.msd.event.application.dto.*
 import com.msd.planet.application.PlanetMapper
 import com.msd.planet.domain.PlanetType
 import com.msd.robot.domain.Robot
@@ -23,25 +21,29 @@ class SuccessEventSender(
     val robotDomainService: RobotDomainService
 ) {
 
-    /**
-     * Send the event after executing a successful movement.
-     */
-    fun sendMovementEvent(
-        robot: Robot,
-        cost: Int,
-        transactionUUID: UUID
-    ): UUID {
-        return eventSender.sendEvent(
-            MovementEventDTO(
-                true,
-                "Movement successful",
-                robot.energy,
-                planetMapper.planetToPlanetDTO(robot.planet, cost, PlanetType.DEFAULT), // TODO planet type?
-                robotDomainService.getRobotsOnPlanet(robot.planet.planetId).map { it.id }
-            ),
-            EventType.MOVEMENT,
-            transactionUUID
-        )
+    fun sendAllMovementEvents(robotPlanetPairs: MutableMap<MovementItemsUsageCommand, Pair<Robot, GameMapPlanetDto>>) {
+        robotPlanetPairs.forEach { (command, pair) ->
+            val moveEventId = eventSender.sendEvent(
+                MovementEventDTO(
+                    true,
+                    "Movement successful",
+                    pair.first.energy,
+                    planetMapper.planetToPlanetDTO(pair.first.planet, pair.second.movementDifficulty, PlanetType.DEFAULT), // TODO planet type?
+                    robotDomainService.getRobotsOnPlanet(pair.first.planet.planetId).map { it.id }
+                ),
+                EventType.MOVEMENT,
+                command.transactionUUID
+            )
+            eventSender.sendEvent(
+                ItemMovementEventDTO(
+                    true,
+                    "Item usage successful",
+                    moveEventId
+                ),
+                EventType.ITEM_MOVEMENT,
+                command.transactionUUID
+            )
+        }
     }
 
     /**
