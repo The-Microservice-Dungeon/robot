@@ -94,7 +94,7 @@ class RobotApplicationServiceTest() {
         every { eventSender.sendEvent(any(), any(), any()) } returns randomUUID
         justRun { successEventSender.sendAttackItemEvents(any(), any(), any()) }
         justRun { successEventSender.sendAllMovementEvents(any()) }
-        justRun { successEventSender.sendMovementEvents(any(), any(), any(), any()) }
+        every { successEventSender.sendMovementEvents(any(), any(), any(), any()) } returns UUID.randomUUID()
         justRun { eventSender.sendGenericEvent(any(), any()) }
     }
 

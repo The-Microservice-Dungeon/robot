@@ -1,8 +1,8 @@
 package com.msd.robot.application
 
 import com.msd.application.dto.GameMapPlanetDto
+import com.msd.command.application.command.Command
 import com.msd.command.application.command.FightingItemUsageCommand
-import com.msd.command.application.command.MovementCommand
 import com.msd.command.application.command.MovementItemsUsageCommand
 import com.msd.event.application.EventSender
 import com.msd.event.application.EventType
@@ -23,17 +23,7 @@ class SuccessEventSender(
 
     fun sendAllMovementEvents(robotPlanetPairs: MutableMap<MovementItemsUsageCommand, Pair<Robot, GameMapPlanetDto>>) {
         robotPlanetPairs.forEach { (command, pair) ->
-            val moveEventId = eventSender.sendEvent(
-                MovementEventDTO(
-                    true,
-                    "Movement successful",
-                    pair.first.energy,
-                    planetMapper.planetToPlanetDTO(pair.first.planet, pair.second.movementDifficulty, PlanetType.DEFAULT), // TODO planet type?
-                    robotDomainService.getRobotsOnPlanet(pair.first.planet.planetId).map { it.id }
-                ),
-                EventType.MOVEMENT,
-                command.transactionUUID
-            )
+            val moveEventId = sendMovementEvents(pair.first, pair.second.movementDifficulty, command, pair.second)
             eventSender.sendEvent(
                 ItemMovementEventDTO(
                     true,
@@ -53,14 +43,15 @@ class SuccessEventSender(
      * @param cost: The energy costs of the movement
      * @param moveCommand: The move command that was executed
      * @param planetDto: The planet to which the robot moved, as returned from the Map Service
+     * @return the event UUID of the sent movementEvent
      */
     fun sendMovementEvents(
         robot: Robot,
         cost: Int,
-        moveCommand: MovementCommand,
+        moveCommand: Command,
         planetDto: GameMapPlanetDto
-    ) {
-        eventSender.sendEvent(
+    ): UUID {
+        val id = eventSender.sendEvent(
             MovementEventDTO(
                 true,
                 "Movement successful",
@@ -80,6 +71,7 @@ class SuccessEventSender(
             EventType.NEIGHBOURS,
             moveCommand.transactionUUID
         )
+        return id
     }
 
     /**
