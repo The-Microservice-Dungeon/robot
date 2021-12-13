@@ -12,8 +12,8 @@ spring:
     consumer:
       auto-offset-reset: earliest
   datasource:
-    url: jdbc:${DB_NAME}:file:./db/robot
-    driver-class-name: org.h2.Driver
+    url: jdbc:${DB_NAME}://${DB_HOST}/robot
+    driver-class-name: org.mariadb.jdbc.Driver
     username: ${DB_USER}
     password: ${DB_PASSWORD}
   jpa:
@@ -52,10 +52,10 @@ spring:
     consumer:
       auto-offset-reset: earliest
   datasource:
-    url: jdbc:h2:file:./db/robot
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: password
+    url: jdbc:mariadb://localhost:3307/robot
+    driver-class-name: org.mariadb.jdbc.Driver
+    username: root
+    password: root
   jpa:
     hibernate:
       ddl-auto: create
