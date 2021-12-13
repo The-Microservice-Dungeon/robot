@@ -533,13 +533,20 @@ class ScenarioTests(
         }"""
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
-        val commands = listOf(
+        val regenCommand = listOf(
             "regenerate ${robot1.id} ${UUID.randomUUID()}",
+        )
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(regenCommand))
+        }.andExpect { status { HttpStatus.OK } }.andReturn()
+
+        val repairCommand = listOf(
             "use-item-repair ${robot2.id} REPAIR_SWARM ${UUID.randomUUID()}"
         )
         mockMvc.post("/commands") {
             contentType = MediaType.APPLICATION_JSON
-            content = mapper.writeValueAsString(CommandDTO(commands))
+            content = mapper.writeValueAsString(CommandDTO(repairCommand))
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
         assertEquals(13 + UpgradeValues.energyRegenByLevel[0], robotRepo.findByIdOrNull(robot1.id)!!.energy)
