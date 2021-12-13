@@ -1041,4 +1041,46 @@ class RobotApplicationServiceTest {
             }
         )
     }
+
+    @Test
+    fun `replaceIdsWithObjectsInValidMineCommands causes events when command is invalid`() {
+        // given
+        every { robotRepository.findByIdOrNull(unknownRobotId) } returns null
+
+        robot4.move(Planet(UUID.randomUUID()), 0)
+
+        val exceptionSlot = slot<FailureException>()
+        justRun { eventSender.handleException(capture(exceptionSlot), any()) }
+
+        val planetsToResources = mapOf(
+            robot1.planet.planetId to ResourceType.COAL,
+            robot2.planet.planetId to ResourceType.IRON
+        )
+
+        val testedMethod = robotApplicationService::class.declaredMemberFunctions
+            .find { it.name == "replaceIdsWithObjectsInValidMineCommands" }!!
+        testedMethod.isAccessible = true
+
+        // whens thens
+        testedMethod.call(
+            robotApplicationService,
+            listOf(MineCommand(robot2.id, UUID.randomUUID())),
+            planetsToResources
+        )
+        assert(exceptionSlot.captured is LevelTooLowException)
+
+        testedMethod.call(
+            robotApplicationService,
+            listOf(MineCommand(unknownRobotId, UUID.randomUUID())),
+            planetsToResources
+        )
+        assert(exceptionSlot.captured is RobotNotFoundException)
+
+        testedMethod.call(
+            robotApplicationService,
+            listOf(MineCommand(robot4.id, UUID.randomUUID())),
+            planetsToResources
+        )
+        assert(exceptionSlot.captured is NoResourceOnPlanetException)
+    }
 }
