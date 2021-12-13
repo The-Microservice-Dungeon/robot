@@ -8,6 +8,7 @@ import com.msd.item.domain.RepairItemType
 import com.msd.robot.domain.exception.InventoryFullException
 import com.msd.robot.domain.exception.NotEnoughResourcesException
 import com.msd.robot.domain.exception.UpgradeException
+import org.hibernate.annotations.Type
 import java.util.*
 import javax.persistence.ElementCollection
 import javax.persistence.Entity
@@ -17,6 +18,7 @@ import javax.persistence.Id
 @Entity
 class Inventory {
     @Id
+    @Type(type="uuid-char")
     val id = UUID.randomUUID()
     var storageLevel: Int = 0
         internal set(value) {

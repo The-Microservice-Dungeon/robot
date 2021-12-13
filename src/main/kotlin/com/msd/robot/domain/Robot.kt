@@ -5,6 +5,7 @@ import com.msd.planet.domain.Planet
 import com.msd.robot.domain.exception.NotEnoughEnergyException
 import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.UpgradeException
+import org.hibernate.annotations.Type
 import java.lang.IllegalArgumentException
 import java.util.*
 import javax.persistence.*
@@ -25,6 +26,7 @@ class Robot(
     planet: Planet
 ) {
     @Id
+    @Type(type="uuid-char")
     val id: UUID = UUID.randomUUID()
 
     @ManyToOne(cascade = [CascadeType.MERGE])
