@@ -22,11 +22,12 @@ object UpgradeValues {
 
 @Entity
 class Robot(
+    @Type(type = "uuid-char")
     val player: UUID,
     planet: Planet
 ) {
     @Id
-    @Type(type="uuid-char")
+    @Type(type = "uuid-char")
     val id: UUID = UUID.randomUUID()
 
     @ManyToOne(cascade = [CascadeType.MERGE])

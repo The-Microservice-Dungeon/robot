@@ -12,7 +12,7 @@ spring:
     consumer:
       auto-offset-reset: earliest
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost:3306}/${DB_NAME:robot}?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${DB_HOST:localhost:3307}/${DB_NAME:robot}?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true
     driver-class-name: org.mariadb.jdbc.Driver
     username: ${DB_USER:robot}
     password: ${DB_PASSWORD:robot}
@@ -54,10 +54,10 @@ spring:
     consumer:
       auto-offset-reset: earliest
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost:3306}/${DB_NAME:robot}?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${DB_HOST:localhost:3307}/${DB_NAME:robot}?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true
     driver-class-name: org.mariadb.jdbc.Driver
-    username: ${DB_USER:robot}
-    password: ${DB_PASSWORD:robot}
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:root}
   jpa:
     hibernate:
       ddl-auto: create-drop
