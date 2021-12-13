@@ -1083,4 +1083,8 @@ class RobotApplicationServiceTest {
         )
         assert(exceptionSlot.captured is NoResourceOnPlanetException)
     }
+
+    @Test
+    fun `distributeMinedResources after mining distributes resources correctly`() {
+    }
 }

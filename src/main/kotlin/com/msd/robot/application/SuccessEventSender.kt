@@ -65,7 +65,7 @@ class SuccessEventSender(
                 true,
                 "Movement successful",
                 robot.energy,
-                planetMapper.planetToPlanetDTO(robot.planet, cost, PlanetType.DEFAULT), // TODO planet type?
+                planetMapper.planetToPlanetDTO(robot.planet, cost, planetDto.planetType), // TODO planet type?
                 robotDomainService.getRobotsOnPlanet(robot.planet.planetId).map { it.id }
             ),
             EventType.MOVEMENT,
