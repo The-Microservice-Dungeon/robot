@@ -157,6 +157,7 @@ internal class RobotDomainServiceTest {
         every { robotRepository.findByIdOrNull(any()) } answers { robots.find { it.id == firstArg() } }
         justRun { robotRepository.delete(robot1) }
         every { robotRepository.saveAll(listOf(robot2, robot4, robot5)) } answers { firstArg() }
+
         // when
         for (i in 1..4) {
             robot2.attack(robot1)
@@ -166,6 +167,7 @@ internal class RobotDomainServiceTest {
         assert(!robot1.alive) { "except robot1 to be dead" }
 
         robotDomainService.postFightCleanup(planet1.planetId)
+
         // then
         assertEquals(0, robot1.inventory.usedStorage)
         assertAll(

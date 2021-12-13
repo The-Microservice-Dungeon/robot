@@ -9,6 +9,7 @@ import com.msd.event.application.EventSender
 import com.msd.item.domain.AttackItemType
 import com.msd.planet.domain.Planet
 import com.msd.robot.application.exception.TargetPlanetNotReachableException
+import com.msd.robot.application.exception.UnknownPlanetException
 import com.msd.robot.domain.*
 import com.msd.robot.domain.exception.NotEnoughEnergyException
 import com.msd.robot.domain.exception.PlanetBlockedException
@@ -28,6 +29,8 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.test.context.ActiveProfiles
 import java.util.*
+import kotlin.reflect.full.declaredMemberFunctions
+import kotlin.reflect.jvm.isAccessible
 
 @ExtendWith(MockKExtension::class)
 @SpringBootTest
@@ -72,8 +75,8 @@ class RobotApplicationServiceTest {
         robotDomainService = RobotDomainService(robotRepository, gameMapMockService)
         robotApplicationService = RobotApplicationService(gameMapMockService, robotDomainService, eventSender, successEventSender)
 
-        planet1 = Planet(UUID.randomUUID())
-        planet2 = Planet(UUID.randomUUID())
+        planet1 = Planet(UUID.randomUUID(), ResourceType.COAL)
+        planet2 = Planet(UUID.randomUUID(), ResourceType.IRON)
 
         robot1 = Robot(player1Id, planet1)
         robot2 = Robot(player1Id, planet2)
@@ -954,6 +957,87 @@ class RobotApplicationServiceTest {
             },
             {
                 assert(robot1.inventory.getStorageUsageForResource(ResourceType.GOLD) == 5)
+            }
+        )
+    }
+
+    @Test
+    fun `getResourcesOnPlanets has no entry for planets only present in invalid commands`() {
+        // given
+        every { gameMapMockService.getResourceOnPlanet(robot1.planet.planetId) } returns robot1.planet.resourceType!!
+        every { gameMapMockService.getResourceOnPlanet(robot2.planet.planetId) } returns robot2.planet.resourceType!!
+
+        robot4.move(Planet(randomUUID), 0)
+
+        val mineCommands = listOf(
+            MineCommand(robot1.id, UUID.randomUUID()),
+            MineCommand(robot2.id, UUID.randomUUID()),
+            MineCommand(robot3.id, UUID.randomUUID()),
+            MineCommand(robot4.id, UUID.randomUUID()),
+        )
+
+        // when
+        val getResourcesOnPlanets = robotApplicationService::class.declaredMemberFunctions.find { it.name == "getResourcesOnPlanets" }!!
+        getResourcesOnPlanets.isAccessible = true
+        val resultMap = getResourcesOnPlanets.call(
+            robotApplicationService,
+            mineCommands
+        ) as Map<UUID, ResourceType?>
+
+        // then
+        assertThrows<NullPointerException> {
+            resultMap[randomUUID]!!
+        }
+        assertEquals(ResourceType.COAL, resultMap[robot1.planet.planetId])
+        assertEquals(ResourceType.IRON, resultMap[robot2.planet.planetId])
+    }
+
+    @Test
+    fun `getResourcesOnPlanets has no entry if planet resources cant get retrieved from map service`() {
+        // given
+        robot3.move(Planet(UUID.randomUUID()), 0)
+        robot4.move(Planet(UUID.randomUUID()), 0)
+
+        every { gameMapMockService.getResourceOnPlanet(robot1.planet.planetId) } throws UnknownPlanetException(robot1.planet.planetId)
+        every { gameMapMockService.getResourceOnPlanet(robot2.planet.planetId) } throws NoResourceOnPlanetException(robot2.planet.planetId)
+        every { gameMapMockService.getResourceOnPlanet(robot3.planet.planetId) } throws
+            ClientException("GameMap Client returned internal error when retrieving resource on planet ${robot3.planet.planetId}")
+        every { gameMapMockService.getResourceOnPlanet(robot4.planet.planetId) } returns ResourceType.PLATIN
+
+        val mineCommands = listOf(
+            MineCommand(robot1.id, UUID.randomUUID()),
+            MineCommand(robot2.id, UUID.randomUUID()),
+            MineCommand(robot3.id, UUID.randomUUID()),
+            MineCommand(robot4.id, UUID.randomUUID()),
+        )
+
+        // when
+        val getResourcesOnPlanets = robotApplicationService::class.declaredMemberFunctions.find { it.name == "getResourcesOnPlanets" }!!
+        getResourcesOnPlanets.isAccessible = true
+        val resultMap = getResourcesOnPlanets.call(
+            robotApplicationService,
+            mineCommands
+        ) as Map<UUID, ResourceType?>
+
+        // then
+        assertAll(
+            {
+                assertThrows<NullPointerException> {
+                    resultMap[robot1.planet.planetId]!!
+                }
+            },
+            {
+                assertThrows<NullPointerException> {
+                    resultMap[robot2.planet.planetId]!!
+                }
+            },
+            {
+                assertThrows<NullPointerException> {
+                    resultMap[robot3.planet.planetId]!!
+                }
+            },
+            {
+                assertEquals(ResourceType.PLATIN, resultMap[robot4.planet.planetId])
             }
         )
     }
