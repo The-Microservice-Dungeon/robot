@@ -9,10 +9,11 @@ on:
       - '**/.gitignore'
     branches:
       - 'main'
+      - 'devops_auto_deploy'
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow isn't split up, because the gradle daemon takes FOREVER to start
-  all-in-one:
+  test-and-build:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     services:
@@ -69,3 +70,20 @@ jobs:
         run: |
           rm -f $GRADLE_USER_HOME/caches/modules-2/modules-2.lock
           rm -f $GRADLE_USER_HOME/caches/modules-2/gc.properties
+  deploy:
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: stop-pull-run
+        uses: appleboy/ssh-action@master
+        env:
+          SERVICE_NAME: robot
+        with:
+          host: cides03.gm.fh-koeln.de
+          username: ${{ secrets.PROD_USER }}
+          password: ${{ secrets.PROD_PWD }}
+          port: 22
+          envs: SERVICE_NAME
+          script: |
+            echo ${{ secrets.PROD_PWD }} | sudo -S docker-compose -f $SERVICE_NAME/service-compose.yml pull
+            echo ${{ secrets.PROD_PWD }} | sudo -S docker-compose -f $SERVICE_NAME/service-compose.yml up -d
