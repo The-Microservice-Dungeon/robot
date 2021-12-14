@@ -150,7 +150,7 @@ class CommandControllerTest(
             content = mapper.writeValueAsString(CommandDTO(commands))
         }.andExpect {
             status { isBadRequest() }
-            content { string("AttackCommands need to be homogeneous.") }
+            content { string("Command batches need to be homogeneous.") }
         }.andDo { print() }
 
         // then

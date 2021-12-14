@@ -36,6 +36,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
+import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -46,6 +47,7 @@ import java.util.*
     partitions = 1,
     brokerProperties = ["listeners=PLAINTEXT://\${spring.kafka.bootstrap-servers}", "port=9092"]
 )
+@Transactional
 class ScenarioTests(
     @Autowired private val mockMvc: MockMvc,
     @Autowired private val mapper: ObjectMapper,
@@ -533,13 +535,20 @@ class ScenarioTests(
         }"""
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
-        val commands = listOf(
+        val regenCommand = listOf(
             "regenerate ${robot1.id} ${UUID.randomUUID()}",
+        )
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(regenCommand))
+        }.andExpect { status { HttpStatus.OK } }.andReturn()
+
+        val repairCommand = listOf(
             "use-item-repair ${robot2.id} REPAIR_SWARM ${UUID.randomUUID()}"
         )
         mockMvc.post("/commands") {
             contentType = MediaType.APPLICATION_JSON
-            content = mapper.writeValueAsString(CommandDTO(commands))
+            content = mapper.writeValueAsString(CommandDTO(repairCommand))
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
         assertEquals(13 + UpgradeValues.energyRegenByLevel[0], robotRepo.findByIdOrNull(robot1.id)!!.energy)
