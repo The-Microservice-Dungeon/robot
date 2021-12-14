@@ -1,5 +1,6 @@
 package com.msd.event.application
 
+import org.hibernate.annotations.Type
 import java.util.*
 import javax.persistence.Column
 import javax.persistence.Entity
@@ -13,5 +14,6 @@ class ErrorEvent(
     val eventType: EventType
 ) {
     @Id
+    @Type(type = "uuid-char")
     val errorId: UUID = UUID.randomUUID()
 }
