@@ -1179,11 +1179,12 @@ class RobotApplicationServiceTest {
     }
 
     @Test
-    fun `distributeMinedResources after mining runs fine when InventoryFullException occurs`() {
+    fun `distributeMinedResources can handle 0 resources to be distributed`() {
         // given
         every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf()
 
-        val amount = 33
+        val robots = listOf(robot1, robot2)
+        val amount = 0
         val resource = ResourceType.COAL
 
         val testedMethod = robotApplicationService::class.declaredMemberFunctions
@@ -1191,10 +1192,12 @@ class RobotApplicationServiceTest {
         testedMethod.isAccessible = true
 
         // when
-        testedMethod.call(robotApplicationService, listOf(robot1), amount, resource)
+        testedMethod.call(robotApplicationService, robots, amount, resource)
 
         // then
         val robot1Amount = robot1.inventory.getStorageUsageForResource(ResourceType.COAL) // speed 2
-        assert(robot1Amount == robot1.inventory.maxStorage)
+        val robot2Amount = robot2.inventory.getStorageUsageForResource(ResourceType.COAL) // speed 2
+        assert(robot1Amount == 0)
+        assert(robot2Amount == 0)
     }
 }
