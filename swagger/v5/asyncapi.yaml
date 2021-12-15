@@ -94,7 +94,7 @@ components:
   messages:
     movement:
       description: >
-        Announces wheather a movemnt has been successfull and provides data about planet
+        Announces whether a movemnt has been successfull and provides data about planet. transactionId is empty for obscuration.
       traits:
         - $ref: '#/components/messageTraits/DefaultTradingKafkaMessage'
       payload:
@@ -141,21 +141,24 @@ components:
       traits:
         - $ref: '#/components/messageTraits/DefaultTradingKafkaMessage'
       payload:
-        type: array
-        items:
-          - type: object
-            properties:
-              planetID:
-                type: string
-                format: uuid
-                decription: uuid of the planets neighbours
-              movementDifficulty:
-                type: integer
-                description: Movemenet difficulty of the planet
-              direction:
-                type: string
-                enum: [north, west, south, east]
-                description: cardinal direction of neighbour 
+        type: object
+        properties:
+          neighbours:
+            type: array
+            items:
+              - type: object
+                properties:
+                  planetID:
+                    type: string
+                    format: uuid
+                    decription: uuid of the planets neighbours
+                  movementDifficulty:
+                    type: integer
+                    description: Movemenet difficulty of the planet
+                  direction:
+                    type: string
+                    enum: [north, west, south, east]
+                    description: cardinal direction of neighbour 
     planet-blocked:
       description: >
         If a planet has been blocked

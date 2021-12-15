@@ -33,6 +33,7 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka:2.7.6")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("io.github.microutils:kotlin-logging-jvm:2.1.0")
+    implementation("org.mariadb.jdbc:mariadb-java-client:2.7.4")
     testImplementation("com.squareup.okhttp3:okhttp:4.9.2")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.9.2")
     implementation("org.mapstruct:mapstruct:1.5.0.Beta1")

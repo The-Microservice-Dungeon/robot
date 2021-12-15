@@ -98,9 +98,14 @@ class RobotApplicationServiceTest {
         every { robotRepository.save(any()) } returns robot1 // we don't use the return value of save calls
         every { eventSender.sendEvent(any(), any(), any()) } returns randomUUID
         justRun { successEventSender.sendAttackItemEvents(any(), any(), any()) }
-        justRun { successEventSender.sendItemMovementEvents(any()) }
-        justRun { successEventSender.sendMovementEvents(any(), any(), any(), any()) }
+        justRun { successEventSender.sendMovementItemEvents(any()) }
+        every { successEventSender.sendMovementEvents(any(), any(), any(), any()) } returns UUID.randomUUID()
         justRun { eventSender.sendGenericEvent(any(), any()) }
+        justRun { successEventSender.sendMiningEvent(any()) }
+        justRun { successEventSender.sendFightingEvent(any(), any(), any()) }
+        justRun { successEventSender.sendResourceDistributionEvent(any()) }
+        justRun { successEventSender.sendEnergyRegenEvent(any(), any()) }
+        justRun { successEventSender.sendBlockEvent(any(), any()) }
     }
 
     @Test
