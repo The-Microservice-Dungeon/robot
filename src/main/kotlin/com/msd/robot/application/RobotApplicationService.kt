@@ -554,13 +554,13 @@ class RobotApplicationService(
         var amountDistributed = 0
         val sortedDecimalPlaces = robotsDecimalPlaces.entries.sortedBy { it.value }.reversed()
         var index = 0
-        val fullRobots = mutableMapOf<Robot, Boolean>()
+        val fullRobots = mutableSetOf<Robot>()
         while (amountDistributed < remainingAmount && fullRobots.count() < sortedDecimalPlaces.size) {
             try {
                 sortedDecimalPlaces[index % sortedDecimalPlaces.size].key.inventory.addResource(resource, 1)
                 amountDistributed += 1
             } catch (ife: InventoryFullException) {
-                fullRobots[sortedDecimalPlaces[index % sortedDecimalPlaces.size].key] = true
+                fullRobots.add(sortedDecimalPlaces[index % sortedDecimalPlaces.size].key)
             }
             index++
         }

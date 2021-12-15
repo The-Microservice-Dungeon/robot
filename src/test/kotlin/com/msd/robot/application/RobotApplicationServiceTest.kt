@@ -8,6 +8,7 @@ import com.msd.domain.ResourceType
 import com.msd.event.application.EventSender
 import com.msd.item.domain.AttackItemType
 import com.msd.planet.domain.Planet
+import com.msd.planet.domain.PlanetType
 import com.msd.robot.application.exception.TargetPlanetNotReachableException
 import com.msd.robot.application.exception.UnknownPlanetException
 import com.msd.robot.domain.*
@@ -73,7 +74,8 @@ class RobotApplicationServiceTest {
     fun setup() {
         MockKAnnotations.init(this)
         robotDomainService = RobotDomainService(robotRepository, gameMapMockService)
-        robotApplicationService = RobotApplicationService(gameMapMockService, robotDomainService, eventSender, successEventSender)
+        robotApplicationService =
+            RobotApplicationService(gameMapMockService, robotDomainService, eventSender, successEventSender)
 
         planet1 = Planet(UUID.randomUUID(), ResourceType.COAL)
         planet2 = Planet(UUID.randomUUID(), ResourceType.IRON)
@@ -161,7 +163,7 @@ class RobotApplicationServiceTest {
             robot1.block()
         planet1.blocked = false
         val command = MovementCommand(robot1.id, planet2.planetId, UUID.randomUUID())
-        val planetDto = GameMapPlanetDto(planet2.planetId, 3)
+        val planetDto = GameMapPlanetDto(planet2.planetId, 3, PlanetType.DEFAULT)
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { gameMapMockService.retrieveTargetPlanetIfRobotCanReach(any(), any()) } returns planetDto
         val failureException = slot<FailureException>()
@@ -181,7 +183,7 @@ class RobotApplicationServiceTest {
         robot1.block()
 
         val command = MovementCommand(robot3.id, planet2.planetId, UUID.randomUUID())
-        val planetDto = GameMapPlanetDto(planet2.planetId, 3)
+        val planetDto = GameMapPlanetDto(planet2.planetId, 3, PlanetType.DEFAULT)
         every { robotRepository.findByIdOrNull(robot3.id) } returns robot3
         every { gameMapMockService.retrieveTargetPlanetIfRobotCanReach(any(), any()) } returns planetDto
         val failureException = slot<FailureException>()
@@ -199,7 +201,7 @@ class RobotApplicationServiceTest {
     fun `Robot moves if there are no problems`() {
         // given
         val command = MovementCommand(robot1.id, planet2.planetId, UUID.randomUUID())
-        val planetDto = GameMapPlanetDto(planet2.planetId, 3)
+        val planetDto = GameMapPlanetDto(planet2.planetId, 3, PlanetType.DEFAULT)
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { robotRepository.save(any()) } returns robot1
         every { gameMapMockService.retrieveTargetPlanetIfRobotCanReach(any(), any()) } returns planetDto
@@ -977,7 +979,8 @@ class RobotApplicationServiceTest {
         )
 
         // when
-        val getResourcesOnPlanets = robotApplicationService::class.declaredMemberFunctions.find { it.name == "getResourcesOnPlanets" }!!
+        val getResourcesOnPlanets =
+            robotApplicationService::class.declaredMemberFunctions.find { it.name == "getResourcesOnPlanets" }!!
         getResourcesOnPlanets.isAccessible = true
         val resultMap = getResourcesOnPlanets.call(
             robotApplicationService,
@@ -999,7 +1002,9 @@ class RobotApplicationServiceTest {
         robot4.move(Planet(UUID.randomUUID()), 0)
 
         every { gameMapMockService.getResourceOnPlanet(robot1.planet.planetId) } throws UnknownPlanetException(robot1.planet.planetId)
-        every { gameMapMockService.getResourceOnPlanet(robot2.planet.planetId) } throws NoResourceOnPlanetException(robot2.planet.planetId)
+        every { gameMapMockService.getResourceOnPlanet(robot2.planet.planetId) } throws NoResourceOnPlanetException(
+            robot2.planet.planetId
+        )
         every { gameMapMockService.getResourceOnPlanet(robot3.planet.planetId) } throws
             ClientException("GameMap Client returned internal error when retrieving resource on planet ${robot3.planet.planetId}")
         every { gameMapMockService.getResourceOnPlanet(robot4.planet.planetId) } returns ResourceType.PLATIN
@@ -1012,7 +1017,8 @@ class RobotApplicationServiceTest {
         )
 
         // when
-        val getResourcesOnPlanets = robotApplicationService::class.declaredMemberFunctions.find { it.name == "getResourcesOnPlanets" }!!
+        val getResourcesOnPlanets =
+            robotApplicationService::class.declaredMemberFunctions.find { it.name == "getResourcesOnPlanets" }!!
         getResourcesOnPlanets.isAccessible = true
         val resultMap = getResourcesOnPlanets.call(
             robotApplicationService,
@@ -1085,6 +1091,110 @@ class RobotApplicationServiceTest {
     }
 
     @Test
-    fun `distributeMinedResources after mining distributes resources correctly`() {
+    fun `distributeMinedResources after mining distributes resources correctly for equal mining levels`() {
+        // given
+        every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf()
+
+        val robots = listOf(robot1, robot3, robot4, robot6)
+        robots.forEach {
+            it.upgrade(UpgradeType.MINING_SPEED, 1)
+            it.upgrade(UpgradeType.MINING_SPEED, 2)
+            it.upgrade(UpgradeType.MINING_SPEED, 3)
+        }
+
+        val amount = 23
+        val resource = ResourceType.COAL
+
+        val testedMethod = robotApplicationService::class.declaredMemberFunctions
+            .find { it.name == "distributeMinedResources" }!!
+        testedMethod.isAccessible = true
+
+        // when
+        testedMethod.call(robotApplicationService, robots, amount, resource)
+
+        // then
+        val robot1Amount = robot1.inventory.getStorageUsageForResource(ResourceType.COAL)
+        val robot3Amount = robot3.inventory.getStorageUsageForResource(ResourceType.COAL)
+        val robot4Amount = robot4.inventory.getStorageUsageForResource(ResourceType.COAL)
+        val robot6Amount = robot6.inventory.getStorageUsageForResource(ResourceType.COAL)
+
+        assertAll(
+            {
+                assert(robot1Amount in 5..6)
+            }, {
+            assert(robot3Amount in 5..6)
+        }, {
+            assert(robot4Amount in 5..6)
+        }, {
+            assert(robot6Amount in 5..6)
+        }, {
+            assertEquals(23, robot1Amount + robot3Amount + robot4Amount + robot6Amount)
+        }
+        )
+    }
+
+    @Test
+    fun `distributeMinedResources after mining distributes resources correctly for different mining levels`() {
+        // given
+        every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf()
+
+        val robots = listOf(robot1, robot3, robot4, robot6)
+        robot3.upgrade(UpgradeType.MINING_SPEED, 1)
+        robot4.upgrade(UpgradeType.MINING_SPEED, 1)
+        robot4.upgrade(UpgradeType.MINING_SPEED, 2)
+        robot6.upgrade(UpgradeType.MINING_SPEED, 1)
+        robot6.upgrade(UpgradeType.MINING_SPEED, 2)
+        robot6.upgrade(UpgradeType.MINING_SPEED, 3)
+
+        val amount = 33
+        val resource = ResourceType.COAL
+
+        val testedMethod = robotApplicationService::class.declaredMemberFunctions
+            .find { it.name == "distributeMinedResources" }!!
+        testedMethod.isAccessible = true
+
+        // when
+        testedMethod.call(robotApplicationService, robots, amount, resource)
+
+        // then
+        val robot1Amount = robot1.inventory.getStorageUsageForResource(ResourceType.COAL) // speed 2
+        val robot3Amount = robot3.inventory.getStorageUsageForResource(ResourceType.COAL) // speed 5
+        val robot4Amount = robot4.inventory.getStorageUsageForResource(ResourceType.COAL) // speed 10
+        val robot6Amount = robot6.inventory.getStorageUsageForResource(ResourceType.COAL) // speed 15
+
+        assertAll(
+            {
+                assert(robot1Amount == 2)
+            }, {
+            assert(robot3Amount == 5)
+        }, {
+            assert(robot4Amount == 10)
+        }, {
+            // this one gets more than its fair share, because our method favors higher mining speeds
+            assert(robot6Amount == 16)
+        }, {
+            assertEquals(33, robot1Amount + robot3Amount + robot4Amount + robot6Amount)
+        }
+        )
+    }
+
+    @Test
+    fun `distributeMinedResources after mining runs fine when InventoryFullException occurs`() {
+        // given
+        every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf()
+
+        val amount = 33
+        val resource = ResourceType.COAL
+
+        val testedMethod = robotApplicationService::class.declaredMemberFunctions
+            .find { it.name == "distributeMinedResources" }!!
+        testedMethod.isAccessible = true
+
+        // when
+        testedMethod.call(robotApplicationService, listOf(robot1), amount, resource)
+
+        // then
+        val robot1Amount = robot1.inventory.getStorageUsageForResource(ResourceType.COAL) // speed 2
+        assert(robot1Amount == robot1.inventory.maxStorage)
     }
 }
