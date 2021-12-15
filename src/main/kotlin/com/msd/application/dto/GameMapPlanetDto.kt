@@ -15,6 +15,6 @@ class GameMapPlanetDto(
 ) {
 
     fun toPlanet(): Planet {
-        return Planet(id)
+        return Planet(id, resource?.resourceType)
     }
 }

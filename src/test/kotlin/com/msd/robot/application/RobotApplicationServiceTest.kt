@@ -2,6 +2,7 @@ package com.msd.robot.application
 
 import com.msd.application.*
 import com.msd.application.dto.GameMapPlanetDto
+import com.msd.application.dto.ResourceDto
 import com.msd.command.application.command.*
 import com.msd.core.FailureException
 import com.msd.domain.ResourceType
@@ -206,7 +207,7 @@ class RobotApplicationServiceTest {
     fun `Robot moves if there are no problems`() {
         // given
         val command = MovementCommand(robot1.id, planet2.planetId, UUID.randomUUID())
-        val planetDto = GameMapPlanetDto(planet2.planetId, 3, PlanetType.DEFAULT)
+        val planetDto = GameMapPlanetDto(planet2.planetId, 3, PlanetType.DEFAULT, resource = ResourceDto(ResourceType.IRON))
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { robotRepository.save(any()) } returns robot1
         every { gameMapMockService.retrieveTargetPlanetIfRobotCanReach(any(), any()) } returns planetDto
