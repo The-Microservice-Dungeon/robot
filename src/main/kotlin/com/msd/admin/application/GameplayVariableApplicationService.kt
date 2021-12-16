@@ -14,34 +14,37 @@ class GameplayVariableApplicationService(
     val energyRegenerationLevelRepository: EnergyRegenerationLevelRepository,
     val energyCostCalculationValueRepository: EnergyCostCalculationValueRepository
 ) {
-    fun patchGameplayVariables(patchDto: GameplayVariablesDTO) {
+    fun patchGameplayVariables(patchDto: GameplayVariablesDTO): GameplayVariablesDTO {
+        val changedDTO = GameplayVariablesDTO()
+
         if (patchDto.storage.isNotEmpty()) {
-            patchStorageVariables(patchDto.storage)
+            changedDTO.storage = patchStorageVariables(patchDto.storage)
         }
         if (patchDto.hp.isNotEmpty()) {
-            patchHealthVariables(patchDto.hp)
+            changedDTO.hp = patchHealthVariables(patchDto.hp)
         }
         if (patchDto.damage.isNotEmpty()) {
-            patchDamageVariables(patchDto.damage)
+            changedDTO.damage = patchDamageVariables(patchDto.damage)
         }
         if (patchDto.miningSpeed.isNotEmpty()) {
-            patchMiningSpeedVariables(patchDto.miningSpeed)
+            changedDTO.miningSpeed = patchMiningSpeedVariables(patchDto.miningSpeed)
         }
         if (patchDto.energyCapacity.isNotEmpty()) {
-            patchEnergyCapacityVariables(patchDto.energyCapacity)
+            changedDTO.energyCapacity = patchEnergyCapacityVariables(patchDto.energyCapacity)
         }
         if (patchDto.energyRegeneration.isNotEmpty()) {
-            patchEnergyRegenerationVariables(patchDto.energyRegeneration)
+            changedDTO.energyRegeneration = patchEnergyRegenerationVariables(patchDto.energyRegeneration)
         }
         if (patchDto.energyCostCalculation.isNotEmpty()) {
-            patchEnergyCalculationVariables(patchDto.energyCostCalculation)
+            changedDTO.energyCostCalculation = patchEnergyCalculationVariables(patchDto.energyCostCalculation)
         }
+
+        return changedDTO
     }
 
-    // TODO("application runner, commandline runner spring, level enums über zahlenwerte")
-    // TODO("Return changed Values")
+    // TODO("application runner, commandline runner spring")
 
-    fun patchStorageVariables(map: Map<GameplayVariablesLevelVerbs, Int>) {
+    fun patchStorageVariables(map: Map<GameplayVariablesLevelVerbs, Int>): Map<GameplayVariablesLevelVerbs, Int> {
         val storageLevel = storageLevelRepository.findByIdOrNull("STORAGE")!!
 
         storageLevel.levels.forEach {
@@ -50,10 +53,11 @@ class GameplayVariableApplicationService(
             }
         }
 
-        storageLevelRepository.save(storageLevel)
+        val changedLevelValues = storageLevelRepository.save(storageLevel)
+        return changedLevelValues.levels
     }
 
-    fun patchHealthVariables(map: Map<GameplayVariablesLevelVerbs, Int>) {
+    fun patchHealthVariables(map: Map<GameplayVariablesLevelVerbs, Int>): Map<GameplayVariablesLevelVerbs, Int> {
         val healthLevel = healthLevelRepository.findByIdOrNull("HP")!!
 
         healthLevel.levels.forEach {
@@ -62,10 +66,11 @@ class GameplayVariableApplicationService(
             }
         }
 
-        healthLevelRepository.save(healthLevel)
+        val changedLevelValues = healthLevelRepository.save(healthLevel)
+        return changedLevelValues.levels
     }
 
-    fun patchDamageVariables(map: Map<GameplayVariablesLevelVerbs, Int>) {
+    fun patchDamageVariables(map: Map<GameplayVariablesLevelVerbs, Int>): Map<GameplayVariablesLevelVerbs, Int> {
         val damageLevel = damageLevelRepository.findByIdOrNull("DAMAGE")!!
 
         damageLevel.levels.forEach {
@@ -74,10 +79,11 @@ class GameplayVariableApplicationService(
             }
         }
 
-        damageLevelRepository.save(damageLevel)
+        val changedLevelValues = damageLevelRepository.save(damageLevel)
+        return changedLevelValues.levels
     }
 
-    fun patchMiningSpeedVariables(map: Map<GameplayVariablesLevelVerbs, Int>) {
+    fun patchMiningSpeedVariables(map: Map<GameplayVariablesLevelVerbs, Int>): Map<GameplayVariablesLevelVerbs, Int> {
         val miningSpeedLevel = miningSpeedLevelRepository.findByIdOrNull("MININGSPEED")!!
 
         miningSpeedLevel.levels.forEach {
@@ -86,10 +92,11 @@ class GameplayVariableApplicationService(
             }
         }
 
-        miningSpeedLevelRepository.save(miningSpeedLevel)
+        val changedLevelValues = miningSpeedLevelRepository.save(miningSpeedLevel)
+        return changedLevelValues.levels
     }
 
-    fun patchEnergyCapacityVariables(map: Map<GameplayVariablesLevelVerbs, Int>) {
+    fun patchEnergyCapacityVariables(map: Map<GameplayVariablesLevelVerbs, Int>): Map<GameplayVariablesLevelVerbs, Int> {
         val energyCapacityLevel = energyCapacityLevelRepository.findByIdOrNull("ENERGYCAPACITY")!!
 
         energyCapacityLevel.levels.forEach {
@@ -98,10 +105,11 @@ class GameplayVariableApplicationService(
             }
         }
 
-        energyCapacityLevelRepository.save(energyCapacityLevel)
+        val changedLevelValues = energyCapacityLevelRepository.save(energyCapacityLevel)
+        return changedLevelValues.levels
     }
 
-    fun patchEnergyRegenerationVariables(map: Map<GameplayVariablesLevelVerbs, Int>) {
+    fun patchEnergyRegenerationVariables(map: Map<GameplayVariablesLevelVerbs, Int>): Map<GameplayVariablesLevelVerbs, Int> {
         val energyRegenerationLevel = energyRegenerationLevelRepository.findByIdOrNull("ENERGYREGENERATION")!!
 
         energyRegenerationLevel.levels.forEach {
@@ -110,10 +118,11 @@ class GameplayVariableApplicationService(
             }
         }
 
-        energyRegenerationLevelRepository.save(energyRegenerationLevel)
+        val changedLevelValues = energyRegenerationLevelRepository.save(energyRegenerationLevel)
+        return changedLevelValues.levels
     }
 
-    fun patchEnergyCalculationVariables(map: Map<EnergyCostCalculationVerbs, Double>) {
+    fun patchEnergyCalculationVariables(map: Map<EnergyCostCalculationVerbs, Double>): Map<EnergyCostCalculationVerbs, Double> {
         val energyCostCalculationValue = energyCostCalculationValueRepository.findByIdOrNull("ENERGYCOSTCALCULATION")!!
 
         energyCostCalculationValue.values.forEach {
@@ -122,6 +131,7 @@ class GameplayVariableApplicationService(
             }
         }
 
-        energyCostCalculationValueRepository.save(energyCostCalculationValue)
+        val changedLevelValues = energyCostCalculationValueRepository.save(energyCostCalculationValue)
+        return changedLevelValues.values
     }
 }
