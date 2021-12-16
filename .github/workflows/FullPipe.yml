@@ -62,7 +62,7 @@ jobs:
       - name: Build docker image to github registry
         run: >
           ./gradlew jib
-          -Djib.to.image=ghcr.io/the-microservice-dungeon/gamelog/gamelogservice
+          -Djib.to.image=ghcr.io/the-microservice-dungeon/robot/robotservice
           -Djib.from.image=eclipse-temurin:17-alpine
           --parallel
           --build-cache
