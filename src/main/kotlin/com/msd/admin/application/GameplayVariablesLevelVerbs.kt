@@ -1,6 +1,7 @@
 package com.msd.admin.application
 
 enum class GameplayVariablesLevelVerbs(val verb: String) {
+    LVL0("lvl0"),
     LVL1("lvl1"),
     LVL2("lvl2"),
     LVL3("lvl3"),

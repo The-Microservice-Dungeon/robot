@@ -140,7 +140,7 @@ class RobotTest {
         robot1.attack(robot2)
 
         // assert
-        assert(robot2.health == UpgradeValues.maxHealthByLevel[0] - UpgradeValues.attackDamageByLevel[0])
+        assert(robot2.health == UpgradeValues.maxHealthByLevel.getByVal(0) - UpgradeValues.attackDamageByLevel.getByVal(0))
     }
 
     @Test
@@ -196,25 +196,25 @@ class RobotTest {
         assertAll(
             "Assert upgrading changes values",
             {
-                assertEquals(UpgradeValues.storageByLevel[1], robot1.inventory.maxStorage)
+                assertEquals(UpgradeValues.storageByLevel.getByVal(1), robot1.inventory.maxStorage)
             },
             {
-                assertEquals(UpgradeValues.maxHealthByLevel[1], robot1.maxHealth)
+                assertEquals(UpgradeValues.maxHealthByLevel.getByVal(1), robot1.maxHealth)
             },
             {
-                assertEquals(UpgradeValues.attackDamageByLevel[1], robot1.attackDamage)
+                assertEquals(UpgradeValues.attackDamageByLevel.getByVal(1), robot1.attackDamage)
             },
             {
-                assertEquals(UpgradeValues.miningSpeedByLevel[1], robot1.miningSpeed)
+                assertEquals(UpgradeValues.miningSpeedByLevel.getByVal(1), robot1.miningSpeed)
             },
             {
                 assertTrue(robot1.canMine(ResourceType.IRON))
             },
             {
-                assertEquals(UpgradeValues.maxEnergyByLevel[1], robot1.maxEnergy)
+                assertEquals(UpgradeValues.maxEnergyByLevel.getByVal(1), robot1.maxEnergy)
             },
             {
-                assertEquals(UpgradeValues.energyRegenByLevel[1], robot1.energyRegen)
+                assertEquals(UpgradeValues.energyRegenByLevel.getByVal(1), robot1.energyRegen)
             }
         )
     }

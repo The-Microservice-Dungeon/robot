@@ -17,6 +17,7 @@ import com.msd.robot.application.dtos.RobotDto
 import com.msd.robot.application.dtos.RobotSpawnDto
 import com.msd.robot.domain.RobotRepository
 import com.msd.robot.domain.UpgradeValues
+import com.msd.robot.domain.getByVal
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.AfterAll
@@ -542,7 +543,7 @@ class ScenarioTests(
             content = mapper.writeValueAsString(CommandDTO(commands))
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
-        assertEquals(13 + UpgradeValues.energyRegenByLevel[0], robotRepo.findByIdOrNull(robot1.id)!!.energy)
+        assertEquals(13 + UpgradeValues.energyRegenByLevel.getByVal(0), robotRepo.findByIdOrNull(robot1.id)!!.energy)
         assertEquals(10, robotRepo.findByIdOrNull(robot2.id)!!.health)
         assertEquals(10, robotRepo.findByIdOrNull(robot3.id)!!.health)
 

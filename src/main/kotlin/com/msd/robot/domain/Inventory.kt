@@ -30,7 +30,7 @@ class Inventory {
             field = value
         }
     val maxStorage
-        get() = UpgradeValues.storageByLevel[storageLevel]
+        get() = UpgradeValues.storageByLevel.getByVal(storageLevel)
     var usedStorage = 0
         private set
 
