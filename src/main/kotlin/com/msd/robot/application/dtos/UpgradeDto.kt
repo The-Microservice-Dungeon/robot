@@ -4,7 +4,7 @@ import com.msd.robot.domain.UpgradeType
 import java.util.*
 
 class UpgradeDto(
-    val transaction_id: UUID,
+    val transactionId: UUID,
 
     val upgradeType: UpgradeType,
 

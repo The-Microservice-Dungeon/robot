@@ -95,7 +95,7 @@ class RobotControllerTest(
     fun `Sending a spawn command leads to a robot being present in the repository`() {
         val spawnDto = """
             {
-                "transaction_id": "${UUID.randomUUID()}",
+                "transactionId": "${UUID.randomUUID()}",
                 "player": "$player1Id",
                 "planet": "$planet1Id"
             }
@@ -118,8 +118,8 @@ class RobotControllerTest(
         // given
         val restorationDTO = """
             {
-                "transaction-id": "${UUID.randomUUID()}",
-                "restoration-type": "HEALTH"
+                "transactionId": "${UUID.randomUUID()}",
+                "restorationType": "HEALTH"
             }
         """.trimIndent()
         val robotId = UUID.randomUUID()
@@ -142,8 +142,8 @@ class RobotControllerTest(
         // given
         val restorationDTO = """
             {
-                "transaction-id": "${UUID.randomUUID()}",
-                "restoration-type": "WRONG"
+                "transactionId": "${UUID.randomUUID()}",
+                "restorationType": "WRONG"
             }
         """.trimIndent()
         val robot1 = Robot(player1Id, Planet(planet1Id))
@@ -271,9 +271,9 @@ class RobotControllerTest(
         // given
         val upgradeDto = """
             {
-                "transaction_id": "${UUID.randomUUID()}",
-                "upgrade-type": "DAMAGE",
-                "target-level": 1
+                "transactionId": "${UUID.randomUUID()}",
+                "upgradeType": "DAMAGE",
+                "targetLevel": 1
             }
         """.trimIndent()
 
@@ -295,9 +295,9 @@ class RobotControllerTest(
 
         val upgradeDto = """
             {
-                "transaction_id": "${UUID.randomUUID()}",
-                "upgrade-type": "DAMAGE",
-                "target-level": 2
+                "transactionId": "${UUID.randomUUID()}",
+                "upgradeType": "DAMAGE",
+                "targetLevel": 2
             }
         """.trimIndent()
 
@@ -332,9 +332,9 @@ class RobotControllerTest(
 
         val upgradeDto = """
             {
-                "transaction_id": "${UUID.randomUUID()}",
-                "upgrade-type": "DAMAGE",
-                "target-level": 6
+                "transactionId": "${UUID.randomUUID()}",
+                "upgradeType": "DAMAGE",
+                "targetLevel": 6
             }
         """.trimIndent()
 
@@ -362,9 +362,9 @@ class RobotControllerTest(
 
         val upgradeDto = """
             {
-                "transaction_id": "${UUID.randomUUID()}",
-                "upgrade-type": "DAMAGE",
-                "target-level": 0
+                "transactionId": "${UUID.randomUUID()}",
+                "upgradeType": "DAMAGE",
+                "targetLevel": 0
             }
         """.trimIndent()
 
@@ -390,9 +390,9 @@ class RobotControllerTest(
         UpgradeType.values().forEach {
             val upgradeDto = """
             {
-                "transaction_id": "${UUID.randomUUID()}",
-                "upgrade-type": "$it",
-                "target-level": 1
+                "transactionId": "${UUID.randomUUID()}",
+                "upgradeType": "$it",
+                "targetLevel": 1
             }
             """.trimIndent()
 

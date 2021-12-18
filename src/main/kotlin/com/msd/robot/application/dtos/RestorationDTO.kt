@@ -4,6 +4,6 @@ import com.msd.robot.application.RestorationType
 import java.util.*
 
 data class RestorationDTO(
-    val transactionID: UUID,
+    val transactionId: UUID,
     val restorationType: RestorationType
 )
