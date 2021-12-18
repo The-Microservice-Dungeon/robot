@@ -47,6 +47,10 @@ channels:
     publish:
       message:
         $ref: '#/components/messages/item-movement'
+  robot-destroyed:
+    publish:
+      message:
+        $ref: '#/components/messages/robot-destroyed'
 components:
   messageTraits:
     DefaultTradingKafkaMessage:
@@ -357,3 +361,21 @@ components:
             type: string
             format: uuid
             description: eventId of a movement event that tells you about your target planet. Also a neighbour event with the same transactionId as this event is thrown to tell you abour neighbour planets.
+
+    robot-destroyed:
+      description: >
+        Event shows a destroyed robot.
+      traits:
+        - $ref: '#/components/messageTraits/DefaultTradingKafkaMessage'
+      payload:
+        type: object
+        properties:
+          robotId:
+            type: string
+            format: uuid
+            description: Id of the robot
+          playerId:
+            type: string
+            format: uuid
+            description: Owner of the robot
+
