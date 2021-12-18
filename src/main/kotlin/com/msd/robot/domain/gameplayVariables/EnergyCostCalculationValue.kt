@@ -1,18 +1,18 @@
 package com.msd.robot.domain.gameplayVariables
 
 import com.msd.admin.application.EnergyCostCalculationVerbs
-import java.util.*
 import javax.persistence.ElementCollection
 import javax.persistence.Entity
+import javax.persistence.FetchType
 import javax.persistence.Id
 
 @Entity
 class EnergyCostCalculationValue {
     @Id
-    val Id = UUID.randomUUID()
+    val id: String = "ENERGYCOSTCALCULATION"
 
-    @ElementCollection
-    val values = mutableMapOf(
+    @ElementCollection(fetch = FetchType.EAGER)
+    val levels = mutableMapOf(
         EnergyCostCalculationVerbs.BLOCKINGBASECOST to 2.0,
         EnergyCostCalculationVerbs.BLOCKINGMAXENERGYPROPORTION to 10.0,
         EnergyCostCalculationVerbs.MININGMULTIPLIER to 1.0,
@@ -23,8 +23,8 @@ class EnergyCostCalculationValue {
     )
 }
 
-object EnergyCostCalculationObject {
-    var values = mapOf(
+object EnergyCostCalculationValueObject {
+    var levels = mapOf(
         EnergyCostCalculationVerbs.BLOCKINGBASECOST to 2.0,
         EnergyCostCalculationVerbs.BLOCKINGMAXENERGYPROPORTION to 10.0,
         EnergyCostCalculationVerbs.MININGMULTIPLIER to 1.0,

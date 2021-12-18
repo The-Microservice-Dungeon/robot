@@ -13,13 +13,15 @@ import javax.persistence.*
 import kotlin.math.round
 
 object UpgradeValues {
-    val storageByLevel = StorageLevelObject.levels
-    val maxHealthByLevel = HealthLevelObject.levels
-    val attackDamageByLevel = DamageLevelObject.levels
-    val miningSpeedByLevel = MiningSpeedLevelObject.levels
-    val maxEnergyByLevel = EnergyCapacityObject.levels
-    val energyRegenByLevel = EnergyRegenerationObject.levels
+    var storageByLevel = StorageLevelObject.levels
+    var maxHealthByLevel = HealthLevelObject.levels
+    var attackDamageByLevel = DamageLevelObject.levels
+    var miningSpeedByLevel = MiningSpeedLevelObject.levels
+    var maxEnergyByLevel = EnergyCapacityLevelObject.levels
+    var energyRegenByLevel = EnergyRegenerationLevelObject.levels
 }
+
+// TODO("Integrate EnergyCostCalculationObject")
 
 fun Map<GameplayVariablesLevelVerbs, Int>.getByVal(value: Int): Int {
     return when (value) {
@@ -30,8 +32,7 @@ fun Map<GameplayVariablesLevelVerbs, Int>.getByVal(value: Int): Int {
         4 -> this[GameplayVariablesLevelVerbs.LVL4]!!
         5 -> this[GameplayVariablesLevelVerbs.LVL5]!!
 
-        // TODO("Create Exception")
-        else -> throw Exception("")
+        else -> throw IndexOutOfBoundsException()
     }
 }
 

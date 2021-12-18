@@ -1,17 +1,17 @@
 package com.msd.robot.domain.gameplayVariables
 
 import com.msd.admin.application.GameplayVariablesLevelVerbs
-import java.util.*
 import javax.persistence.ElementCollection
 import javax.persistence.Entity
+import javax.persistence.FetchType
 import javax.persistence.Id
 
 @Entity
 class EnergyRegenerationLevel {
     @Id
-    val Id = UUID.randomUUID()
+    val id: String = "ENERGYREGENERATION"
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     val levels = mutableMapOf(
         GameplayVariablesLevelVerbs.LVL0 to 4,
         GameplayVariablesLevelVerbs.LVL1 to 6,
@@ -22,7 +22,7 @@ class EnergyRegenerationLevel {
     )
 }
 
-object EnergyRegenerationObject {
+object EnergyRegenerationLevelObject {
     var levels = mapOf(
         GameplayVariablesLevelVerbs.LVL0 to 4,
         GameplayVariablesLevelVerbs.LVL1 to 6,

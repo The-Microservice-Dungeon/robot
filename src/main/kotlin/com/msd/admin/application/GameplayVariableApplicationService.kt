@@ -58,7 +58,7 @@ class GameplayVariableApplicationService(
     }
 
     fun patchHealthVariables(map: Map<GameplayVariablesLevelVerbs, Int>): Map<GameplayVariablesLevelVerbs, Int> {
-        val healthLevel = healthLevelRepository.findByIdOrNull("HP")!!
+        val healthLevel = healthLevelRepository.findByIdOrNull("HEALTH")!!
 
         healthLevel.levels.forEach {
             if (map.containsKey(it.key)) {
@@ -125,13 +125,13 @@ class GameplayVariableApplicationService(
     fun patchEnergyCalculationVariables(map: Map<EnergyCostCalculationVerbs, Double>): Map<EnergyCostCalculationVerbs, Double> {
         val energyCostCalculationValue = energyCostCalculationValueRepository.findByIdOrNull("ENERGYCOSTCALCULATION")!!
 
-        energyCostCalculationValue.values.forEach {
+        energyCostCalculationValue.levels.forEach {
             if (map.containsKey(it.key)) {
-                energyCostCalculationValue.values[it.key] = map[it.key]!!
+                energyCostCalculationValue.levels[it.key] = map[it.key]!!
             }
         }
 
         val changedLevelValues = energyCostCalculationValueRepository.save(energyCostCalculationValue)
-        return changedLevelValues.values
+        return changedLevelValues.levels
     }
 }

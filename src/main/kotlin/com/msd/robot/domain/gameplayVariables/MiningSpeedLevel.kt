@@ -1,17 +1,17 @@
 package com.msd.robot.domain.gameplayVariables
 
 import com.msd.admin.application.GameplayVariablesLevelVerbs
-import java.util.*
 import javax.persistence.ElementCollection
 import javax.persistence.Entity
+import javax.persistence.FetchType
 import javax.persistence.Id
 
 @Entity
 class MiningSpeedLevel {
     @Id
-    val Id = UUID.randomUUID()
+    val id: String = "MININGSPEED"
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     val levels = mutableMapOf(
         GameplayVariablesLevelVerbs.LVL0 to 2,
         GameplayVariablesLevelVerbs.LVL1 to 5,

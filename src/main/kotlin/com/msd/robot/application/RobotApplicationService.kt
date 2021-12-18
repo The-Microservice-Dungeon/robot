@@ -472,6 +472,8 @@ class RobotApplicationService(
     ): MutableList<ValidMineCommand> {
         val validMineCommands = mutableListOf<ValidMineCommand>()
 
+        // TODO("Throw NotEnoughEnergyException here?")
+
         for (mineCommand in mineCommands) {
             try {
                 val robot = robotDomainService.getRobot(mineCommand.robotUUID)

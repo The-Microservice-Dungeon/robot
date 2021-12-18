@@ -1,5 +1,6 @@
 package com.msd.gameplayVariables
 
+import com.msd.admin.application.GameplayVariableApplicationService
 import com.msd.application.GameMapService
 import com.msd.event.application.EventSender
 import com.msd.planet.application.PlanetMapper
@@ -43,6 +44,12 @@ class GameplayVariablesApplicationServiceTest(
     lateinit var miningSpeedLevelRepository: MiningSpeedLevelRepository
 
     @MockK
+    lateinit var storageLevelRepository: StorageLevelRepository
+
+    @MockK
+    lateinit var energyCostCalculationValueRepository: EnergyCostCalculationValueRepository
+
+    @MockK
     lateinit var gameMapMockService: GameMapService
 
     @MockK
@@ -50,8 +57,8 @@ class GameplayVariablesApplicationServiceTest(
     lateinit var robotApplicationService: RobotApplicationService
     lateinit var robotDomainService: RobotDomainService
 
-    @MockK
-    lateinit var storageLevelRepository: StorageLevelRepository
+    lateinit var gameplayVariablesApplicationService: GameplayVariableApplicationService
+
     lateinit var robot: Robot
     lateinit var planet: Planet
     private val playerId: UUID = UUID.randomUUID()
