@@ -12,13 +12,15 @@ spring:
     consumer:
       auto-offset-reset: earliest
   datasource:
-    url: jdbc:${DB_NAME}:file:./db/robot
-    driver-class-name: org.h2.Driver
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+    url: jdbc:mysql://${DB_HOST:localhost:3307}/${DB_NAME:robot}?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true
+    driver-class-name: org.mariadb.jdbc.Driver
+    username: ${DB_USER:robot}
+    password: ${DB_PASSWORD:robot}
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: create-drop
+    properties:
+      dialect: org.hibernate.dialect.MariaDB106Dialect
 
 microservice:
   map:
@@ -45,20 +47,22 @@ spring:
   kafka:
     group-id: robot
     enabled: true
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: localhost:29092
     topic:
       consumer:
         round: gameServiceRound
     consumer:
       auto-offset-reset: earliest
   datasource:
-    url: jdbc:h2:file:./db/robot
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: password
+    url: jdbc:mysql://${DB_HOST:localhost:3307}/${DB_NAME:robot}?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true
+    driver-class-name: org.mariadb.jdbc.Driver
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:root}
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: create-drop
+    properties:
+      dialect: org.hibernate.dialect.MariaDB106Dialect
 microservice:
   map:
     address: http://localhost:8081

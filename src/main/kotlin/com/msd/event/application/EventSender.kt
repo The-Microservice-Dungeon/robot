@@ -8,6 +8,7 @@ import com.msd.planet.domain.PlanetRepository
 import com.msd.robot.domain.RobotRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
+import java.lang.RuntimeException
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.*
@@ -133,7 +134,6 @@ class EventSender(
         )
     }
 
-    // TODO do we need this method? It only gets used when sending a successful event, we now what topic we need there
     private fun getTopicByEvent(event: GenericEventDTO): String {
         return when (event) {
             is MovementEventDTO -> topicConfig.ROBOT_MOVEMENT
@@ -146,7 +146,7 @@ class EventSender(
             is NeighboursEventDTO -> topicConfig.ROBOT_NEIGHBOURS
             is ItemRepairEventDTO -> topicConfig.ROBOT_ITEM_REPAIR
             is ItemMovementEventDTO -> topicConfig.ROBOT_ITEM_MOVEMENT
-            else -> TODO()
+            else -> throw RuntimeException("Unknown eventDTO")
         }
     }
 

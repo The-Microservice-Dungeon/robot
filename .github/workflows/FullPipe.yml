@@ -1,6 +1,5 @@
 name: Unit Test + Docker Image
-
-# Controls when the workflow will run
+#Test again
 on:
   push:
     paths-ignore:
@@ -12,10 +11,19 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow isn't split up, because the gradle daemon takes FOREVER to start
-  all-in-one:
+  test-and-build:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
-
+    services:
+      mariadb:
+        image: mariadb:10.6.5
+        env:
+          MYSQL_PASSWORD: robot
+          MYSQL_USER: robot
+          MYSQL_DATABASE: robot
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - '3306:3306'
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -24,7 +32,7 @@ jobs:
       - name: Set up JDK 11 + cache
         uses: actions/setup-java@v2
         with:
-          java-version: '11'
+          java-version: '17'
           distribution: 'temurin'
           # Setup gradle cache
           cache: gradle
@@ -38,10 +46,10 @@ jobs:
       - name: Unit Test
         # since it's h2, it is kind of unnecessary
         env:
-          DB_HOST: ''
-          DB_NAME: h2
-          DB_USER: sa
-          DB_PASSWORD: password
+          DB_PASSWORD: robot
+          DB_USER: robot
+          DB_NAME: robot
+          DB_HOST: localhost:3306
         run: ./gradlew test --build-cache --parallel
 
       - name: Login to GitHub Container Registry
@@ -52,7 +60,12 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build docker image to github registry
-        run: ./gradlew jib --image=ghcr.io/the-microservice-dungeon/robot/robotservice --parallel --build-cache
+        run: >
+          ./gradlew jib
+          -Djib.to.image=ghcr.io/the-microservice-dungeon/robot/robotservice
+          -Djib.from.image=eclipse-temurin:17-alpine
+          --parallel
+          --build-cache
 
       - name: Cleanup Gradle Cache
         # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
@@ -60,3 +73,20 @@ jobs:
         run: |
           rm -f $GRADLE_USER_HOME/caches/modules-2/modules-2.lock
           rm -f $GRADLE_USER_HOME/caches/modules-2/gc.properties
+  deploy:
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: stop-pull-run
+        uses: appleboy/ssh-action@master
+        env:
+          SERVICE_NAME: robot
+        with:
+          host: cides03.gm.fh-koeln.de
+          username: ${{ secrets.PROD_USER }}
+          password: ${{ secrets.PROD_PWD }}
+          port: 22
+          envs: SERVICE_NAME
+          script: |
+            echo ${{ secrets.PROD_PWD }} | sudo -S docker-compose -f $SERVICE_NAME/service-compose.yml pull
+            echo ${{ secrets.PROD_PWD }} | sudo -S docker-compose -f $SERVICE_NAME/service-compose.yml up -d

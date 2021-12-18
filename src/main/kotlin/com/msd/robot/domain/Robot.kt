@@ -7,6 +7,7 @@ import com.msd.robot.domain.exception.NotEnoughEnergyException
 import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.UpgradeException
 import com.msd.robot.domain.gameplayVariables.*
+import org.hibernate.annotations.Type
 import java.lang.IllegalArgumentException
 import java.util.*
 import javax.persistence.*
@@ -38,10 +39,12 @@ fun Map<GameplayVariablesLevelVerbs, Int>.getByVal(value: Int): Int {
 
 @Entity
 class Robot(
+    @Type(type = "uuid-char")
     val player: UUID,
     planet: Planet
 ) {
     @Id
+    @Type(type = "uuid-char")
     val id: UUID = UUID.randomUUID()
 
     @ManyToOne(cascade = [CascadeType.MERGE])

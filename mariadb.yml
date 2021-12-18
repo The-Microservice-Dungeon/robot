@@ -1,0 +1,12 @@
+# This is a docker-compose file you can run to spin up a fresh mariaDB container. Does not persist after restart
+version: '3.9'
+services:
+  mariadb:
+    image: mariadb:10.6.5
+    environment:
+      MYSQL_PASSWORD: robot
+      MYSQL_USER: robot
+      MYSQL_DATABASE: robot
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - '3306:3306'

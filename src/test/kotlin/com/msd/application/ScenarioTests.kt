@@ -37,6 +37,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
+import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -47,6 +48,7 @@ import java.util.*
     partitions = 1,
     brokerProperties = ["listeners=PLAINTEXT://\${spring.kafka.bootstrap-servers}", "port=9092"]
 )
+@Transactional
 class ScenarioTests(
     @Autowired private val mockMvc: MockMvc,
     @Autowired private val mapper: ObjectMapper,
@@ -276,45 +278,45 @@ class ScenarioTests(
         mockMvc.post("/robots/${robot1.id}/upgrades") {
             contentType = MediaType.APPLICATION_JSON
             content = """{
-                "transaction_id": "${UUID.randomUUID()}",
-                "upgrade-type": "MINING_SPEED",
-                "target-level": 1
+                "transactionId": "${UUID.randomUUID()}",
+                "upgradeType": "MINING_SPEED",
+                "targetLevel": 1
             }"""
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
         mockMvc.post("/robots/${robot1.id}/upgrades") {
             contentType = MediaType.APPLICATION_JSON
             content = """{
-                "transaction_id": "${UUID.randomUUID()}",
-                "upgrade-type": "MINING_SPEED",
-                "target-level": 2
+                "transactionId": "${UUID.randomUUID()}",
+                "upgradeType": "MINING_SPEED",
+                "targetLevel": 2
             }"""
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
         mockMvc.post("/robots/${robot2.id}/upgrades") {
             contentType = MediaType.APPLICATION_JSON
             content = """{
-                "transaction_id": "${UUID.randomUUID()}",
-                "upgrade-type": "MINING_SPEED",
-                "target-level": 1
+                "transactionId": "${UUID.randomUUID()}",
+                "upgradeType": "MINING_SPEED",
+                "targetLevel": 1
             }"""
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
         mockMvc.post("/robots/${robot3.id}/upgrades") {
             contentType = MediaType.APPLICATION_JSON
             content = """{
-                "transaction_id": "${UUID.randomUUID()}",
-                "upgrade-type": "DAMAGE",
-                "target-level": 1
+                "transactionId": "${UUID.randomUUID()}",
+                "upgradeType": "DAMAGE",
+                "targetLevel": 1
             }"""
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
         mockMvc.post("/robots/${robot3.id}/upgrades") {
             contentType = MediaType.APPLICATION_JSON
             content = """{
-                "transaction_id": "${UUID.randomUUID()}",
-                "upgrade-type": "DAMAGE",
-                "target-level": 2
+                "transactionId": "${UUID.randomUUID()}",
+                "upgradeType": "DAMAGE",
+                "targetLevel": 2
             }"""
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
@@ -322,9 +324,9 @@ class ScenarioTests(
             mockMvc.post("/robots/${it.id}/upgrades") {
                 contentType = MediaType.APPLICATION_JSON
                 content = """{
-                "transaction_id": "${UUID.randomUUID()}",
-                "upgrade-type": "HEALTH",
-                "target-level": 1
+                "transactionId": "${UUID.randomUUID()}",
+                "upgradeType": "HEALTH",
+                "targetLevel": 1
             }"""
             }.andExpect { status { HttpStatus.OK } }.andReturn()
         }
@@ -534,13 +536,20 @@ class ScenarioTests(
         }"""
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
-        val commands = listOf(
+        val regenCommand = listOf(
             "regenerate ${robot1.id} ${UUID.randomUUID()}",
+        )
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(regenCommand))
+        }.andExpect { status { HttpStatus.OK } }.andReturn()
+
+        val repairCommand = listOf(
             "use-item-repair ${robot2.id} REPAIR_SWARM ${UUID.randomUUID()}"
         )
         mockMvc.post("/commands") {
             contentType = MediaType.APPLICATION_JSON
-            content = mapper.writeValueAsString(CommandDTO(commands))
+            content = mapper.writeValueAsString(CommandDTO(repairCommand))
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
         assertEquals(13 + UpgradeValues.energyRegenByLevel.getByVal(0), robotRepo.findByIdOrNull(robot1.id)!!.energy)

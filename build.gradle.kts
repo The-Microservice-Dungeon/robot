@@ -3,16 +3,16 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     id("org.springframework.boot") version "2.5.5"
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
-    id("org.jetbrains.kotlin.plugin.allopen") version "1.5.31"
-    id("org.jetbrains.kotlin.plugin.noarg") version "1.5.31"
+    id("org.jetbrains.kotlin.plugin.allopen") version "1.6.0"
+    id("org.jetbrains.kotlin.plugin.noarg") version "1.6.0"
     id("org.jlleitschuh.gradle.ktlint") version "10.2.0"
     id("com.google.cloud.tools.jib") version "3.1.4"
-    id("org.jetbrains.dokka") version "1.5.31"
+    id("org.jetbrains.dokka") version "1.6.0"
     jacoco
-    kotlin("jvm") version "1.5.31"
-    kotlin("plugin.spring") version "1.5.31"
-    kotlin("plugin.jpa") version "1.5.31"
-    kotlin("kapt") version "1.5.10"
+    kotlin("jvm") version "1.6.0"
+    kotlin("plugin.spring") version "1.6.0"
+    kotlin("plugin.jpa") version "1.6.0"
+    kotlin("kapt") version "1.6.0"
 }
 
 group = "com.msd"
@@ -33,6 +33,7 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka:2.7.6")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("io.github.microutils:kotlin-logging-jvm:2.1.0")
+    implementation("org.mariadb.jdbc:mariadb-java-client:2.7.4")
     testImplementation("com.squareup.okhttp3:okhttp:4.9.2")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.9.2")
     implementation("org.mapstruct:mapstruct:1.5.0.Beta1")
