@@ -3,12 +3,17 @@ package com.msd.command.application
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.application.AbstractKafkaProducerTest
+import com.msd.application.ScenarioTests
 import com.msd.application.dto.GameMapNeighbourDto
 import com.msd.application.dto.GameMapPlanetDto
+import com.msd.application.dto.MineResponseDto
+import com.msd.application.dto.ResourceDto
 import com.msd.domain.DomainEvent
+import com.msd.domain.ResourceType
 import com.msd.event.application.EventType
 import com.msd.event.application.ProducerTopicConfiguration
 import com.msd.event.application.dto.*
+import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
 import com.msd.planet.application.PlanetDTO
@@ -134,28 +139,6 @@ class CommandControllerTest(
                 status { isBadRequest() }
             }.andDo { print() }
         }
-    }
-
-    @Test
-    fun `can't mix attack commands with other commands`() {
-        // given
-        val command1 = "fight ${robot1.id} ${robot5.id} ${UUID.randomUUID()}"
-        val command2 = "regenerate ${robot2.id} ${UUID.randomUUID()}"
-
-        val commands = listOf(command1, command2)
-
-        // when
-        mockMvc.post("/commands") {
-            contentType = MediaType.APPLICATION_JSON
-            content = mapper.writeValueAsString(CommandDTO(commands))
-        }.andExpect {
-            status { isBadRequest() }
-            content { string("Command batches need to be homogeneous.") }
-        }.andDo { print() }
-
-        // then
-        assertEquals(10, robot5.health)
-        assertEquals(20, robot1.energy)
     }
 
     @Test
@@ -597,5 +580,169 @@ class CommandControllerTest(
         }
         // then
         assertEquals(20, robotRepository.findByIdOrNull(robot1.id)!!.energy)
+    }
+
+    @Test
+    fun `Sending Any heterogeneous command lists causes 400`() {
+        // given
+        val heterogeneousMineCommand = listOf(
+            "mine ${robot1.id} ${UUID.randomUUID()}",
+            "block ${robot2.id} ${UUID.randomUUID()}"
+        )
+
+        val heterogeneousFightCommand = listOf(
+            "fight ${robot1.id} ${robot2.id} ${UUID.randomUUID()}",
+            "block ${robot2.id} ${UUID.randomUUID()}"
+        )
+
+        val heterogeneousBlockCommand = listOf(
+            "block ${robot1.id} ${UUID.randomUUID()}",
+            "mine ${robot2.id} ${UUID.randomUUID()}"
+        )
+
+        val heterogeneousMoveCommand = listOf(
+            "move ${robot1.id} $planet1Id ${UUID.randomUUID()}",
+            "block ${robot2.id} ${UUID.randomUUID()}"
+        )
+
+        val heterogeneousEnergyRegenCommand = listOf(
+            "regenerate ${robot1.id} ${UUID.randomUUID()}",
+            "block ${robot2.id} ${UUID.randomUUID()}"
+        )
+
+        val heterogeneousItemFightingCommand = listOf(
+            "use-item-fighting ${robot1.id} ${AttackItemType.ROCKET} ${robot2.id} ${UUID.randomUUID()}",
+            "block ${robot2.id} ${UUID.randomUUID()}"
+        )
+
+        val heterogeneousItemMoveCommand = listOf(
+            "use-item-movement ${robot1.id} ${MovementItemType.WORMHOLE} ${UUID.randomUUID()}",
+            "block ${robot2.id} ${UUID.randomUUID()}"
+        )
+
+        val heterogeneousItemRepairCommand = listOf(
+            "use-item-repair ${robot1.id} ${RepairItemType.REPAIR_SWARM} ${UUID.randomUUID()}",
+            "block ${robot2.id} ${UUID.randomUUID()}"
+        )
+
+        val commandBatches = listOf(
+            heterogeneousMineCommand,
+            heterogeneousFightCommand,
+            heterogeneousBlockCommand,
+            heterogeneousItemMoveCommand,
+            heterogeneousEnergyRegenCommand,
+            heterogeneousItemFightingCommand,
+            heterogeneousItemRepairCommand,
+            heterogeneousMoveCommand
+        )
+
+        // when
+        commandBatches.forEach {
+            mockMvc.post("/commands") {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(CommandDTO(it))
+            }.andExpect {
+                // then
+                status { isBadRequest() }
+                content { string("Command batches need to be homogeneous.") }
+            }
+        }
+    }
+
+    @Test
+    fun `When sending MineCommand MapService doesn't know the planet`() {
+        val mineCommands = listOf(
+            "mine ${robot1.id} ${UUID.randomUUID()}", // returns planet
+            "mine ${robot3.id} ${UUID.randomUUID()}" // returns unknown planet
+        )
+
+        val planet1GameMapDto = GameMapPlanetDto(
+            planet1Id,
+            3,
+            PlanetType.DEFAULT,
+            ResourceDto(ResourceType.COAL)
+        )
+
+        val miningResponse = MineResponseDto(2)
+
+        ScenarioTests.mockGameServiceWebClient.enqueue(
+            MockResponse().setResponseCode(200)
+                .setBody(jacksonObjectMapper().writeValueAsString(planet1GameMapDto))
+                .setHeader("Content-Type", "application/json")
+        )
+        ScenarioTests.mockGameServiceWebClient.enqueue(
+            MockResponse().setResponseCode(400)
+                .setHeader("Content-Type", "application/json")
+        )
+        ScenarioTests.mockGameServiceWebClient.enqueue(
+            MockResponse().setResponseCode(200)
+                .setBody(jacksonObjectMapper().writeValueAsString(miningResponse))
+                .setHeader("Content-Type", "application/json")
+        )
+
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(mineCommands))
+        }.andExpect {
+            // then
+            status { isAccepted() }
+        }
+
+        assertEquals(
+            2,
+            robotRepository.findByIdOrNull(robot1.id)!!.inventory.getStorageUsageForResource(ResourceType.COAL)
+        )
+        assertEquals(
+            0,
+            robotRepository.findByIdOrNull(robot3.id)!!.inventory.getStorageUsageForResource(ResourceType.COAL)
+        )
+    }
+
+    @Test
+    fun `When sending MineCommand MapService doesn't return resource on the planet`() {
+        val mineCommands = listOf(
+            "mine ${robot1.id} ${UUID.randomUUID()}", // returns resource
+            "mine ${robot3.id} ${UUID.randomUUID()}" // returns no resource
+        )
+
+        val planet1GameMapDto = GameMapPlanetDto(
+            planet1Id,
+            3,
+            PlanetType.DEFAULT
+        )
+
+        val miningResponse = MineResponseDto(2)
+
+        ScenarioTests.mockGameServiceWebClient.enqueue(
+            MockResponse().setResponseCode(200)
+                .setBody(jacksonObjectMapper().writeValueAsString(planet1GameMapDto))
+                .setHeader("Content-Type", "application/json")
+        )
+        ScenarioTests.mockGameServiceWebClient.enqueue(
+            MockResponse().setResponseCode(400)
+                .setHeader("Content-Type", "application/json")
+        )
+        ScenarioTests.mockGameServiceWebClient.enqueue(
+            MockResponse().setResponseCode(200)
+                .setBody(jacksonObjectMapper().writeValueAsString(miningResponse))
+                .setHeader("Content-Type", "application/json")
+        )
+
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(mineCommands))
+        }.andExpect {
+            // then
+            status { isAccepted() }
+        }
+
+        assertEquals(
+            2,
+            robotRepository.findByIdOrNull(robot1.id)!!.inventory.getStorageUsageForResource(ResourceType.COAL)
+        )
+        assertEquals(
+            0,
+            robotRepository.findByIdOrNull(robot3.id)!!.inventory.getStorageUsageForResource(ResourceType.COAL)
+        )
     }
 }
