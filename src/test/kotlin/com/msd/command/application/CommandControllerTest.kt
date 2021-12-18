@@ -3,7 +3,6 @@ package com.msd.command.application
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.application.AbstractKafkaProducerTest
-import com.msd.application.ScenarioTests
 import com.msd.application.dto.GameMapNeighbourDto
 import com.msd.application.dto.GameMapPlanetDto
 import com.msd.application.dto.MineResponseDto
@@ -665,16 +664,16 @@ class CommandControllerTest(
 
         val miningResponse = MineResponseDto(2)
 
-        ScenarioTests.mockGameServiceWebClient.enqueue(
+        mockGameServiceWebClient.enqueue(
             MockResponse().setResponseCode(200)
                 .setBody(jacksonObjectMapper().writeValueAsString(planet1GameMapDto))
                 .setHeader("Content-Type", "application/json")
         )
-        ScenarioTests.mockGameServiceWebClient.enqueue(
+        mockGameServiceWebClient.enqueue(
             MockResponse().setResponseCode(400)
                 .setHeader("Content-Type", "application/json")
         )
-        ScenarioTests.mockGameServiceWebClient.enqueue(
+        mockGameServiceWebClient.enqueue(
             MockResponse().setResponseCode(200)
                 .setBody(jacksonObjectMapper().writeValueAsString(miningResponse))
                 .setHeader("Content-Type", "application/json")
@@ -708,21 +707,29 @@ class CommandControllerTest(
         val planet1GameMapDto = GameMapPlanetDto(
             planet1Id,
             3,
+            PlanetType.DEFAULT,
+            ResourceDto(ResourceType.COAL)
+        )
+
+        val planet2GameMapDto = GameMapPlanetDto(
+            planet1Id,
+            3,
             PlanetType.DEFAULT
         )
 
         val miningResponse = MineResponseDto(2)
 
-        ScenarioTests.mockGameServiceWebClient.enqueue(
+        mockGameServiceWebClient.enqueue(
             MockResponse().setResponseCode(200)
                 .setBody(jacksonObjectMapper().writeValueAsString(planet1GameMapDto))
                 .setHeader("Content-Type", "application/json")
         )
-        ScenarioTests.mockGameServiceWebClient.enqueue(
-            MockResponse().setResponseCode(400)
+        mockGameServiceWebClient.enqueue(
+            MockResponse().setResponseCode(200)
+                .setBody(jacksonObjectMapper().writeValueAsString(planet2GameMapDto))
                 .setHeader("Content-Type", "application/json")
         )
-        ScenarioTests.mockGameServiceWebClient.enqueue(
+        mockGameServiceWebClient.enqueue(
             MockResponse().setResponseCode(200)
                 .setBody(jacksonObjectMapper().writeValueAsString(miningResponse))
                 .setHeader("Content-Type", "application/json")
