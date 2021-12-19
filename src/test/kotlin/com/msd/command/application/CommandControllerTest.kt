@@ -229,6 +229,8 @@ class CommandControllerTest(
 
     @Test
     fun `destroyed robots get deleted after combat attacks are executed`() {
+        startFightingContainer()
+        startRobotDestroyedContainer()
         // given
         for (i in 1..3) robot1.upgrade(UpgradeType.DAMAGE, i)
         assertEquals(10, robot1.attackDamage)

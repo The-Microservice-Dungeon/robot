@@ -92,6 +92,7 @@ class ScenarioTests(
         startNeighboursContainer()
         startFightingContainer()
         startResourceDistributionContainer()
+        startRobotDestroyedContainer()
         consumerRecords.clear()
 
         // //////////////////////  1. Spawn the robots  //////////////////////////////
@@ -225,6 +226,7 @@ class ScenarioTests(
         startFightingContainer()
         startResourceDistributionContainer()
         startMiningContainer()
+        startRobotDestroyedContainer()
 
         consumerRecords.clear()
 
