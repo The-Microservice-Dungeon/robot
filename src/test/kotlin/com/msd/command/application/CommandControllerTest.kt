@@ -246,6 +246,8 @@ class CommandControllerTest(
         }.andDo { print() }
         // then
         assertNull(robotRepository.findByIdOrNull(robot5.id))
+        assertEquals(1, consumerRecords.filter { it.topic() == topicConfig.ROBOT_FIGHTING }.size)
+        assertEquals(1, consumerRecords.filter { it.topic() == topicConfig.ROBOT_DESTROYED }.size)
     }
 
     @Test

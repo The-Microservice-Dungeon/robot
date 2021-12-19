@@ -217,7 +217,8 @@ class ScenarioTests(
             println(it.topic() + ": " + it.value())
         }
 
-        assertEquals(45, consumerRecords.size)
+        assertEquals(48, consumerRecords.size)
+        assertEquals(3, consumerRecords.filter { it.topic() == topicConfig.ROBOT_DESTROYED }.size)
     }
 
     @Test
@@ -459,7 +460,8 @@ class ScenarioTests(
             3 Resource Distribution Events ( 3 remaining robots on planet)
             = 30
          */
-        assertEquals(30, consumerRecords.size)
+        assertEquals(31, consumerRecords.size)
+        assertEquals(1, consumerRecords.filter { it.topic() == topicConfig.ROBOT_DESTROYED }.size)
     }
 
     @Test

@@ -146,6 +146,7 @@ class EventSender(
             is NeighboursEventDTO -> topicConfig.ROBOT_NEIGHBOURS
             is ItemRepairEventDTO -> topicConfig.ROBOT_ITEM_REPAIR
             is ItemMovementEventDTO -> topicConfig.ROBOT_ITEM_MOVEMENT
+            is RobotDestroyedEventDTO -> topicConfig.ROBOT_DESTROYED
             else -> throw RuntimeException("Unknown eventDTO")
         }
     }
