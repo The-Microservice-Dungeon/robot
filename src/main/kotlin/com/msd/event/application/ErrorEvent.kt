@@ -9,7 +9,7 @@ import javax.persistence.Id
 @Entity
 class ErrorEvent(
     val topic: String,
-    @Column(length = 2048)
+    @Column(length = 8192)
     val eventString: String,
     val eventType: EventType
 ) {
