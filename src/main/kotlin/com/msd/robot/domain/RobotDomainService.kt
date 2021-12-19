@@ -13,6 +13,7 @@ import com.msd.robot.domain.exception.NotEnoughItemsException
 import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.robot.domain.exception.TargetRobotOutOfReachException
+import mu.KotlinLogging
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.util.*
@@ -22,6 +23,7 @@ class RobotDomainService(
     val robotRepository: RobotRepository,
     val gameMapService: GameMapService
 ) {
+    private val logger = KotlinLogging.logger {}
 
     /**
      * Check if an attack is valid, and if so, execute the attack.
@@ -98,6 +100,12 @@ class RobotDomainService(
             resourcesToBeDistributed[ResourceType.IRON] == 0 &&
             resourcesToBeDistributed[ResourceType.COAL] == 0
         ) return listOf()
+
+        logger.debug(
+            "Distributing resources:\n${
+            resourcesToBeDistributed.map{it.key.toString() + ": " + it.value.toString()}
+            }"
+        )
         val robotsAliveOnPlanet = robotRepository.findAllByPlanet_PlanetId(planetId)
 
         // reversed, so the most valuable resources get distributed first
@@ -322,6 +330,7 @@ class RobotDomainService(
         val robot = this.getRobot(robotId)
         val takenResources = robot.inventory.takeAllResources()
         robotRepository.save(robot)
+        logger.debug("Emptied the resource inventory of robot $robotId")
         return takenResources
     }
 
@@ -339,5 +348,6 @@ class RobotDomainService(
             RestorationType.ENERGY -> robot.restoreEnergy()
         }
         robotRepository.save(robot)
+        logger.debug("Restored $restorationType of robot $robotId")
     }
 }

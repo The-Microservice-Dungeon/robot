@@ -4,6 +4,7 @@ import com.msd.command.application.command.*
 import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
+import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import java.lang.IllegalArgumentException
 import java.lang.RuntimeException
@@ -11,6 +12,8 @@ import java.util.*
 
 @Service
 class CommandApplicationService {
+
+    private val logger = KotlinLogging.logger {}
 
     val commandTypeKeywordsAndNumArgs = mapOf(
         CommandVerbs.BLOCK.verb to 2,
@@ -31,8 +34,13 @@ class CommandApplicationService {
      */
     fun parseCommandsFromStrings(commandStrings: List<String>): List<Command> {
         val commands = commandStrings.map { parseCommand(it) }
-        if (commands.filter { it::class == commands[0]::class }.count() != commands.size)
+        if (commands.filter { it::class == commands[0]::class }.count() != commands.size) {
+            logger.info(
+                "Rejected command batch because of inhomogeneity:\n Rejected transactionUUIDs:\n" +
+                    "${commands.map{it.transactionUUID}}"
+            )
             throw CommandBatchParsingException("Command batches need to be homogeneous.")
+        }
         return commands
     }
 
@@ -51,15 +59,30 @@ class CommandApplicationService {
 
         if (args.count() != commandTypeKeywordsAndNumArgs[verb]) throw CommandParsingException(commandString)
 
+        return parseCommandByVerb(verb, args, commandString)
+    }
+
+    /**
+     * Parses a commandString by checking whether it is an item usage command or a action command.
+     */
+    private fun parseCommandByVerb(
+        verb: String,
+        args: List<String>,
+        commandString: String
+    ): Command {
         try {
             return if (verb.startsWith("use-item-"))
                 parseItemUsageCommand(verb, args)
             else
                 parseActionCommand(verb, args)
         } catch (iae: IllegalArgumentException) {
-            if (iae.message?.contains("Invalid UUID") == true)
+            if (iae.message?.contains("Invalid UUID") == true) {
+                logger.info("Rejected command batch because of malformed UUID: ${iae.message}")
                 throw CommandParsingException(commandString, "Invalid UUID string")
-            else throw CommandParsingException(commandString, "Unknown ItemType: ${args[2]}")
+            } else {
+                logger.info("Rejected command batch because of Unknown ItemType: ${args[2]}")
+                throw CommandParsingException(commandString, "Unknown ItemType: ${args[2]}")
+            }
         }
     }
 

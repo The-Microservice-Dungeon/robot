@@ -18,6 +18,7 @@ import com.msd.robot.domain.UpgradeType
 import com.msd.robot.domain.exception.InventoryFullException
 import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.RobotNotFoundException
+import mu.KotlinLogging
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import java.util.*
@@ -30,6 +31,8 @@ class RobotApplicationService(
     val eventSender: EventSender,
     val successEventSender: SuccessEventSender
 ) {
+
+    private val logger = KotlinLogging.logger {}
 
     /**
      * Takes a list of commands and passes them on to the corresponding method.
@@ -101,6 +104,7 @@ class RobotApplicationService(
             }
         }
 
+        logger.debug("[Movement] Sending success events for command batch")
         successfulCommands.forEach { (command, triple) ->
             successEventSender.sendMovementEvents(triple.first, triple.second, command, triple.third)
         }
@@ -330,6 +334,7 @@ class RobotApplicationService(
                 robotDomainService.getRobot(it.robotUUID).planet.planetId
             } catch (rnfe: RobotNotFoundException) {
                 // we will handle this later, for we are just interested in the planets
+                logger.debug("[Mining] Robot with ${it.robotUUID} not found")
                 null
             }
         }
@@ -340,6 +345,7 @@ class RobotApplicationService(
                 gameMapService.getResourceOnPlanet(it)
             } catch (re: RuntimeException) {
                 // if there was any problem we just put null, this will cause an exception to be thrown later on
+                logger.debug("[Mining] Failed to get resource on planet $it from map service")
                 null
             }
         }
@@ -424,6 +430,8 @@ class RobotApplicationService(
             distributeMinedResources(miningRobotsOnPlanet, minedAmount, resource)
         } catch (re: FailureException) {
             eventSender.handleAll(re, validMineCommands.map { MineCommand(it.robot.id, it.transactionId) })
+        } catch (e: RuntimeException) {
+            logger.warn("[Mining] Error during mining call to map service for planet $planet")
         }
     }
 
@@ -479,7 +487,10 @@ class RobotApplicationService(
             try {
                 it.inventory.addResource(resource, correspondingAmount)
             } catch (ife: InventoryFullException) {
-                // TODO?
+                logger.debug(
+                    "[Mining] Robot did not receive all resources granted to it, because its " +
+                        "inventory was full"
+                )
             }
         }
         return Pair(amountDistributed, robotsDecimalPlaces)
@@ -514,6 +525,10 @@ class RobotApplicationService(
                 amountDistributed += 1
             } catch (ife: InventoryFullException) {
                 fullRobots[sortedDecimalPlaces[index % sortedDecimalPlaces.size].key] = true
+                logger.debug(
+                    "[Mining] Robot did not receive all resources granted to it, because its " +
+                        "inventory was full"
+                )
             }
             index++
         }
