@@ -132,11 +132,11 @@ components:
               #  description: Recharge multiplicator of the planet
               planetType:
                 type: string
-                enum: [default, spacestation]
+                enum: [DEFAULT, SPACESTATION]
                 description: Planet type (`default` or `spacestation`) of the planet
               resourceType:
                 type: string
-                enum: [coal, iron, gem, gold, platin]
+                enum: [COAL, IRON, GEM, GOLD, PLATIN]
           robots:
             type: array
             items:
@@ -155,7 +155,7 @@ components:
             items:
               - type: object
                 properties:
-                  planetID:
+                  planetId:
                     type: string
                     format: uuid
                     decription: uuid of the planets neighbours
@@ -164,7 +164,7 @@ components:
                     description: Movemenet difficulty of the planet
                   direction:
                     type: string
-                    enum: [north, west, south, east]
+                    enum: [NORTH, WEST, SOUTH, EAST]
                     description: cardinal direction of neighbour 
     planet-blocked:
       description: >
@@ -213,7 +213,7 @@ components:
             description: Amount of the mined resource in the inventory after mining
           resourceType:
             type: string
-            enum: [coal, iron, gem, gold, platin, NONE]
+            enum: [COAL, IRON, GEM, GOLD, PLATIN, NONE]
     fighting:
       description: >
         Result of a fight
@@ -398,3 +398,9 @@ components:
             type: string
             format: uuid
             description: Owner of the robot
+          otherSeeableRobots:
+            type: array
+            description: Robots that are on the same planet as this robot during spawn
+            items:
+              - type: string
+                format: uuid
