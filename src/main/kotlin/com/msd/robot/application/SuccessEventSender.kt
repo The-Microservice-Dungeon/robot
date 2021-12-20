@@ -7,7 +7,6 @@ import com.msd.event.application.EventSender
 import com.msd.event.application.EventType
 import com.msd.event.application.dto.*
 import com.msd.planet.application.PlanetMapper
-import com.msd.planet.domain.PlanetType
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
 import mu.KotlinLogging
@@ -60,7 +59,7 @@ class SuccessEventSender(
                 true,
                 "Movement successful",
                 robot.energy,
-                planetMapper.planetToPlanetDTO(robot.planet, cost, PlanetType.DEFAULT), // TODO planet type?
+                planetMapper.planetToPlanetDTO(robot.planet, cost, planetDto.planetType), // TODO planet type?
                 robotDomainService.getRobotsOnPlanet(robot.planet.planetId).map { it.id }
             ),
             EventType.MOVEMENT,

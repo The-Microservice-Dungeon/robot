@@ -18,7 +18,7 @@ import javax.persistence.Id
 @Entity
 class Inventory {
     @Id
-    @Type(type="uuid-char")
+    @Type(type = "uuid-char")
     val id = UUID.randomUUID()
     var storageLevel: Int = 0
         internal set(value) {

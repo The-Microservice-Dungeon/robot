@@ -38,6 +38,7 @@ topics:
   robot-resource-distribution: resource-distribution
   robot-destroyed: robot-destroyed
 
+
 ---
 spring:
   config:

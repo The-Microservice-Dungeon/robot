@@ -146,8 +146,8 @@ class ScenarioTests(
         // ////////////////////////////////// 2. Move the robots to the same planet /////////////////////////
         // All robots move to planet3
         val planet3Dto = GameMapPlanetDto(
-            planet3, 3, null,
-            listOf(
+            planet3, 3,
+            neighbours = listOf(
                 GameMapNeighbourDto(planet1, 3, MapDirection.NORTH),
                 GameMapNeighbourDto(planet2, 3, MapDirection.SOUTH)
             )
@@ -348,7 +348,7 @@ class ScenarioTests(
             "mine ${robot4.id} ${UUID.randomUUID()}"
         )
 
-        val planet1GameMapDto = GameMapPlanetDto(planet1, 3, ResourceDto(ResourceType.COAL))
+        val planet1GameMapDto = GameMapPlanetDto(planet1, 3, resource = ResourceDto(ResourceType.COAL))
         val miningResponse = MineResponseDto(19) // 10 + 5 + 2 + 2
         for (i in 1..3) {
             mockGameServiceWebClient.enqueue(

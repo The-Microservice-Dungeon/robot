@@ -9,7 +9,7 @@ import javax.persistence.Id
 @Entity
 data class Planet(
     @Id
-    @Type(type="uuid-char")
+    @Type(type = "uuid-char")
     val planetId: UUID,
     var resourceType: ResourceType? = null
 ) {
