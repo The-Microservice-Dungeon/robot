@@ -5,7 +5,6 @@ info:
   description: |
                 This service is in charge of the robots for The Microservice Dungeon\
                 You can use the "robot" topic to subcribe to our events.\
-
 channels:
   movement:
     publish:
@@ -47,6 +46,10 @@ channels:
     publish:
       message:
         $ref: '#/components/messages/item-movement'
+  spawn-notification:
+    publish:
+      message:
+        $ref: '#/components/messages/spawn-notification'
   robot-destroyed:
     publish:
       message:
@@ -379,3 +382,19 @@ components:
             format: uuid
             description: Owner of the robot
 
+    spawn-notification:
+      description: >
+        Event shows a spawned robot.
+      traits:
+        - $ref: '#/components/messageTraits/DefaultTradingKafkaMessage'
+      payload:
+        type: object
+        properties:
+          robotId:
+            type: string
+            format: uuid
+            description: Id of the robot
+          playerId:
+            type: string
+            format: uuid
+            description: Owner of the robot
