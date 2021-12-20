@@ -1069,7 +1069,7 @@ class RobotApplicationServiceTest {
         )
 
         val testedMethod = robotApplicationService::class.declaredMemberFunctions
-            .find { it.name == "replaceIdsWithObjectsInValidMineCommands" }!!
+            .find { it.name == "replaceIdsWithObjectsIfMineCommandIsValid" }!!
         testedMethod.isAccessible = true
 
         // whens thens
