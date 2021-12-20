@@ -16,17 +16,21 @@ class RestAPIExceptionHandler : ResponseEntityExceptionHandler() {
 
     @ExceptionHandler(CommandParsingException::class)
     fun handleParsingException(parsingException: CommandParsingException): ResponseEntity<Any> {
+        logger.info("Rejected request because of parsing error.")
         return ResponseEntity(parsingException.message, HttpStatus.BAD_REQUEST)
     }
 
     @ExceptionHandler(CommandBatchParsingException::class)
     fun handleParsingException(parsingException: CommandBatchParsingException): ResponseEntity<Any> {
+        logger.info("Rejected request because of parsing error.")
         return ResponseEntity(parsingException.message, HttpStatus.BAD_REQUEST)
     }
 
     @ExceptionHandler(RobotNotFoundException::class)
-    fun handleRobotNotFoundException(robotNotFoundException: RobotNotFoundException) =
-        ResponseEntity(robotNotFoundException.message, HttpStatus.NOT_FOUND)
+    fun handleRobotNotFoundException(robotNotFoundException: RobotNotFoundException): ResponseEntity<Any> {
+        logger.info("Request failed because no robot with the specified ID was found.")
+        return ResponseEntity(robotNotFoundException.message, HttpStatus.NOT_FOUND)
+    }
 
     override fun handleHttpMessageNotReadable(
         ex: HttpMessageNotReadableException,
@@ -34,6 +38,7 @@ class RestAPIExceptionHandler : ResponseEntityExceptionHandler() {
         status: HttpStatus,
         request: WebRequest
     ): ResponseEntity<Any> {
+        logger.info("Unreadable HTTP Request: ${request.getDescription(true)}")
         return ResponseEntity("Request could not be accepted", HttpStatus.BAD_REQUEST)
     }
 }

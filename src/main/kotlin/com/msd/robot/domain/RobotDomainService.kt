@@ -13,6 +13,7 @@ import com.msd.robot.domain.exception.NotEnoughItemsException
 import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.robot.domain.exception.TargetRobotOutOfReachException
+import mu.KotlinLogging
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.util.*
@@ -22,6 +23,7 @@ class RobotDomainService(
     val robotRepository: RobotRepository,
     val gameMapService: GameMapService
 ) {
+    private val logger = KotlinLogging.logger {}
 
     /**
      * Check if an attack is valid, and if so, execute the attack.
@@ -98,11 +100,17 @@ class RobotDomainService(
             resourcesToBeDistributed[ResourceType.IRON] == 0 &&
             resourcesToBeDistributed[ResourceType.COAL] == 0
         ) return listOf()
+
+        logger.debug(
+            "Distributing resources:\n${
+            resourcesToBeDistributed.map{it.key.toString() + ": " + it.value.toString()}
+            }"
+        )
         val robotsAliveOnPlanet = robotRepository.findAllByPlanet_PlanetId(planetId)
 
         // reversed, so the most valuable resources get distributed first
         resourcesToBeDistributed.entries.sortedBy { it.key }.reversed().forEach {
-            distributeDroppedResourcesOfTypeToRobots(it, robotsAliveOnPlanet)
+            distributeDroppedResourcesOfType(it, robotsAliveOnPlanet)
         }
 
         robotRepository.saveAll(robotsAliveOnPlanet)
@@ -114,7 +122,7 @@ class RobotDomainService(
      *
      * @param MutableMap.MutableEntry the `MapEntry` specifying how many of which `ResourceType` wil be distributed
      */
-    private fun distributeDroppedResourcesOfTypeToRobots(
+    private fun distributeDroppedResourcesOfType(
         resourcesToBeDistributed: MutableMap.MutableEntry<ResourceType, Int>,
         robotsAliveOnPlanet: List<Robot>
     ) {
@@ -165,8 +173,8 @@ class RobotDomainService(
     }
 
     /**
-     * Distributes the leftover specified `Resource` to the `Robots`. Not all `Robots` can get a `Resource`, so the `Robots` get shuffled
-     * and each gets a single `Resource` of the specified Type
+     * Distributes the leftover specified `Resource` to the `Robots`. Not all `Robots` can get a `Resource`, so the
+     * `Robots` get shuffled and each gets a single `Resource` of the specified Type
      *
      * @param robotsAliveOnPlanet         the `Robots` which will get the remaining `Resources`
      * @param resourcesToBeDistributed    the amount and Type of the `Ressource` that will be distributed
@@ -227,9 +235,8 @@ class RobotDomainService(
 
     /**
      * Makes the specified [Robot] use an item. The function of the Item is specified via a higher order function, which
-     * is the value of the passed [RepairItemType]. To use an item the specified `playerId` and the `Robot's`
-     * `player` must match. If the Robot doesn't own the specified item a NotEnoughItemsException
-     * is thrown.
+     * is the value of the passed [RepairItemType]. If the Robot doesn't own the specified item a
+     * NotEnoughItemsException is thrown.
      *
      * @param robotId     the `UUID` of the `Robot` which should use the item.
      * @param playerId    the `UUID` of the player the `Robot` belongs to.
@@ -249,7 +256,7 @@ class RobotDomainService(
 
     /**
      * Use the specified item. A player is allowed to use the item, if the specified robot has the item in its
-     * inventory and the player issuing the command owns the robot.
+     * inventory.
      *
      * @throws NotEnoughItemsException when the robot does not have the specified item
      * @param userId: The UUID of the robot that's suppoed to use the item
@@ -263,18 +270,17 @@ class RobotDomainService(
         val user = getRobot(userId)
         if (user.inventory.getItemAmountByType(item) <= 0)
             throw NotEnoughItemsException("This Robot doesn't have the required Item", item)
-        val battlefieldAndtargetRobots = item.use(user, target, robotRepository)
+        val battlefieldAndTargetRobots = item.use(user, target, robotRepository)
         user.inventory.removeItem(item)
         robotRepository.save(user)
-        return battlefieldAndtargetRobots
+        return battlefieldAndTargetRobots
     }
 
     /**
-     * Makes the specified [Robot] use the specified item. To use an item the specified `playerId` and the `Robot's`
-     * `player` must match. The items function is specified via a higher order function which is the `func`value of the
-     * itemType. If the `Robot` doesn't have enough of the specified items an exception is thrown.
+     * Makes the specified [Robot] use the specified item. The items function is specified via a higher order
+     * function which is the `func`value of the itemType. If the `Robot` doesn't have enough of the specified items
+     * a [NotEnoughItemsException] is thrown.
      *
-     * @param playerId    the `UUID` of the player which owns the specified `Robot`
      * @param robotId     the `UUID`of the `Robot` which should use the item.
      * @param itemType    the [MovementItemType] of the used item.
      * @throws NotEnoughItemsException when the `Robot` doesn't own enough of the specified `itemType`
@@ -322,6 +328,7 @@ class RobotDomainService(
         val robot = this.getRobot(robotId)
         val takenResources = robot.inventory.takeAllResources()
         robotRepository.save(robot)
+        logger.debug("Emptied the resource inventory of robot $robotId")
         return takenResources
     }
 
@@ -339,5 +346,6 @@ class RobotDomainService(
             RestorationType.ENERGY -> robot.restoreEnergy()
         }
         robotRepository.save(robot)
+        logger.debug("Restored $restorationType of robot $robotId")
     }
 }
