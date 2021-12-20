@@ -598,4 +598,95 @@ class CommandControllerTest(
         // then
         assertEquals(20, robotRepository.findByIdOrNull(robot1.id)!!.energy)
     }
+
+    @Test
+    fun `Usage of a RepairSwarm causes all robots of the player on the same planet to be repaired by 20`() {
+        startItemRepairContainer()
+        // given
+        val robotsOnPlanet1Player1 = listOf(robot1, robot2)
+        robot1.inventory.addItem(RepairItemType.REPAIR_SWARM)
+        robotsOnPlanet1Player1.forEach {
+            it.upgrade(UpgradeType.HEALTH, 1)
+            it.receiveDamage(21)
+        }
+        robotRepository.saveAll(robotsOnPlanet1Player1)
+
+        val transactionId = UUID.randomUUID()
+        val command = "use-item-repair ${robot1.id} ${RepairItemType.REPAIR_SWARM} $transactionId"
+
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(listOf(command)))
+        }.andExpect {
+            status { isAccepted() }
+        }
+        // then
+        assertEquals(
+            0,
+            robotRepository.findByIdOrNull(robot1.id)!!.inventory.getItemAmountByType(RepairItemType.REPAIR_SWARM)
+        )
+        assertAll(
+            robotsOnPlanet1Player1.map {
+                {
+                    assertEquals(24, robotRepository.findByIdOrNull(it.id)!!.health)
+                }
+            }
+        )
+
+        val domainEvent =
+            eventTestUtils.getNextEventOfTopic<ItemRepairEventDTO>(consumerRecords, topicConfig.ROBOT_ITEM_REPAIR)
+
+        eventTestUtils.checkHeaders(transactionId, EventType.ITEM_REPAIR, domainEvent)
+        eventTestUtils.checkItemRepairPayload(
+            true,
+            "Robot has used REPAIR_SWARM",
+            robotsOnPlanet1Player1.map { RepairEventRobotDTO(it.id, 24) },
+            domainEvent.payload
+        )
+    }
+
+    @Test
+    fun `Robot cannot use RepairSwarm if it doesn't have the item`() {
+        startItemRepairContainer()
+        // given
+        val robotsOnPlanet1Player1 = listOf(robot1, robot2)
+        robotsOnPlanet1Player1.forEach {
+            it.upgrade(UpgradeType.HEALTH, 1)
+            it.receiveDamage(21)
+        }
+        robotRepository.saveAll(robotsOnPlanet1Player1)
+
+        val transactionId = UUID.randomUUID()
+        val command = "use-item-repair ${robot1.id} ${RepairItemType.REPAIR_SWARM} $transactionId"
+
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(listOf(command)))
+        }.andExpect {
+            status { isAccepted() }
+        }
+        // then
+        assertEquals(
+            0,
+            robotRepository.findByIdOrNull(robot1.id)!!.inventory.getItemAmountByType(RepairItemType.REPAIR_SWARM)
+        )
+        assertAll(
+            robotsOnPlanet1Player1.map {
+                {
+                    assertEquals(4, robotRepository.findByIdOrNull(it.id)!!.health)
+                }
+            }
+        )
+
+        val domainEvent =
+            eventTestUtils.getNextEventOfTopic<ItemRepairEventDTO>(consumerRecords, topicConfig.ROBOT_ITEM_REPAIR)
+
+        eventTestUtils.checkHeaders(transactionId, EventType.ITEM_REPAIR, domainEvent)
+        eventTestUtils.checkItemRepairPayload(
+            false,
+            "This Robot doesn't have the required Item\nMissing item: ${RepairItemType.REPAIR_SWARM}",
+            listOf(),
+            domainEvent.payload
+        )
+    }
 }
