@@ -649,10 +649,15 @@ class CommandControllerTest(
     }
 
     @Test
-    fun `When sending MineCommand MapService doesn't know the planet`() {
+    fun `Planet unknown to MapService causes stops corresponding mining command`() {
+        startMiningContainer()
+
+        val transId1 = UUID.randomUUID()
+        val transId2 = UUID.randomUUID()
+
         val mineCommands = listOf(
-            "mine ${robot1.id} ${UUID.randomUUID()}", // returns planet
-            "mine ${robot3.id} ${UUID.randomUUID()}" // returns unknown planet
+            "mine ${robot1.id} $transId1", // returns planet
+            "mine ${robot3.id} $transId2" // returns unknown planet
         )
 
         val planet1GameMapDto = GameMapPlanetDto(
@@ -695,13 +700,42 @@ class CommandControllerTest(
             0,
             robotRepository.findByIdOrNull(robot3.id)!!.inventory.getStorageUsageForResource(ResourceType.COAL)
         )
+
+        val domainEvent1 = eventTestUtils.getNextEventOfTopic<MiningEventDTO>(consumerRecords, topicConfig.ROBOT_MINING)
+
+        val domainEvent2 = eventTestUtils.getNextEventOfTopic<MiningEventDTO>(consumerRecords, topicConfig.ROBOT_MINING)
+
+        eventTestUtils.checkHeaders(transId1, EventType.MINING, domainEvent2)
+        eventTestUtils.checkMiningPayload(
+            true,
+            "Robot ${robot1.id} mined successfully",
+            20,
+            2,
+            ResourceType.COAL.toString(),
+            domainEvent2.payload
+        )
+
+        eventTestUtils.checkHeaders(transId2, EventType.MINING, domainEvent1)
+        eventTestUtils.checkMiningPayload(
+            false,
+            "Map Service did not return any resource on the planet $planet2Id",
+            20,
+            0,
+            "NONE",
+            domainEvent1.payload
+        )
     }
 
     @Test
-    fun `When sending MineCommand MapService doesn't return resource on the planet`() {
+    fun `Planet without resource stops corresponding mining command`() {
+        startMiningContainer()
+
+        val transId1 = UUID.randomUUID()
+        val transId2 = UUID.randomUUID()
+
         val mineCommands = listOf(
-            "mine ${robot1.id} ${UUID.randomUUID()}", // returns resource
-            "mine ${robot3.id} ${UUID.randomUUID()}" // returns no resource
+            "mine ${robot1.id} $transId1", // returns resource
+            "mine ${robot3.id} $transId2" // returns no resource
         )
 
         val planet1GameMapDto = GameMapPlanetDto(
@@ -750,6 +784,30 @@ class CommandControllerTest(
         assertEquals(
             0,
             robotRepository.findByIdOrNull(robot3.id)!!.inventory.getStorageUsageForResource(ResourceType.COAL)
+        )
+
+        val domainEvent1 = eventTestUtils.getNextEventOfTopic<MiningEventDTO>(consumerRecords, topicConfig.ROBOT_MINING)
+
+        val domainEvent2 = eventTestUtils.getNextEventOfTopic<MiningEventDTO>(consumerRecords, topicConfig.ROBOT_MINING)
+
+        eventTestUtils.checkHeaders(transId1, EventType.MINING, domainEvent2)
+        eventTestUtils.checkMiningPayload(
+            true,
+            "Robot ${robot1.id} mined successfully",
+            20,
+            2,
+            ResourceType.COAL.toString(),
+            domainEvent2.payload
+        )
+
+        eventTestUtils.checkHeaders(transId2, EventType.MINING, domainEvent1)
+        eventTestUtils.checkMiningPayload(
+            false,
+            "Map Service did not return any resource on the planet $planet2Id",
+            20,
+            0,
+            "NONE",
+            domainEvent1.payload
         )
     }
 }
