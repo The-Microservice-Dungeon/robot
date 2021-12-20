@@ -947,7 +947,7 @@ class RobotApplicationServiceTest {
         )
 
         // when
-        robotApplicationService.useAttackItems(commands)
+        robotApplicationService.executeFightingItemUsageCommand(commands)
 
         // then
         assertAll(

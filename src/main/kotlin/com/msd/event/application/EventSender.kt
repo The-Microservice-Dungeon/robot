@@ -6,6 +6,7 @@ import com.msd.domain.DomainEvent
 import com.msd.event.application.dto.*
 import com.msd.planet.domain.PlanetRepository
 import com.msd.robot.domain.RobotRepository
+import mu.KotlinLogging
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.lang.RuntimeException
@@ -23,10 +24,13 @@ class EventSender(
 
     private val eventVersion = 1
 
+    private val logger = KotlinLogging.logger {}
+
     /**
      * Convert the Exception into a corresponding Kafka Event
      */
     fun handleException(fe: FailureException, command: Command) {
+        logger.info("[${command.transactionUUID}] Handling FailureException of type ${fe::class}")
         when (val event = getFailureEventFromCommandAndException(command, fe)) {
             is MovementEventDTO -> {
                 kafkaMessageProducer.send(

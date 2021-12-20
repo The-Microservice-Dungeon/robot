@@ -110,7 +110,7 @@ class RobotDomainService(
 
         // reversed, so the most valuable resources get distributed first
         resourcesToBeDistributed.entries.sortedBy { it.key }.reversed().forEach {
-            distributeDroppedResourcesOfTypeToRobots(it, robotsAliveOnPlanet)
+            distributeDroppedResourcesOfType(it, robotsAliveOnPlanet)
         }
 
         robotRepository.saveAll(robotsAliveOnPlanet)
@@ -122,7 +122,7 @@ class RobotDomainService(
      *
      * @param MutableMap.MutableEntry the `MapEntry` specifying how many of which `ResourceType` wil be distributed
      */
-    private fun distributeDroppedResourcesOfTypeToRobots(
+    private fun distributeDroppedResourcesOfType(
         resourcesToBeDistributed: MutableMap.MutableEntry<ResourceType, Int>,
         robotsAliveOnPlanet: List<Robot>
     ) {
