@@ -10,5 +10,6 @@ enum class EventType(val eventString: String) {
     ITEM_MOVEMENT("item-movement"),
     ITEM_FIGHTING("item-fighting"),
     RESOURCE_DISTRIBUTION("resource-distribution"),
-    NEIGHBOURS("neighbours")
+    NEIGHBOURS("neighbours"),
+    DESTROYED("robot-destroyed")
 }

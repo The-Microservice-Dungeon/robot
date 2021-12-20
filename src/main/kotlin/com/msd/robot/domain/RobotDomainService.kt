@@ -3,7 +3,10 @@ package com.msd.robot.domain
 import com.msd.application.GameMapService
 import com.msd.application.dto.GameMapPlanetDto
 import com.msd.domain.ResourceType
+import com.msd.event.application.EventSender
+import com.msd.event.application.EventType
 import com.msd.event.application.dto.RepairEventRobotDTO
+import com.msd.event.application.dto.RobotDestroyedEventDTO
 import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.ItemType
 import com.msd.item.domain.MovementItemType
@@ -21,7 +24,8 @@ import java.util.*
 @Service
 class RobotDomainService(
     val robotRepository: RobotRepository,
-    val gameMapService: GameMapService
+    val gameMapService: GameMapService,
+    val eventSender: EventSender
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -76,6 +80,12 @@ class RobotDomainService(
                     resourcesToBeDistributed[resourceType]!!.plus(robot.inventory.takeAllResourcesOfType(resourceType))
             }
             robotRepository.delete(robot)
+            eventSender.sendGenericEvent(
+                RobotDestroyedEventDTO(
+                    robot.id, robot.player
+                ),
+                EventType.DESTROYED
+            )
         }
         return resourcesToBeDistributed
     }
