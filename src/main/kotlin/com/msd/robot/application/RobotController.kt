@@ -70,7 +70,7 @@ class RobotController(
     }
 
     /**
-     * Give the specified robot an item of type addItemDto.`item-type`.
+     * Give the specified robot an item of type addItemDto.`itemType`.
      *
      * @see <a href="https://the-microservice-dungeon.github.io/docs/openapi/robot#tag/trading/paths/~1robots~1{robot-uuid}~1inventory~1items/post"></a>
      * @return success message

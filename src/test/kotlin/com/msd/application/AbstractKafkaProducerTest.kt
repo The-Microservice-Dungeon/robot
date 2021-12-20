@@ -29,6 +29,7 @@ abstract class AbstractKafkaProducerTest(
     internal lateinit var itemFightingContainer: KafkaMessageListenerContainer<String, String>
     internal lateinit var itemRepairContainer: KafkaMessageListenerContainer<String, String>
     internal lateinit var itemMovementContainer: KafkaMessageListenerContainer<String, String>
+    internal lateinit var robotDestroyedContainer: KafkaMessageListenerContainer<String, String>
 
     private val runningContainers = mutableListOf<KafkaMessageListenerContainer<String, String>>()
 
@@ -134,6 +135,17 @@ abstract class AbstractKafkaProducerTest(
         itemMovementContainer.start()
         runningContainers.add(itemMovementContainer)
         ContainerTestUtils.waitForAssignment(itemMovementContainer, embeddedKafka.partitionsPerTopic)
+    }
+
+    protected fun startRobotDestroyedContainer() {
+        robotDestroyedContainer = eventTestUtils.createMessageListenerContainer(
+            embeddedKafka,
+            topicConfig.ROBOT_DESTROYED,
+            consumerRecords
+        )
+        robotDestroyedContainer.start()
+        runningContainers.add(robotDestroyedContainer)
+        ContainerTestUtils.waitForAssignment(robotDestroyedContainer, embeddedKafka.partitionsPerTopic)
     }
 
     protected fun shutDownAllContainers() {

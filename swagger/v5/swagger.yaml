@@ -436,6 +436,7 @@ paths:
                 upgradeType: 
                   type: string
                   enum: [STORAGE, HEALTH, DAMAGE, MINING_SPEED, MINING, MAX_ENERGY, ENERGY_REGEN]
+                  description: When using this endpoint, keep in mind that upgradeType is case sensitive.
                 targetLevel:
                   type: integer
                   minimum: 1
@@ -490,6 +491,7 @@ paths:
                 restorationType: 
                   type: string
                   enum: [HEALTH, ENERGY]
+                  description: When using this endpoint, keep in mind that restorationType is case sensitive.
               required:
               - transactionId
               - restorationType
@@ -541,6 +543,7 @@ paths:
                 itemType: 
                   type: string
                   enum: [ROCKET, WORMHOLE, LONG_RANGE_BOMBARDEMENT, SELF_DESTRUCTION, REPAIR_SWARM, NUKE]
+                  description: When using this endpoint, keep in mind that itemType is case sensitive.
               required:
               - transactionId
               - itemType

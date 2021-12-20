@@ -73,7 +73,7 @@ class RobotApplicationServiceTest {
     @BeforeEach
     fun setup() {
         MockKAnnotations.init(this)
-        robotDomainService = RobotDomainService(robotRepository, gameMapMockService)
+        robotDomainService = RobotDomainService(robotRepository, gameMapMockService, eventSender)
         robotApplicationService =
             RobotApplicationService(gameMapMockService, robotDomainService, eventSender, successEventSender)
 
@@ -952,7 +952,7 @@ class RobotApplicationServiceTest {
         )
 
         // when
-        robotApplicationService.useAttackItems(commands)
+        robotApplicationService.executeFightingItemUsageCommand(commands)
 
         // then
         assertAll(

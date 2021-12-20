@@ -92,6 +92,7 @@ class ScenarioTests(
         startNeighboursContainer()
         startFightingContainer()
         startResourceDistributionContainer()
+        startRobotDestroyedContainer()
         consumerRecords.clear()
 
         // //////////////////////  1. Spawn the robots  //////////////////////////////
@@ -216,7 +217,8 @@ class ScenarioTests(
             println(it.topic() + ": " + it.value())
         }
 
-        assertEquals(45, consumerRecords.size)
+        assertEquals(48, consumerRecords.size)
+        assertEquals(3, consumerRecords.filter { it.topic() == topicConfig.ROBOT_DESTROYED }.size)
     }
 
     @Test
@@ -225,6 +227,7 @@ class ScenarioTests(
         startFightingContainer()
         startResourceDistributionContainer()
         startMiningContainer()
+        startRobotDestroyedContainer()
 
         consumerRecords.clear()
 
@@ -277,45 +280,45 @@ class ScenarioTests(
         mockMvc.post("/robots/${robot1.id}/upgrades") {
             contentType = MediaType.APPLICATION_JSON
             content = """{
-                "transaction_id": "${UUID.randomUUID()}",
-                "upgrade-type": "MINING_SPEED",
-                "target-level": 1
+                "transactionId": "${UUID.randomUUID()}",
+                "upgradeType": "MINING_SPEED",
+                "targetLevel": 1
             }"""
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
         mockMvc.post("/robots/${robot1.id}/upgrades") {
             contentType = MediaType.APPLICATION_JSON
             content = """{
-                "transaction_id": "${UUID.randomUUID()}",
-                "upgrade-type": "MINING_SPEED",
-                "target-level": 2
+                "transactionId": "${UUID.randomUUID()}",
+                "upgradeType": "MINING_SPEED",
+                "targetLevel": 2
             }"""
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
         mockMvc.post("/robots/${robot2.id}/upgrades") {
             contentType = MediaType.APPLICATION_JSON
             content = """{
-                "transaction_id": "${UUID.randomUUID()}",
-                "upgrade-type": "MINING_SPEED",
-                "target-level": 1
+                "transactionId": "${UUID.randomUUID()}",
+                "upgradeType": "MINING_SPEED",
+                "targetLevel": 1
             }"""
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
         mockMvc.post("/robots/${robot3.id}/upgrades") {
             contentType = MediaType.APPLICATION_JSON
             content = """{
-                "transaction_id": "${UUID.randomUUID()}",
-                "upgrade-type": "DAMAGE",
-                "target-level": 1
+                "transactionId": "${UUID.randomUUID()}",
+                "upgradeType": "DAMAGE",
+                "targetLevel": 1
             }"""
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
         mockMvc.post("/robots/${robot3.id}/upgrades") {
             contentType = MediaType.APPLICATION_JSON
             content = """{
-                "transaction_id": "${UUID.randomUUID()}",
-                "upgrade-type": "DAMAGE",
-                "target-level": 2
+                "transactionId": "${UUID.randomUUID()}",
+                "upgradeType": "DAMAGE",
+                "targetLevel": 2
             }"""
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
@@ -323,9 +326,9 @@ class ScenarioTests(
             mockMvc.post("/robots/${it.id}/upgrades") {
                 contentType = MediaType.APPLICATION_JSON
                 content = """{
-                "transaction_id": "${UUID.randomUUID()}",
-                "upgrade-type": "HEALTH",
-                "target-level": 1
+                "transactionId": "${UUID.randomUUID()}",
+                "upgradeType": "HEALTH",
+                "targetLevel": 1
             }"""
             }.andExpect { status { HttpStatus.OK } }.andReturn()
         }
@@ -457,7 +460,8 @@ class ScenarioTests(
             3 Resource Distribution Events ( 3 remaining robots on planet)
             = 30
          */
-        assertEquals(30, consumerRecords.size)
+        assertEquals(31, consumerRecords.size)
+        assertEquals(1, consumerRecords.filter { it.topic() == topicConfig.ROBOT_DESTROYED }.size)
     }
 
     @Test

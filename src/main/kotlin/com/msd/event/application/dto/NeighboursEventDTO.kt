@@ -4,7 +4,7 @@ import com.msd.planet.domain.MapDirection
 import java.util.*
 
 class NeighboursEventDTO(
-    val neighbors: List<NeighbourDTO>
+    val neighbours: List<NeighbourDTO>
 ) : GenericEventDTO() {
 
     class NeighbourDTO(

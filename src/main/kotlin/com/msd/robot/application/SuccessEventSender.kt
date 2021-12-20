@@ -9,6 +9,7 @@ import com.msd.event.application.dto.*
 import com.msd.planet.application.PlanetMapper
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
+import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import java.util.*
 
@@ -19,8 +20,11 @@ class SuccessEventSender(
     val robotDomainService: RobotDomainService
 ) {
 
+    private val logger = KotlinLogging.logger {}
+
     fun sendMovementItemEvents(robotPlanetPairs: MutableMap<MovementItemsUsageCommand, Pair<Robot, GameMapPlanetDto>>) {
         robotPlanetPairs.forEach { (command, pair) ->
+            logger.info("[${command.transactionUUID}] Successfully executed MovementItemUsageCommand")
             val moveEventId = sendMovementEvents(pair.first, pair.second.movementDifficulty, command, pair.second)
             eventSender.sendEvent(
                 ItemMovementEventDTO(
@@ -49,6 +53,7 @@ class SuccessEventSender(
         moveCommand: Command,
         planetDto: GameMapPlanetDto
     ): UUID {
+        logger.info("[${moveCommand.transactionUUID}] Successfully executed AttackItemUsageCommand")
         val id = eventSender.sendEvent(
             MovementEventDTO(
                 true,
@@ -80,6 +85,7 @@ class SuccessEventSender(
         it: FightingItemUsageCommand,
         robot: Robot
     ) {
+        logger.info("[${it.transactionUUID}] Successfully executed AttackItemUsageCommand")
         val causedFightingEvents = targetRobots.map { targetRobot ->
             eventSender.sendEvent(
                 FightingEventDTO(
@@ -107,6 +113,7 @@ class SuccessEventSender(
     }
 
     fun sendMiningEvent(it: ValidMineCommand) {
+        logger.debug("[${it.transactionId}] Sending event for successful mining")
         eventSender.sendEvent(
             MiningEventDTO(
                 true,
@@ -124,6 +131,7 @@ class SuccessEventSender(
         command: RepairItemUsageCommand,
         robots: List<RepairEventRobotDTO>
     ) {
+        logger.info("[${command.transactionUUID}] Successfully executed RepairItemUsageCommand")
         eventSender.sendEvent(
             ItemRepairEventDTO(
                 true,
@@ -140,6 +148,7 @@ class SuccessEventSender(
         target: Robot,
         attacker: Robot
     ) {
+        logger.info("[${it.transactionUUID}] Successfully executed FightingCommand")
         eventSender.sendEvent(
             FightingEventDTO(
                 true,
@@ -158,6 +167,7 @@ class SuccessEventSender(
         robot: Robot,
         energyRegenCommand: EnergyRegenCommand
     ) {
+        logger.info("[${energyRegenCommand.transactionUUID}] Successfully executed EnergyRegenCommand")
         eventSender.sendEvent(
             RegenerationEventDTO(
                 true,
@@ -170,6 +180,7 @@ class SuccessEventSender(
     }
 
     fun sendBlockEvent(robot: Robot, blockCommand: BlockCommand) {
+        logger.info("[${blockCommand.transactionUUID}] Successfully executed BlockCommand")
         eventSender.sendEvent(
             BlockEventDTO(
                 true,
@@ -183,6 +194,7 @@ class SuccessEventSender(
     }
 
     fun sendResourceDistributionEvent(it: Robot) {
+        logger.info("Distributed resources to robot ${it.id}")
         eventSender.sendGenericEvent(
             ResourceDistributionEventDTO(
                 it.id,
