@@ -859,4 +859,8 @@ class CommandControllerTest(
             domainEvent1.payload
         )
     }
+
+    @Test
+    fun `Unreachable MapService causes event to be thrown`() {
+    }
 }

@@ -6,6 +6,7 @@ import com.msd.application.dto.GameMapPlanetDto
 import com.msd.application.dto.MineRequestDto
 import com.msd.application.dto.MineResponseDto
 import com.msd.config.properties.MicroserviceMapConfig
+import com.msd.core.FailureException
 import com.msd.domain.ResourceType
 import com.msd.robot.application.exception.TargetPlanetNotReachableException
 import com.msd.robot.application.exception.UnknownPlanetException
@@ -76,12 +77,8 @@ class GameMapService(
             val response = querySpec.exchangeToMono { response ->
                 if (response.statusCode() == HttpStatus.OK)
                     response.bodyToMono<String>()
-                else {
-                    logger.error("GameMap Client returned internal error when retrieving targetPlanet for movement")
-                    throw ClientException(
-                        "GameMap Client returned internal error when retrieving targetPlanet for movement"
-                    )
-                }
+                else
+                    throw FailureException("Could not get planet data from MapService")
             }.block()!!
             val planetDto: GameMapPlanetDto = jacksonObjectMapper().readValue(response)
             if (planetDto.neighbours.find { it.planetId == startPlanetID } != null)
