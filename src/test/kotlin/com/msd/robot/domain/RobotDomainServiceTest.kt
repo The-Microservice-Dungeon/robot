@@ -3,6 +3,7 @@ package com.msd.robot.domain
 import com.msd.application.GameMapService
 import com.msd.application.dto.GameMapPlanetDto
 import com.msd.domain.ResourceType
+import com.msd.event.application.EventSender
 import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
@@ -50,13 +51,16 @@ internal class RobotDomainServiceTest {
     lateinit var robotRepository: RobotRepository
 
     @MockK
+    lateinit var eventSender: EventSender
+
+    @MockK
     lateinit var gameMapService: GameMapService
 
     lateinit var robotDomainService: RobotDomainService
 
     @BeforeEach
     fun setup() {
-        robotDomainService = RobotDomainService(robotRepository, gameMapService)
+        robotDomainService = RobotDomainService(robotRepository, gameMapService, eventSender)
         player1Id = UUID.randomUUID()
         player2Id = UUID.randomUUID()
 
@@ -70,6 +74,8 @@ internal class RobotDomainServiceTest {
         robot5 = Robot(player2Id, planet1)
         robot6 = Robot(player2Id, planet2)
         robots = listOf(robot1, robot2, robot3, robot4, robot5, robot6)
+
+        justRun { eventSender.sendGenericEvent(any(), any()) }
     }
 
     @Test
@@ -157,6 +163,7 @@ internal class RobotDomainServiceTest {
         every { robotRepository.findByIdOrNull(any()) } answers { robots.find { it.id == firstArg() } }
         justRun { robotRepository.delete(robot1) }
         every { robotRepository.saveAll(listOf(robot2, robot4, robot5)) } answers { firstArg() }
+
         // when
         for (i in 1..4) {
             robot2.attack(robot1)
@@ -166,6 +173,7 @@ internal class RobotDomainServiceTest {
         assert(!robot1.alive) { "except robot1 to be dead" }
 
         robotDomainService.postFightCleanup(planet1.planetId)
+
         // then
         assertEquals(0, robot1.inventory.usedStorage)
         assertAll(

@@ -5,7 +5,6 @@ info:
   description: |
                 This service is in charge of the robots for The Microservice Dungeon\
                 You can use the "robot" topic to subcribe to our events.\
-
 channels:
   movement:
     publish:
@@ -47,6 +46,10 @@ channels:
     publish:
       message:
         $ref: '#/components/messages/item-movement'
+  spawn-notification:
+    publish:
+      message:
+        $ref: '#/components/messages/spawn-notification'
   robot-destroyed:
     publish:
       message:
@@ -129,11 +132,11 @@ components:
               #  description: Recharge multiplicator of the planet
               planetType:
                 type: string
-                enum: [default, spacestation]
+                enum: [DEFAULTf, SPACESTATION]
                 description: Planet type (`default` or `spacestation`) of the planet
               resourceType:
                 type: string
-                enum: [coal, iron, gem, gold, platin]
+                enum: [COAL, IRON, GEM, GOLD, PLATIN]
           robots:
             type: array
             items:
@@ -152,7 +155,7 @@ components:
             items:
               - type: object
                 properties:
-                  planetID:
+                  planetId:
                     type: string
                     format: uuid
                     decription: uuid of the planets neighbours
@@ -161,7 +164,7 @@ components:
                     description: Movemenet difficulty of the planet
                   direction:
                     type: string
-                    enum: [north, west, south, east]
+                    enum: [NORTH, WEST, SOUTH, EAST]
                     description: cardinal direction of neighbour 
     planet-blocked:
       description: >
@@ -204,13 +207,13 @@ components:
             type: integer
             example: 10
             description: Remaining energy after mining
-          upadetetInventory:
+          updatedInventory:
             type: integer
             example: 5
             description: Amount of the mined resource in the inventory after mining
           resourceType:
             type: string
-            enum: [coal, iron, gem, gold, platin, NONE]
+            enum: [COAL, IRON, GEM, GOLD, PLATIN, NONE]
     fighting:
       description: >
         Result of a fight
@@ -379,3 +382,25 @@ components:
             format: uuid
             description: Owner of the robot
 
+    spawn-notification:
+      description: >
+        Event shows a spawned robot.
+      traits:
+        - $ref: '#/components/messageTraits/DefaultTradingKafkaMessage'
+      payload:
+        type: object
+        properties:
+          robotId:
+            type: string
+            format: uuid
+            description: Id of the robot
+          playerId:
+            type: string
+            format: uuid
+            description: Owner of the robot
+          otherSeeableRobots:
+            type: array
+            description: Robots that are on the same planet as this robot during spawn
+            items:
+              - type: string
+                format: uuid

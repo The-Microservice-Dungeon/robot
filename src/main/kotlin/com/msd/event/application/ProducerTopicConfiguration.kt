@@ -36,4 +36,7 @@ class ProducerTopicConfiguration {
 
     @Value("robot-resource-distribution")
     lateinit var ROBOT_RESOURCE_DISTRIBUTION: String
+
+    @Value("robot-destroyed")
+    lateinit var ROBOT_DESTROYED: String
 }
