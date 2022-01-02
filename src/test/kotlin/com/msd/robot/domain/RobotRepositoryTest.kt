@@ -19,6 +19,7 @@ import javax.persistence.EntityNotFoundException
 class RobotRepositoryTest(
     @Autowired val robotRepository: RobotRepository
 ) {
+    // TODO fix these tests not running when they're not the first. Some tests drops the database and these tests don't pass anymore since there is no database
     val player1Id: UUID = UUID.randomUUID()
     val player2Id: UUID = UUID.randomUUID()
 

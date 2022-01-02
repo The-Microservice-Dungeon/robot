@@ -18,16 +18,22 @@ import com.msd.robot.domain.UpgradeType
 import com.msd.robot.domain.exception.InventoryFullException
 import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.RobotNotFoundException
+import com.msd.robot.domain.gameplayVariables.EnergyCostCalculationValuesRepository
+import com.msd.robot.domain.gameplayVariables.UpgradeValuesRepository
 import mu.KotlinLogging
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import java.util.*
+import javax.persistence.EntityNotFoundException
 import kotlin.math.floor
 
 @Service
 class RobotApplicationService(
     val gameMapService: GameMapService,
     val robotDomainService: RobotDomainService,
+    val upgradeValuesRepository: UpgradeValuesRepository,
+    val energyCostCalculationValuesRepository: EnergyCostCalculationValuesRepository,
     val eventSender: EventSender,
     val successEventSender: SuccessEventSender
 ) {
@@ -90,8 +96,10 @@ class RobotApplicationService(
      * @param planet the `UUID` of the `Planet`
      */
     fun spawn(player: UUID, planet: UUID): Robot {
-        var robot = Robot(player, Planet(planet))
-        robot = robotDomainService.saveRobot(robot)
+        val upgradeValues = upgradeValuesRepository.findByIdOrNull("VALUES") ?: throw EntityNotFoundException("Upgrade Values not found")
+        val energyCostValues = energyCostCalculationValuesRepository.findByIdOrNull("ENERGY_COST_CALCULATION") ?: throw EntityNotFoundException("Energy cost values not found")
+        val robot = Robot(player, Planet(planet), upgradeValues, energyCostValues)
+        robotDomainService.saveRobot(robot)
         logger.info("Spawned robot with ID ${robot.id} on planet $planet")
         return robot
     }

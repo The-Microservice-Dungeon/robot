@@ -25,11 +25,13 @@ import org.junit.jupiter.api.assertAll
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.test.annotation.DirtiesContext
 import java.util.*
 import kotlin.reflect.full.declaredMemberFunctions
 import kotlin.reflect.jvm.isAccessible
 
 @ExtendWith(MockKExtension::class)
+@DirtiesContext
 internal class RobotDomainServiceTest {
 
     lateinit var robot1: Robot

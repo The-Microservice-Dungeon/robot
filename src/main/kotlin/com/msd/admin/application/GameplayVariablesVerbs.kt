@@ -4,8 +4,8 @@ enum class GameplayVariablesVerbs(val verb: String) {
     STORAGE("storage"),
     HEALTH("hp"),
     DAMAGE("damage"),
-    MININGSPEED("miningSpeed"),
-    ENERGYCAPACITY("energyCapacity"),
-    ENERGYREGENERATION("energyRegeneration"),
-    ENERGYCOSTCALCULATION("energyCostCalculation")
+    MINING_SPEED("miningSpeed"),
+    ENERGY_CAPACITY("energyCapacity"),
+    ENERGY_REGENERATION("energyRegeneration"),
+    ENERGY_COST_CALCULATION("energyCostCalculation")
 }

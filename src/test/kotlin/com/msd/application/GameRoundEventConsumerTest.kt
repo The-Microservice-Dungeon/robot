@@ -1,12 +1,7 @@
 package com.msd.application
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.msd.admin.application.EnergyCostCalculationVerbs
-import com.msd.admin.application.GameplayVariablesDTO
-import com.msd.admin.application.GameplayVariablesLevelVerbs
 import com.msd.planet.domain.Planet
 import com.msd.planet.domain.PlanetRepository
-import com.msd.robot.domain.Robot
 import com.msd.robot.domain.gameplayVariables.*
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.junit.jupiter.api.Assertions.*
@@ -17,13 +12,11 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.http.MediaType
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.test.context.EmbeddedKafka
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.patch
 import java.util.*
 import javax.transaction.Transactional
 
@@ -103,110 +96,4 @@ internal class GameRoundEventConsumerTest(
 //            planetRepository.findAll().map { { assertFalse(it.blocked) } }
 //        )
 //    }
-
-    @Test
-    fun `UpgradeValues get patched when GameRound ends (gameRoundListener-Method is called)`() {
-        // given
-
-        val patchDTO = GameplayVariablesDTO()
-        patchDTO.damage = mutableMapOf(
-            GameplayVariablesLevelVerbs.LVL0 to 0,
-            GameplayVariablesLevelVerbs.LVL1 to 1,
-            GameplayVariablesLevelVerbs.LVL2 to 2,
-            GameplayVariablesLevelVerbs.LVL3 to 3,
-            GameplayVariablesLevelVerbs.LVL4 to 4,
-            GameplayVariablesLevelVerbs.LVL5 to 5
-        )
-
-        patchDTO.energyCapacity = mutableMapOf(
-            GameplayVariablesLevelVerbs.LVL0 to 0,
-            GameplayVariablesLevelVerbs.LVL1 to 1,
-            GameplayVariablesLevelVerbs.LVL2 to 2,
-            GameplayVariablesLevelVerbs.LVL3 to 3,
-            GameplayVariablesLevelVerbs.LVL4 to 4,
-            GameplayVariablesLevelVerbs.LVL5 to 5
-        )
-
-        patchDTO.energyCostCalculation = mutableMapOf(
-            EnergyCostCalculationVerbs.ATTACKINGWEIGHT to 1.0,
-            EnergyCostCalculationVerbs.ATTACKINGMULTIPLIER to 1.0,
-            EnergyCostCalculationVerbs.MOVEMENTMULTIPLIER to 1.0,
-            EnergyCostCalculationVerbs.MININGMULTIPLIER to 1.0,
-            EnergyCostCalculationVerbs.MINGINGWEIGHT to 1.0,
-            EnergyCostCalculationVerbs.BLOCKINGMAXENERGYPROPORTION to 1.0,
-            EnergyCostCalculationVerbs.BLOCKINGBASECOST to 2.0
-        )
-
-        patchDTO.energyRegeneration = mutableMapOf(
-            GameplayVariablesLevelVerbs.LVL0 to 0,
-            GameplayVariablesLevelVerbs.LVL1 to 1,
-            GameplayVariablesLevelVerbs.LVL2 to 2,
-            GameplayVariablesLevelVerbs.LVL3 to 3,
-            GameplayVariablesLevelVerbs.LVL4 to 4,
-            GameplayVariablesLevelVerbs.LVL5 to 5
-        )
-
-        patchDTO.hp = mutableMapOf(
-            GameplayVariablesLevelVerbs.LVL0 to 0,
-            GameplayVariablesLevelVerbs.LVL1 to 1,
-            GameplayVariablesLevelVerbs.LVL2 to 2,
-            GameplayVariablesLevelVerbs.LVL3 to 3,
-            GameplayVariablesLevelVerbs.LVL4 to 4,
-            GameplayVariablesLevelVerbs.LVL5 to 5
-        )
-
-        patchDTO.miningSpeed = mutableMapOf(
-            GameplayVariablesLevelVerbs.LVL0 to 0,
-            GameplayVariablesLevelVerbs.LVL1 to 1,
-            GameplayVariablesLevelVerbs.LVL2 to 2,
-            GameplayVariablesLevelVerbs.LVL3 to 3,
-            GameplayVariablesLevelVerbs.LVL4 to 4,
-            GameplayVariablesLevelVerbs.LVL5 to 5
-        )
-
-        patchDTO.storage = mutableMapOf(
-            GameplayVariablesLevelVerbs.LVL0 to 0,
-            GameplayVariablesLevelVerbs.LVL1 to 1,
-            GameplayVariablesLevelVerbs.LVL2 to 2,
-            GameplayVariablesLevelVerbs.LVL3 to 3,
-            GameplayVariablesLevelVerbs.LVL4 to 4,
-            GameplayVariablesLevelVerbs.LVL5 to 5
-        )
-
-        mockMvc.patch("/gameplay-variables") {
-            contentType = MediaType.APPLICATION_JSON
-            content = jacksonObjectMapper().writeValueAsString(patchDTO)
-        }.andExpect {
-            status { isOk() }
-        }
-
-        val oldRobot = Robot(UUID.randomUUID(), planet1)
-
-        assertAll(
-            { assert(oldRobot.inventory.maxStorage != 0) },
-            { assert(oldRobot.health != 0) },
-            { assert(oldRobot.attackDamage != 0) },
-            { assert(oldRobot.miningSpeed != 0) },
-            { assert(oldRobot.maxEnergy != 0) },
-            { assert(oldRobot.energyRegen != 0) }
-        )
-
-        // when
-        val record = ConsumerRecord(roundTopic, 1, 0, "", "ended")
-        gameRoundEventConsumer.gameRoundListener(record)
-
-        // then
-        val newRobot = Robot(UUID.randomUUID(), planet1)
-
-        assertAll(
-            { assert(newRobot.inventory.maxStorage == 0) },
-            { assert(newRobot.health == 0) },
-            { assert(newRobot.attackDamage == 0) },
-            { assert(newRobot.miningSpeed == 0) },
-            { assert(newRobot.maxEnergy == 0) },
-            { assert(newRobot.energyRegen == 0) },
-
-            { assert(EnergyCostCalculationValueObject.levels[EnergyCostCalculationVerbs.BLOCKINGBASECOST] == 2.0) }
-        )
-    }
 }
