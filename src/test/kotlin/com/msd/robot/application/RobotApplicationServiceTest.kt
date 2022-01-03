@@ -97,7 +97,10 @@ class RobotApplicationServiceTest {
         every { robotRepository.findByIdOrNull(robot6.id) } returns robot6
 
         every { robotRepository.save(any()) } returns robot1 // we don't use the return value of save calls
+
         every { eventSender.sendEvent(any(), any(), any()) } returns randomUUID
+        justRun { eventSender.handleRuntimeException(any(), any()) }
+
         justRun { successEventSender.sendAttackItemEvents(any(), any(), any()) }
         justRun { successEventSender.sendMovementItemEvents(any()) }
         every { successEventSender.sendMovementEvents(any(), any(), any(), any()) } returns UUID.randomUUID()

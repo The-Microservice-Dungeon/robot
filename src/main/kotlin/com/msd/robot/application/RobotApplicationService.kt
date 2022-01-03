@@ -147,6 +147,7 @@ class RobotApplicationService(
         val planet = planetDto.toPlanet()
         try {
             robot.move(planet, cost)
+            robotDomainService.saveRobot(robot)
             logger.info("[${moveCommand.transactionUUID}] Successfully executed MoveCommand")
             return Triple(robot, cost, planetDto)
         } catch (pbe: PlanetBlockedException) {
@@ -154,9 +155,8 @@ class RobotApplicationService(
                 "[${moveCommand.transactionUUID}] " +
                     "Impeded movement of robot ${robot.id} from moving because planet was blocked."
             )
-            throw pbe
-        } finally {
             robotDomainService.saveRobot(robot)
+            throw pbe
         }
     }
 

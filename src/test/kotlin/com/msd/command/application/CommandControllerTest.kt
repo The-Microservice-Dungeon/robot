@@ -861,6 +861,104 @@ class CommandControllerTest(
     }
 
     @Test
-    fun `Unreachable MapService causes event to be thrown`() {
+    fun `Unreachable MapService causes event to be thrown during mining`() {
+        // given
+        startMiningContainer()
+
+        val planet1GameMapDto = GameMapPlanetDto(
+            planet1Id,
+            3,
+            PlanetType.DEFAULT,
+            ResourceDto(ResourceType.COAL)
+        )
+
+        mockGameServiceWebClient.enqueue(
+            MockResponse().setResponseCode(200)
+                .setBody(jacksonObjectMapper().writeValueAsString(planet1GameMapDto))
+                .setHeader("Content-Type", "application/json")
+        )
+
+        val transactionId = UUID.randomUUID()
+        val command = listOf("mine ${robot1.id} $transactionId")
+
+        // when
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(command))
+        }.andExpect {
+            // then
+            status { isAccepted() }
+        }
+
+        // then
+        val domainEvent = eventTestUtils.getNextEventOfTopic<MiningEventDTO>(consumerRecords, topicConfig.ROBOT_MINING)
+        eventTestUtils.checkHeaders(transactionId, EventType.MINING, domainEvent)
+        eventTestUtils.checkMiningPayload(
+            false,
+            "Unexpected exception occurred: Could not connect to Map Service",
+            20,
+            0,
+            "NONE",
+            domainEvent.payload
+        )
+    }
+
+    @Test
+    fun `Unreachable MapService causes event to be thrown during movement item usage`() {
+        // given
+        startItemMovementContainer()
+
+        robot1.inventory.addItem(MovementItemType.WORMHOLE)
+        robotRepository.save(robot1)
+
+        val transactionId = UUID.randomUUID()
+        val command = listOf("use-item-movement ${robot1.id} ${MovementItemType.WORMHOLE} $transactionId")
+
+        // when
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(command))
+        }.andExpect {
+            // then
+            status { isAccepted() }
+        }
+
+        // then
+        val domainEvent1 = eventTestUtils.getNextEventOfTopic<ItemMovementEventDTO>(consumerRecords, topicConfig.ROBOT_ITEM_MOVEMENT)
+        eventTestUtils.checkItemMovementPayload(
+            false,
+            "Unexpected exception occurred: Could not connect to Map Service",
+            null,
+            domainEvent1.payload
+        )
+    }
+
+    @Test
+    fun `Unreachable MapService causes event to be thrown during movement`() {
+        // given
+        startMovementContainer()
+
+        val transactionId = UUID.randomUUID()
+        val command = listOf("move ${robot1.id} $planet2Id $transactionId")
+
+        // when
+        mockMvc.post("/commands") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(CommandDTO(command))
+        }.andExpect {
+            // then
+            status { isAccepted() }
+        }
+
+        // then
+        val domainEvent1 = eventTestUtils.getNextEventOfTopic<MovementEventDTO>(consumerRecords, topicConfig.ROBOT_MOVEMENT)
+        eventTestUtils.checkMovementPayload(
+            false,
+            "Unexpected exception occurred: Could not connect to Map Service",
+            20,
+            null,
+            listOf(),
+            domainEvent1.payload
+        )
     }
 }

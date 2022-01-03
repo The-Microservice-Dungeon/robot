@@ -61,7 +61,7 @@ class GameMapServiceTest(
     }
 
     @Test
-    fun `Throws ClientException if the GameMap Service returns a 400`() {
+    fun `RetrieveTargetPlanetIfRobotCanReach throws FailureException if the GameMap Service returns a 400`() {
         // given
         mockGameServiceWebClient.enqueue(
             MockResponse()
@@ -75,7 +75,7 @@ class GameMapServiceTest(
     }
 
     @Test
-    fun `Throws ClientException if the GameMap Service returns a 500`() {
+    fun `RetrieveTargetPlanetIfRobotCanReach throws ClientException if the GameMap Service returns a 500`() {
         // given
         mockGameServiceWebClient.enqueue(
             MockResponse()

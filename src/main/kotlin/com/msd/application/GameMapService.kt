@@ -77,8 +77,10 @@ class GameMapService(
             val response = querySpec.exchangeToMono { response ->
                 if (response.statusCode() == HttpStatus.OK)
                     response.bodyToMono<String>()
+                else if (response.statusCode() == HttpStatus.BAD_REQUEST)
+                    throw FailureException("The requested planet does not exist")
                 else
-                    throw FailureException("Could not get planet data from MapService")
+                    throw ClientException("Could not get planet data from MapService")
             }.block()!!
             val planetDto: GameMapPlanetDto = jacksonObjectMapper().readValue(response)
             if (planetDto.neighbours.find { it.planetId == startPlanetID } != null)
