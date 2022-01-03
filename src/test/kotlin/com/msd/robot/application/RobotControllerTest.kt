@@ -17,7 +17,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
-import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
@@ -28,7 +27,6 @@ import java.util.*
 @AutoConfigureMockMvc
 @ActiveProfiles(profiles = ["no-async", " test"])
 @Transactional
-@DirtiesContext
 class RobotControllerTest(
     @Autowired private var mockMvc: MockMvc,
     @Autowired private var robotRepository: RobotRepository,

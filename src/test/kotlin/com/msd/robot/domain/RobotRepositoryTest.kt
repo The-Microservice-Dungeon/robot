@@ -8,6 +8,7 @@ import org.junit.jupiter.api.assertAll
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
@@ -16,6 +17,7 @@ import javax.persistence.EntityNotFoundException
 @SpringBootTest
 @ActiveProfiles(profiles = ["test"])
 @Transactional
+@DirtiesContext
 class RobotRepositoryTest(
     @Autowired val robotRepository: RobotRepository
 ) {
