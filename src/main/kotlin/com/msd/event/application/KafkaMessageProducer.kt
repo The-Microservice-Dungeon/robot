@@ -69,6 +69,7 @@ class KafkaMessageProducer(
             EventType.FIGHTING -> jacksonObjectMapper().readValue(payloadString, jacksonObjectMapper().typeFactory.constructParametricType(DomainEvent::class.java, FightingEventDTO::class.java))
             EventType.RESOURCE_DISTRIBUTION -> jacksonObjectMapper().readValue(payloadString, jacksonObjectMapper().typeFactory.constructParametricType(DomainEvent::class.java, ResourceDistributionEventDTO::class.java))
             EventType.NEIGHBOURS -> jacksonObjectMapper().readValue(payloadString, jacksonObjectMapper().typeFactory.constructParametricType(DomainEvent::class.java, NeighboursEventDTO::class.java))
+            EventType.DESTROYED -> jacksonObjectMapper().readValue(payloadString, jacksonObjectMapper().typeFactory.constructParametricType(DomainEvent::class.java, RobotDestroyedEventDTO::class.java))
         }
     }
 }
