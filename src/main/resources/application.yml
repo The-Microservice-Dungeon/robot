@@ -60,7 +60,7 @@ spring:
     password: ${DB_PASSWORD:root}
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: create
     properties:
       dialect: org.hibernate.dialect.MariaDB106Dialect
 microservice:
