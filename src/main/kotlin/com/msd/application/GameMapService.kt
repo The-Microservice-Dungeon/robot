@@ -12,6 +12,7 @@ import com.msd.robot.application.exception.UnknownPlanetException
 import io.netty.channel.ChannelOption
 import io.netty.handler.timeout.ReadTimeoutHandler
 import io.netty.handler.timeout.WriteTimeoutHandler
+import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -33,6 +34,7 @@ class GameMapService(
 ) {
 
     private val gameMapClient: WebClient
+    private val logger = KotlinLogging.logger {}
 
     object GameMapServiceMetaData {
         const val PLANETS_URI = "/planets"
@@ -74,17 +76,21 @@ class GameMapService(
             val response = querySpec.exchangeToMono { response ->
                 if (response.statusCode() == HttpStatus.OK)
                     response.bodyToMono<String>()
-                else
+                else {
+                    logger.error("GameMap Client returned internal error when retrieving targetPlanet for movement")
                     throw ClientException(
                         "GameMap Client returned internal error when retrieving targetPlanet for movement"
                     )
+                }
             }.block()!!
             val planetDto: GameMapPlanetDto = jacksonObjectMapper().readValue(response)
             if (planetDto.neighbours.find { it.planetId == startPlanetID } != null)
                 return planetDto
-            else
+            else {
                 throw TargetPlanetNotReachableException("The robot cannot move to the planet with ID $targetPlanetID")
+            }
         } catch (wcre: WebClientRequestException) {
+            logger.error("Map Service Client failed to connect to the map service with exception: ${wcre.message}")
             throw ClientException("Could not connect to Map Service")
         }
     }
@@ -105,13 +111,16 @@ class GameMapService(
             val response = querySpec.exchangeToMono { response ->
                 if (response.statusCode() == HttpStatus.OK)
                     response.bodyToMono<List<GameMapPlanetDto>>()
-                else
+                else {
+                    logger.error("GameMap Client returned internal error when retrieving targetPlanet for movement")
                     throw ClientException(
                         "GameMap Client returned internal error when retrieving all planets"
                     )
+                }
             }.block()!!
             return response
         } catch (wcre: WebClientRequestException) {
+            logger.error("Map Service Client failed to connect to the map service with exception: ${wcre.message}")
             throw ClientException("Could not connect to Map Service")
         }
     }
@@ -127,13 +136,16 @@ class GameMapService(
                     response.bodyToMono<GameMapPlanetDto>()
                 else if (response.statusCode().is4xxClientError)
                     throw UnknownPlanetException(planetId)
-                else
+                else {
+                    logger.error("GameMap Client returned internal error when retrieving targetPlanet for movement")
                     throw ClientException(
                         "GameMap Client returned internal error when retrieving resource on planet $planetId"
                     )
+                }
             }.block()!!
             return response.resource?.resourceType ?: throw NoResourceOnPlanetException(planetId)
         } catch (wcre: WebClientRequestException) {
+            logger.error("Map Service Client failed to connect to the map service with exception: ${wcre.message}")
             throw ClientException("Could not connect to Map Service")
         }
     }
@@ -150,11 +162,14 @@ class GameMapService(
                     response.bodyToMono<MineResponseDto>()
                 else if (response.statusCode() == HttpStatus.NOT_FOUND)
                     throw UnknownPlanetException(planetId)
-                else
+                else {
+                    logger.error("GameMap Client returned internal error when retrieving targetPlanet for movement")
                     throw ClientException("Map Service returned internal error when trying to mine on planet $planetId")
+                }
             }.block()!!
             return response.amount_mined
         } catch (wcre: WebClientRequestException) {
+            logger.error("Map Service Client failed to connect to the map service with exception: ${wcre.message}")
             throw ClientException("Could not connect to Map Service")
         }
     }

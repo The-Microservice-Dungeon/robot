@@ -8,7 +8,7 @@ spring:
     bootstrap-port: ${KAFKA_BOOTSTRAP_PORT}
     topic:
       consumer:
-        round: gameServiceRound
+        round: roundStatus
     consumer:
       auto-offset-reset: earliest
   datasource:
@@ -18,7 +18,7 @@ spring:
     password: ${DB_PASSWORD:robot}
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     properties:
       dialect: org.hibernate.dialect.MariaDB106Dialect
 
@@ -36,6 +36,8 @@ topics:
   robot-item-repair: item-repair
   robot-item-movement: item-movement
   robot-resource-distribution: resource-distribution
+  robot-destroyed: robot-destroyed
+
 
 ---
 spring:

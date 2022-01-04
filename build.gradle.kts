@@ -8,6 +8,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version "10.2.0"
     id("com.google.cloud.tools.jib") version "3.1.4"
     id("org.jetbrains.dokka") version "1.6.0"
+    id("io.freefair.aspectj") version "6.3.0"
     jacoco
     kotlin("jvm") version "1.6.0"
     kotlin("plugin.spring") version "1.6.0"

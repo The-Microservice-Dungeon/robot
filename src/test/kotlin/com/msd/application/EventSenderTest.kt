@@ -614,7 +614,7 @@ internal class EventSenderTest(
         )
 
         eventTestUtils.checkHeaders(fightingItemUsageCommand.transactionUUID, EventType.ITEM_FIGHTING, domainEvent)
-        eventTestUtils.checkItemFightingPayload(false, "Not enough items\n Missing item: ${fightingItemUsageCommand.itemType}", 0, listOf(), domainEvent.payload)
+        eventTestUtils.checkItemFightingPayload(false, "Not enough items\nMissing item: ${fightingItemUsageCommand.itemType}", 0, listOf(), domainEvent.payload)
     }
 
     @Test
@@ -666,7 +666,7 @@ internal class EventSenderTest(
         eventTestUtils.checkHeaders(regenCommand.transactionUUID, EventType.ITEM_REPAIR, domainEvent)
         eventTestUtils.checkItemRepairPayload(
             false,
-            "Not Enough Items\n Missing item: ${RepairItemType.REPAIR_SWARM}",
+            "Not Enough Items\nMissing item: ${RepairItemType.REPAIR_SWARM}",
             listOf(),
             domainEvent.payload
         )
@@ -693,7 +693,7 @@ internal class EventSenderTest(
         eventTestUtils.checkHeaders(regenCommand.transactionUUID, EventType.ITEM_MOVEMENT, domainEvent)
         eventTestUtils.checkItemMovementPayload(
             false,
-            "Not Enough Items\n Missing item: ${MovementItemType.WORMHOLE}",
+            "Not Enough Items\nMissing item: ${MovementItemType.WORMHOLE}",
             null,
             domainEvent.payload
         )

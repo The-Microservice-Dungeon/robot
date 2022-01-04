@@ -18,18 +18,27 @@ import com.msd.robot.domain.UpgradeType
 import com.msd.robot.domain.exception.InventoryFullException
 import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.RobotNotFoundException
+import com.msd.robot.domain.gameplayVariables.EnergyCostCalculationValuesRepository
+import com.msd.robot.domain.gameplayVariables.UpgradeValuesRepository
+import mu.KotlinLogging
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import java.util.*
+import javax.persistence.EntityNotFoundException
 import kotlin.math.floor
 
 @Service
 class RobotApplicationService(
     val gameMapService: GameMapService,
     val robotDomainService: RobotDomainService,
+    val upgradeValuesRepository: UpgradeValuesRepository,
+    val energyCostCalculationValuesRepository: EnergyCostCalculationValuesRepository,
     val eventSender: EventSender,
     val successEventSender: SuccessEventSender
 ) {
+
+    private val logger = KotlinLogging.logger {}
 
     /**
      * Takes a list of commands and passes them on to the corresponding method.
@@ -43,13 +52,21 @@ class RobotApplicationService(
     fun executeCommands(commands: List<Command>) {
         when (commands[0]) {
             is FightingCommand -> executeAttacks(commands as List<FightingCommand>)
-            is FightingItemUsageCommand -> useAttackItems(commands as List<FightingItemUsageCommand>)
+                .also { logger.info("Finished executing batch of FightingCommands") }
+            is FightingItemUsageCommand -> executeFightingItemUsageCommand(commands as List<FightingItemUsageCommand>)
+                .also { logger.info("Finished executing batch of ItemUsageCommands") }
             is MineCommand -> executeMining(commands as List<MineCommand>)
+                .also { logger.info("Finished executing batch of MineCommands") }
             is MovementItemsUsageCommand -> useMovementItem(commands as List<MovementItemsUsageCommand>)
+                .also { logger.info("Finished executing batch of MovementItemUsageCommands") }
             is MovementCommand -> executeMoveCommands(commands as List<MovementCommand>)
+                .also { logger.info("Finished executing batch of MovementCommands") }
             is BlockCommand -> executeBlockCommands(commands as List<BlockCommand>)
+                .also { logger.info("Finished executing batch of BlockCommands") }
             is EnergyRegenCommand -> executeEnergyRegenCommands(commands as List<EnergyRegenCommand>)
+                .also { logger.info("Finished executing batch of EnergyRegenCommands") }
             is RepairItemUsageCommand -> executeRepairItemUsageCommands(commands as List<RepairItemUsageCommand>)
+                .also { logger.info("Finished executing batch of RepairItemUsageCommands") }
         }
     }
 
@@ -64,6 +81,7 @@ class RobotApplicationService(
         commands.forEach { command ->
             try {
                 robotPlanetPairs[command] = robotDomainService.useMovementItem(command.robotUUID, command.itemType)
+                logger.info("[${command.transactionUUID}] Successfully executed MovementItemUsageCommand")
             } catch (fe: FailureException) {
                 eventSender.handleException(fe, command)
             }
@@ -78,8 +96,12 @@ class RobotApplicationService(
      * @param planet the `UUID` of the `Planet`
      */
     fun spawn(player: UUID, planet: UUID): Robot {
-        val robot = Robot(player, Planet(planet))
-        return robotDomainService.saveRobot(robot)
+        val upgradeValues = upgradeValuesRepository.findByIdOrNull("VALUES") ?: throw EntityNotFoundException("Upgrade Values not found")
+        val energyCostValues = energyCostCalculationValuesRepository.findByIdOrNull("ENERGY_COST_CALCULATION") ?: throw EntityNotFoundException("Energy cost values not found")
+        val robot = Robot(player, Planet(planet), upgradeValues, energyCostValues)
+        robotDomainService.saveRobot(robot)
+        logger.info("Spawned robot with ID ${robot.id} on planet $planet")
+        return robot
     }
 
     /**
@@ -101,6 +123,7 @@ class RobotApplicationService(
             }
         }
 
+        logger.debug("[Movement] Sending success events for command batch")
         successfulCommands.forEach { (command, triple) ->
             successEventSender.sendMovementEvents(triple.first, triple.second, command, triple.third)
         }
@@ -122,8 +145,13 @@ class RobotApplicationService(
         val planet = planetDto.toPlanet()
         try {
             robot.move(planet, cost)
+            logger.info("[${moveCommand.transactionUUID}] Successfully executed MoveCommand")
             return Triple(robot, cost, planetDto)
         } catch (pbe: PlanetBlockedException) {
+            logger.info(
+                "[${moveCommand.transactionUUID}] " +
+                    "Impeded movement of robot ${robot.id} from moving because planet was blocked."
+            )
             throw pbe
         } finally {
             robotDomainService.saveRobot(robot)
@@ -184,6 +212,7 @@ class RobotApplicationService(
         val robot = robotDomainService.getRobot(robotId)
         robot.upgrade(upgradeType, level)
         robotDomainService.saveRobot(robot)
+        logger.info("Successfully upgraded $upgradeType of robot $robotId")
     }
 
     /**
@@ -194,7 +223,7 @@ class RobotApplicationService(
      * This method should never throw any exception. Exceptions occurring during the execution of a single command get
      * handled right then and should not disturb the execution of the following commands.
      *
-     * @param fightingCommands    A list of AttackCommands that need to be executed
+     * @param fightingCommands    A list of AttackCommands that should be executed
      */
     fun executeAttacks(fightingCommands: List<FightingCommand>) {
         val battleFields = executeFights(fightingCommands)
@@ -224,6 +253,10 @@ class RobotApplicationService(
                 eventSender.handleException(fe, it)
             }
         }
+        logger.debug(
+            "Successful Fights happened on following planets:\n" +
+                battleFields.fold("") { agg, battlefield -> "$agg- $battlefield,\n" }
+        )
         return battleFields
     }
 
@@ -231,8 +264,13 @@ class RobotApplicationService(
      * Clean up the affected planets (called battleFields) and send the events for resource distribution
      */
     private fun postFightCleanup(battleFields: MutableSet<UUID>) {
+        logger.debug("Starting cleanup for planets after fight")
         battleFields.forEach { planetId ->
             val affectedRobots = robotDomainService.postFightCleanup(planetId)
+            logger.debug(
+                "Clean up on planet $planetId affected following robots:\n" +
+                    affectedRobots.fold("") { agg, robot -> "$agg- $robot.id\n" }
+            )
             affectedRobots.forEach {
                 successEventSender.sendResourceDistributionEvent(it)
             }
@@ -259,13 +297,23 @@ class RobotApplicationService(
     }
 
     /**
-     * Execute all [AttackItemUsageCommands][FightingItemUsageCommand]. The failure of one command execution does not
+     * Executes all [AttackItemUsageCommands][FightingItemUsageCommand]. The failure of one command execution does not
      * impair the other command executions. After all commands have been executed, the battlefields get cleaned up,
      * i.e. all dead robots get removed and their resources distributed between the remaining robots on the planet.
      *
      * @param usageCommands: The AttackItemUsageCommands that should be executed
      */
-    fun useAttackItems(usageCommands: List<FightingItemUsageCommand>) {
+    fun executeFightingItemUsageCommand(usageCommands: List<FightingItemUsageCommand>) {
+        val battleFields = useFightingItem(usageCommands)
+        postFightCleanup(battleFields)
+    }
+
+    /**
+     * Executes the FightingItemUsageCommand
+     */
+    private fun useFightingItem(
+        usageCommands: List<FightingItemUsageCommand>
+    ): MutableSet<UUID> {
         val battleFields = mutableSetOf<UUID>()
         usageCommands.forEach {
             try {
@@ -281,7 +329,7 @@ class RobotApplicationService(
                 eventSender.handleException(fe, it)
             }
         }
-        postFightCleanup(battleFields)
+        return battleFields
     }
 
     /**
@@ -291,8 +339,8 @@ class RobotApplicationService(
      */
     fun repair(robotId: UUID) {
         val robot = robotDomainService.getRobot(robotId)
-
         robot.repair()
+        logger.info("Successfully repair robot $robotId")
         robotDomainService.saveRobot(robot)
     }
 
@@ -303,15 +351,14 @@ class RobotApplicationService(
      */
     fun executeMining(mineCommands: List<MineCommand>) {
         val resourcesByPlanets = getResourcesOnPlanets(mineCommands)
+        logger.debug("Fetched resources on planets")
+        val validMineCommands = replaceIdsWithObjectsIfMineCommandIsValid(mineCommands, resourcesByPlanets)
 
-        val validMineCommands = replaceIdsWithObjectsInValidMineCommands(mineCommands, resourcesByPlanets)
-
-        val amountsByGroupedPlanet = resourceAmountRequestedPerPlanet(validMineCommands)
+        val amountsByGroupedPlanet = calculateResourceAmountRequestedPerPlanet(validMineCommands)
 
         amountsByGroupedPlanet.forEach { (planet, amount) ->
             mineResourcesOnPlanet(validMineCommands, planet, amount)
         }
-
         validMineCommands.forEach {
             successEventSender.sendMiningEvent(it)
         }
@@ -330,6 +377,7 @@ class RobotApplicationService(
                 robotDomainService.getRobot(it.robotUUID).planet.planetId
             } catch (rnfe: RobotNotFoundException) {
                 // we will handle this later, for we are just interested in the planets
+                logger.debug("[Mining] Robot with ${it.robotUUID} not found")
                 null
             }
         }
@@ -340,6 +388,7 @@ class RobotApplicationService(
                 gameMapService.getResourceOnPlanet(it)
             } catch (re: RuntimeException) {
                 // if there was any problem we just put null, this will cause an exception to be thrown later on
+                logger.debug("[Mining] Failed to get resource on planet $it from map service")
                 null
             }
         }
@@ -360,11 +409,13 @@ class RobotApplicationService(
      * @return a list of [ValidMineCommand]s, representing only the MineCommands which are valid and having replaced
      *              the IDs with the corresponding entities.
      */
-    private fun replaceIdsWithObjectsInValidMineCommands(
+    private fun replaceIdsWithObjectsIfMineCommandIsValid(
         mineCommands: List<MineCommand>,
         planetsToResources: Map<UUID, ResourceType?>
     ): MutableList<ValidMineCommand> {
         val validMineCommands = mutableListOf<ValidMineCommand>()
+
+        // TODO("Throw NotEnoughEnergyException here?")
 
         for (mineCommand in mineCommands) {
             try {
@@ -378,6 +429,7 @@ class RobotApplicationService(
                 if (!robot.canMine(resource))
                     throw LevelTooLowException("The mining level of the robot is too low to mine the resource $resource")
                 validMineCommands.add(validMineCommand)
+                logger.debug("[${mineCommand.transactionUUID}] Created ValidMineCommand")
             } catch (re: FailureException) {
                 eventSender.handleException(re, mineCommand)
             }
@@ -393,7 +445,7 @@ class RobotApplicationService(
      * @Param mineCommands: A list of ValidMineCommands, each containing a requested amount and a planet.
      * @return A map connecting the distinct planets to the amount of resources requested from their resource.
      */
-    private fun resourceAmountRequestedPerPlanet(mineCommands: MutableList<ValidMineCommand>): Map<UUID, Int> {
+    private fun calculateResourceAmountRequestedPerPlanet(mineCommands: MutableList<ValidMineCommand>): Map<UUID, Int> {
         val amountsByGroupedPlanet = mineCommands.groupingBy { it.planet }.fold(
             { _, _ -> 0 },
             { _, acc, element ->
@@ -422,8 +474,11 @@ class RobotApplicationService(
         try {
             val minedAmount = gameMapService.mine(planet, amount)
             distributeMinedResources(miningRobotsOnPlanet, minedAmount, resource)
+            logger.debug("Mined and distributed resources on planet $planet")
         } catch (re: FailureException) {
             eventSender.handleAll(re, validMineCommands.map { MineCommand(it.robot.id, it.transactionId) })
+        } catch (e: RuntimeException) {
+            logger.error("[Mining] Error during mining call to map service for planet $planet")
         }
     }
 
@@ -467,22 +522,51 @@ class RobotApplicationService(
         amount: Int,
         resource: ResourceType
     ): Pair<Int, MutableMap<Robot, Double>> {
+        logger.debug("Distributing $amount of type $resource by mining speed")
         val accumulatedMiningSpeed = robots.fold(0) { acc, robot -> acc + robot.miningSpeed }
         var amountDistributed = 0
         val robotsDecimalPlaces = mutableMapOf<Robot, Double>()
 
-        robots.forEach {
-            val correspondingAmount = floor((it.miningSpeed.toDouble() / accumulatedMiningSpeed) * amount).toInt()
-            val remainder = ((it.miningSpeed.toDouble() / accumulatedMiningSpeed) * amount) - correspondingAmount
-            amountDistributed += correspondingAmount
-            robotsDecimalPlaces[it] = remainder
-            try {
-                it.inventory.addResource(resource, correspondingAmount)
-            } catch (ife: InventoryFullException) {
-                // TODO?
-            }
+        robots.forEach { robot ->
+            amountDistributed += distributeToRobotByMiningSpeed(
+                robot,
+                accumulatedMiningSpeed,
+                amount,
+                robotsDecimalPlaces,
+                resource
+            )
         }
         return Pair(amountDistributed, robotsDecimalPlaces)
+    }
+
+    /**
+     * Distribute the resource to the robot by its fair share, calculated by the portion of mining speed it has
+     * relative to the mining speed of all robots mining on the same planet.
+     *
+     * @param robot: The robot to receive the resources
+     * @param accumulatedMiningSpeed: The mining speed of all robots mining on the planet combined
+     * @param amount: The overall amount to be distributed to all robots
+     * @param robotsDecimalPlaces: Map that needs to get updated with the decimal places of the correspondingAmount
+     * @param resourceType: The ResourceType of the distributed resource
+     *
+     * @return the amount distributed to the robot
+     */
+    private fun distributeToRobotByMiningSpeed(
+        robot: Robot,
+        accumulatedMiningSpeed: Int,
+        amount: Int,
+        robotsDecimalPlaces: MutableMap<Robot, Double>,
+        resourceType: ResourceType
+    ): Int {
+        val correspondingAmount = floor((robot.miningSpeed.toDouble() / accumulatedMiningSpeed) * amount).toInt()
+        val remainder = ((robot.miningSpeed.toDouble() / accumulatedMiningSpeed) * amount) - correspondingAmount
+        robotsDecimalPlaces[robot] = remainder
+        try {
+            robot.inventory.addResource(resourceType, correspondingAmount)
+        } catch (ife: InventoryFullException) {
+            logger.info("[Mining] Robot did not receive all resources granted to it, because its inventory was full")
+        }
+        return correspondingAmount
     }
 
     /**
@@ -504,16 +588,21 @@ class RobotApplicationService(
         remainingAmount: Int,
         resource: ResourceType
     ) {
+        logger.debug("Distributing $remainingAmount of type $resource by decimal places")
         var amountDistributed = 0
         val sortedDecimalPlaces = robotsDecimalPlaces.entries.sortedBy { it.value }.reversed()
         var index = 0
-        val fullRobots = mutableMapOf<Robot, Boolean>()
+        val fullRobots = mutableSetOf<Robot>()
         while (amountDistributed < remainingAmount && fullRobots.count() < sortedDecimalPlaces.size) {
             try {
                 sortedDecimalPlaces[index % sortedDecimalPlaces.size].key.inventory.addResource(resource, 1)
                 amountDistributed += 1
             } catch (ife: InventoryFullException) {
-                fullRobots[sortedDecimalPlaces[index % sortedDecimalPlaces.size].key] = true
+                fullRobots.add(sortedDecimalPlaces[index % sortedDecimalPlaces.size].key)
+                logger.debug(
+                    "[Mining] Robot did not receive all resources granted to it, because its " +
+                        "inventory was full"
+                )
             }
             index++
         }

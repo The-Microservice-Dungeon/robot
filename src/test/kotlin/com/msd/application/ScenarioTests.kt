@@ -16,7 +16,8 @@ import com.msd.planet.domain.PlanetRepository
 import com.msd.robot.application.dtos.RobotDto
 import com.msd.robot.application.dtos.RobotSpawnDto
 import com.msd.robot.domain.RobotRepository
-import com.msd.robot.domain.UpgradeValues
+import com.msd.robot.domain.gameplayVariables.UpgradeValues
+import com.msd.robot.domain.getByVal
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.AfterAll
@@ -54,7 +55,7 @@ class ScenarioTests(
     @Autowired private val embeddedKafka: EmbeddedKafkaBroker,
     @Autowired private val topicConfig: ProducerTopicConfiguration,
     @Autowired private val robotRepo: RobotRepository,
-    @Autowired private val planetRepo: PlanetRepository
+    @Autowired private val planetRepo: PlanetRepository,
 ) : AbstractKafkaProducerTest(embeddedKafka, topicConfig) {
 
     val planet1 = UUID.randomUUID()
@@ -63,6 +64,8 @@ class ScenarioTests(
 
     val player1 = UUID.randomUUID()
     val player2 = UUID.randomUUID()
+
+    val upgradeValues = UpgradeValues()
 
     companion object {
         val mockGameServiceWebClient = MockWebServer()
@@ -92,6 +95,7 @@ class ScenarioTests(
         startNeighboursContainer()
         startFightingContainer()
         startResourceDistributionContainer()
+        startRobotDestroyedContainer()
         consumerRecords.clear()
 
         // //////////////////////  1. Spawn the robots  //////////////////////////////
@@ -145,8 +149,8 @@ class ScenarioTests(
         // ////////////////////////////////// 2. Move the robots to the same planet /////////////////////////
         // All robots move to planet3
         val planet3Dto = GameMapPlanetDto(
-            planet3, 3, null,
-            listOf(
+            planet3, 3,
+            neighbours = listOf(
                 GameMapNeighbourDto(planet1, 3, MapDirection.NORTH),
                 GameMapNeighbourDto(planet2, 3, MapDirection.SOUTH)
             )
@@ -216,7 +220,8 @@ class ScenarioTests(
             println(it.topic() + ": " + it.value())
         }
 
-        assertEquals(45, consumerRecords.size)
+        assertEquals(48, consumerRecords.size)
+        assertEquals(3, consumerRecords.filter { it.topic() == topicConfig.ROBOT_DESTROYED }.size)
     }
 
     @Test
@@ -225,6 +230,7 @@ class ScenarioTests(
         startFightingContainer()
         startResourceDistributionContainer()
         startMiningContainer()
+        startRobotDestroyedContainer()
 
         consumerRecords.clear()
 
@@ -345,7 +351,7 @@ class ScenarioTests(
             "mine ${robot4.id} ${UUID.randomUUID()}"
         )
 
-        val planet1GameMapDto = GameMapPlanetDto(planet1, 3, ResourceDto(ResourceType.COAL))
+        val planet1GameMapDto = GameMapPlanetDto(planet1, 3, resource = ResourceDto(ResourceType.COAL))
         val miningResponse = MineResponseDto(19) // 10 + 5 + 2 + 2
         for (i in 1..3) {
             mockGameServiceWebClient.enqueue(
@@ -457,7 +463,8 @@ class ScenarioTests(
             3 Resource Distribution Events ( 3 remaining robots on planet)
             = 30
          */
-        assertEquals(30, consumerRecords.size)
+        assertEquals(31, consumerRecords.size)
+        assertEquals(1, consumerRecords.filter { it.topic() == topicConfig.ROBOT_DESTROYED }.size)
     }
 
     @Test
@@ -551,7 +558,7 @@ class ScenarioTests(
             content = mapper.writeValueAsString(CommandDTO(repairCommand))
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
-        assertEquals(13 + UpgradeValues.energyRegenByLevel[0], robotRepo.findByIdOrNull(robot1.id)!!.energy)
+        assertEquals(13 + upgradeValues.energyRegenerationValues.getByVal(0), robotRepo.findByIdOrNull(robot1.id)!!.energy)
         assertEquals(10, robotRepo.findByIdOrNull(robot2.id)!!.health)
         assertEquals(10, robotRepo.findByIdOrNull(robot3.id)!!.health)
 
