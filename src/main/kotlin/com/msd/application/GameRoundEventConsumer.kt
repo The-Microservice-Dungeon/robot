@@ -1,5 +1,7 @@
 package com.msd.application
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.msd.application.dto.RoundStatusDTO
 import com.msd.planet.domain.PlanetRepository
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.springframework.kafka.annotation.KafkaListener
@@ -12,8 +14,8 @@ class GameRoundEventConsumer(
 
     @KafkaListener(id = "gameRoundListener", topics = ["\${spring.kafka.topic.consumer.round}"])
     fun gameRoundListener(record: ConsumerRecord<String, String>) {
-        val payload = record.value() // TODO update if the payload isn't just a string
-        if (payload == "ended") {
+        val payload = jacksonObjectMapper().readValue(record.value(), RoundStatusDTO::class.java)
+        if (payload.roundStatus == RoundStatus.ENDED) {
             resetBlocks()
         }
     }

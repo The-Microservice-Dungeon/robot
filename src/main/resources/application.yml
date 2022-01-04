@@ -8,7 +8,7 @@ spring:
     bootstrap-port: ${KAFKA_BOOTSTRAP_PORT}
     topic:
       consumer:
-        round: gameServiceRound
+        round: roundStatus
     consumer:
       auto-offset-reset: earliest
   datasource:
