@@ -9,16 +9,20 @@ import org.springframework.stereotype.Component
 
 @Component
 class GameRoundEventConsumer(
-    val planetRepository: PlanetRepository
+    val planetRepository: PlanetRepository,
 ) {
 
     @KafkaListener(id = "gameRoundListener", topics = ["\${spring.kafka.topic.consumer.round}"])
-    fun resetBlocks(record: ConsumerRecord<String, String>) {
+    fun gameRoundListener(record: ConsumerRecord<String, String>) {
         val payload = jacksonObjectMapper().readValue(record.value(), RoundStatusDTO::class.java)
         if (payload.roundStatus == RoundStatus.ENDED) {
-            val planets = planetRepository.findAllByBlocked(true)
-            planets.forEach { it.blocked = false }
-            planetRepository.saveAll(planets)
+            resetBlocks()
         }
+    }
+
+    fun resetBlocks() {
+        val planets = planetRepository.findAllByBlocked(true)
+        planets.forEach { it.blocked = false }
+        planetRepository.saveAll(planets)
     }
 }
