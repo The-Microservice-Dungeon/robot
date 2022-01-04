@@ -87,7 +87,7 @@ class GameMapServiceTest(
             gameMapService.retrieveTargetPlanetIfRobotCanReach(randomUUID(), randomUUID())
         }
         assertEquals(
-            "GameMap Client returned internal error when retrieving targetPlanet for movement",
+            "Could not get planet data from MapService",
             exception.message
         )
     }
