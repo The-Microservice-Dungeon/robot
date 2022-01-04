@@ -1,5 +1,7 @@
 package com.msd.application
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.msd.application.dto.RoundStatusDTO
 import com.msd.planet.domain.Planet
 import com.msd.planet.domain.PlanetRepository
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -55,7 +57,7 @@ internal class GameRoundEventConsumerTest(
         // given
         planets.forEach { it.blocked = true }
         planetRepository.saveAll(planets)
-        val record = ConsumerRecord(roundTopic, 1, 0, "", "ended")
+        val record = ConsumerRecord(roundTopic, 1, 0, "", jacksonObjectMapper().writeValueAsString(RoundStatusDTO(0, RoundStatus.ENDED)))
         // when
         gameRoundEventConsumer.resetBlocks(record)
         // then
@@ -69,7 +71,7 @@ internal class GameRoundEventConsumerTest(
         // given
         planets.forEach { it.blocked = true }
         planetRepository.saveAll(planets)
-        val record = ConsumerRecord(roundTopic, 1, 0, "", "started")
+        val record = ConsumerRecord(roundTopic, 1, 0, "", jacksonObjectMapper().writeValueAsString(RoundStatusDTO(0, RoundStatus.STARTED)))
         // when
         gameRoundEventConsumer.resetBlocks(record)
         // then
