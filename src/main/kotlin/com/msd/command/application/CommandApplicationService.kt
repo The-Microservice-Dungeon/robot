@@ -7,7 +7,6 @@ import com.msd.item.domain.RepairItemType
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import java.lang.IllegalArgumentException
-import java.lang.RuntimeException
 import java.util.*
 
 @Service
@@ -80,7 +79,7 @@ class CommandApplicationService {
                 logger.info("Rejected command batch because of malformed UUID: ${iae.message}")
                 throw CommandParsingException(commandString, "Invalid UUID string")
             } else {
-                logger.info("Rejected command batch because of Unknown ItemType: ${args[2]}")
+                logger.info("Rejected command batch because of unknown ItemType: ${args[2]}")
                 throw CommandParsingException(commandString, "Unknown ItemType: ${args[2]}")
             }
         }
@@ -127,7 +126,7 @@ class CommandApplicationService {
                 RepairItemType.valueOf(args[1].uppercase()),
                 UUID.fromString(args[2])
             )
-            else -> throw RuntimeException("Internal Error")
+            else -> throw CommandParsingException("Unknown command verb $verb")
         }
     }
 
@@ -150,7 +149,7 @@ class CommandApplicationService {
                 UUID.fromString(args[1]),
                 UUID.fromString(args[2])
             )
-            else -> throw RuntimeException("Internal Error")
+            else -> throw CommandParsingException("Unknown Command verb $verb")
         }
     }
 
@@ -165,7 +164,7 @@ class CommandApplicationService {
             CommandVerbs.BLOCK.verb -> ::BlockCommand
             CommandVerbs.MINE.verb -> ::MineCommand
             CommandVerbs.REGENERATE.verb -> ::EnergyRegenCommand
-            else -> throw RuntimeException("Internal Error")
+            else -> throw CommandParsingException("Unknown Command verb $verb")
         }
     }
 
@@ -179,7 +178,7 @@ class CommandApplicationService {
         return when (verb) {
             CommandVerbs.MOVE.verb -> ::MovementCommand
             CommandVerbs.FIGHT.verb -> ::FightingCommand
-            else -> throw RuntimeException("Internal Error")
+            else -> throw CommandParsingException("Unknown Command verb $verb")
         }
     }
 }

@@ -3,6 +3,7 @@ package com.msd.application
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.application.dto.GameMapNeighbourDto
 import com.msd.application.dto.GameMapPlanetDto
+import com.msd.core.FailureException
 import com.msd.planet.domain.MapDirection
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -21,20 +22,16 @@ class GameMapServiceTest(
     @Autowired val gameMapService: GameMapService
 ) {
 
-    companion object {
-        val mockGameServiceWebClient = MockWebServer()
+    val mockGameServiceWebClient = MockWebServer()
 
-        @BeforeAll
-        @JvmStatic
-        internal fun setUp() {
-            mockGameServiceWebClient.start(port = 8081)
-        }
+    @BeforeEach
+    fun setUp() {
+        mockGameServiceWebClient.start(port = 8081)
+    }
 
-        @AfterAll
-        @JvmStatic
-        internal fun tearDown() {
-            mockGameServiceWebClient.shutdown()
-        }
+    @AfterEach
+    fun tearDown() {
+        mockGameServiceWebClient.shutdown()
     }
 
     @Test
@@ -61,7 +58,7 @@ class GameMapServiceTest(
     }
 
     @Test
-    fun `Throws ClientException if the GameMap Service returns a 400`() {
+    fun `RetrieveTargetPlanetIfRobotCanReach throws FailureException if the GameMap Service returns a 400`() {
         // given
         mockGameServiceWebClient.enqueue(
             MockResponse()
@@ -69,13 +66,13 @@ class GameMapServiceTest(
         )
 
         // then
-        assertThrows<ClientException> {
+        assertThrows<FailureException> {
             gameMapService.retrieveTargetPlanetIfRobotCanReach(randomUUID(), randomUUID())
         }
     }
 
     @Test
-    fun `Throws ClientException if the GameMap Service returns a 500`() {
+    fun `RetrieveTargetPlanetIfRobotCanReach throws ClientException if the GameMap Service returns a 500`() {
         // given
         mockGameServiceWebClient.enqueue(
             MockResponse()
@@ -87,7 +84,7 @@ class GameMapServiceTest(
             gameMapService.retrieveTargetPlanetIfRobotCanReach(randomUUID(), randomUUID())
         }
         assertEquals(
-            "GameMap Client returned internal error when retrieving targetPlanet for movement",
+            "Could not get planet data from MapService",
             exception.message
         )
     }

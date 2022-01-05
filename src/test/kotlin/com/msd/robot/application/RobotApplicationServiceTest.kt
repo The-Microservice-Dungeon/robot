@@ -7,6 +7,7 @@ import com.msd.command.application.command.*
 import com.msd.core.FailureException
 import com.msd.domain.ResourceType
 import com.msd.event.application.EventSender
+import com.msd.event.application.SuccessEventSender
 import com.msd.item.domain.AttackItemType
 import com.msd.planet.domain.Planet
 import com.msd.robot.application.exception.TargetPlanetNotReachableException
@@ -105,7 +106,10 @@ class RobotApplicationServiceTest {
         every { robotRepository.findByIdOrNull(robot6.id) } returns robot6
 
         every { robotRepository.save(any()) } returns robot1 // we don't use the return value of save calls
+
         every { eventSender.sendEvent(any(), any(), any()) } returns randomUUID
+        justRun { eventSender.handleRuntimeException(any(), any()) }
+
         justRun { successEventSender.sendAttackItemEvents(any(), any(), any()) }
         justRun { successEventSender.sendMovementItemEvents(any()) }
         every { successEventSender.sendMovementEvents(any(), any(), any(), any()) } returns UUID.randomUUID()
@@ -123,7 +127,7 @@ class RobotApplicationServiceTest {
         val command = MovementCommand(unknownRobotId, planet1.planetId, UUID.randomUUID())
         every { robotRepository.findByIdOrNull(unknownRobotId) } returns null
         val failureException = slot<FailureException>()
-        justRun { eventSender.handleException(capture(failureException), any()) }
+        justRun { eventSender.handleFailureException(capture(failureException), any()) }
 
         // when
         robotApplicationService.executeMoveCommands(listOf(command))
@@ -144,7 +148,7 @@ class RobotApplicationServiceTest {
             )
         } throws TargetPlanetNotReachableException("")
         val failureException = slot<FailureException>()
-        justRun { eventSender.handleException(capture(failureException), any()) }
+        justRun { eventSender.handleFailureException(capture(failureException), any()) }
 
         // when
         robotApplicationService.executeMoveCommands(listOf(command))
@@ -162,9 +166,7 @@ class RobotApplicationServiceTest {
         every { gameMapMockService.retrieveTargetPlanetIfRobotCanReach(any(), any()) } throws ClientException("")
 
         // when
-        assertThrows<ClientException> {
-            robotApplicationService.executeMoveCommands(listOf(command))
-        }
+        robotApplicationService.executeMoveCommands(listOf(command))
 
         // then
         assertEquals(planet1, robot1.planet)
@@ -181,7 +183,7 @@ class RobotApplicationServiceTest {
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
         every { gameMapMockService.retrieveTargetPlanetIfRobotCanReach(any(), any()) } returns planetDto
         val failureException = slot<FailureException>()
-        justRun { eventSender.handleException(capture(failureException), any()) }
+        justRun { eventSender.handleFailureException(capture(failureException), any()) }
 
         // when
         robotApplicationService.executeMoveCommands(listOf(command))
@@ -201,7 +203,7 @@ class RobotApplicationServiceTest {
         every { robotRepository.findByIdOrNull(robot3.id) } returns robot3
         every { gameMapMockService.retrieveTargetPlanetIfRobotCanReach(any(), any()) } returns planetDto
         val failureException = slot<FailureException>()
-        justRun { eventSender.handleException(capture(failureException), any()) }
+        justRun { eventSender.handleFailureException(capture(failureException), any()) }
 
         // when
         robotApplicationService.executeMoveCommands(listOf(command))
@@ -234,7 +236,7 @@ class RobotApplicationServiceTest {
         // given
         every { robotRepository.findByIdOrNull(unknownRobotId) } returns null
         val failureException = slot<FailureException>()
-        justRun { eventSender.handleException(capture(failureException), any()) }
+        justRun { eventSender.handleFailureException(capture(failureException), any()) }
         // then
         robotApplicationService.executeEnergyRegenCommands(
             listOf(
@@ -280,7 +282,7 @@ class RobotApplicationServiceTest {
     @Test
     fun `Robot cannot block planet if it has not enough energy`() {
         val failureException = slot<FailureException>()
-        justRun { eventSender.handleException(capture(failureException), any()) }
+        justRun { eventSender.handleFailureException(capture(failureException), any()) }
         // given
         robot1.move(planet1, 19)
         val command = BlockCommand(robot1.id, UUID.randomUUID())
@@ -291,7 +293,7 @@ class RobotApplicationServiceTest {
 
         // then
         assert(!robot1.planet.blocked)
-        verify(exactly = 1) { eventSender.handleException(any(), any()) }
+        verify(exactly = 1) { eventSender.handleFailureException(any(), any()) }
         assert(failureException.captured is NotEnoughEnergyException)
     }
 
@@ -463,7 +465,7 @@ class RobotApplicationServiceTest {
             FightingCommand(robot5.id, robot1.id, UUID.randomUUID()),
             FightingCommand(robot6.id, robot3.id, UUID.randomUUID()),
         )
-        justRun { eventSender.handleException(any(), any()) }
+        justRun { eventSender.handleFailureException(any(), any()) }
         // when
         robotApplicationService.executeAttacks(fightingCommands)
         // then
@@ -494,7 +496,7 @@ class RobotApplicationServiceTest {
             },
         )
         verify(exactly = 2) {
-            eventSender.handleException(any(), any())
+            eventSender.handleFailureException(any(), any())
         }
     }
 
@@ -588,14 +590,14 @@ class RobotApplicationServiceTest {
         every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf(
             robot1, robot2, robot3, robot4, robot5, robot6
         )
-        justRun { eventSender.handleException(any(), any()) }
+        justRun { eventSender.handleFailureException(any(), any()) }
 
         // when
         robotApplicationService.executeAttacks(fightingCommands)
 
         // assert
         verify(exactly = 2) {
-            eventSender.handleException(any(), any())
+            eventSender.handleFailureException(any(), any())
         }
     }
 
@@ -713,7 +715,7 @@ class RobotApplicationServiceTest {
         every { gameMapMockService.mine(robot1.planet.planetId, robot1.miningSpeed) } returns robot1.miningSpeed
         every { gameMapMockService.mine(robot2.planet.planetId, robot2.miningSpeed) } returns robot2.miningSpeed
 
-        justRun { eventSender.handleException(any(), any()) }
+        justRun { eventSender.handleFailureException(any(), any()) }
 
         val mineCommands = listOf(
             MineCommand(robot1.id, UUID.randomUUID()),
@@ -725,7 +727,7 @@ class RobotApplicationServiceTest {
 
         // then
         verify(exactly = 1) {
-            eventSender.handleException(any(), any())
+            eventSender.handleFailureException(any(), any())
         }
         assertEquals(robot1.miningSpeed, robot1.inventory.getStorageUsageForResource(ResourceType.COAL))
     }
@@ -822,7 +824,7 @@ class RobotApplicationServiceTest {
         every { gameMapMockService.getResourceOnPlanet(robot6.planet.planetId) } returns ResourceType.COAL
         every { gameMapMockService.mine(robot6.planet.planetId, robot6.miningSpeed) } returns robot6.miningSpeed
         every { robotRepository.saveAll(any<List<Robot>>()) } returns listOf() // we dont need the return value
-        justRun { eventSender.handleException(any(), any()) }
+        justRun { eventSender.handleFailureException(any(), any()) }
 
         val mineCommands = listOf(
             MineCommand(unknownRobotId, UUID.fromString("11111111-1111-1111-1111-111111111111")), // unknown robot
@@ -837,7 +839,7 @@ class RobotApplicationServiceTest {
 
         // then
         verify(exactly = 4) {
-            eventSender.handleException(any(), any())
+            eventSender.handleFailureException(any(), any())
         }
         assertEquals(robot6.miningSpeed, robot6.inventory.getStorageUsageForResource(ResourceType.COAL))
     }
@@ -893,7 +895,7 @@ class RobotApplicationServiceTest {
         robotApplicationService.executeCommands(commands)
 
         // then
-        verify(exactly = 0) { eventSender.handleException(any(), any()) }
+        verify(exactly = 0) { eventSender.handleFailureException(any(), any()) }
         assertAll(
             {
                 assert(robot1.health == robot1.maxHealth - 5 - 20 - 10)
@@ -1072,7 +1074,7 @@ class RobotApplicationServiceTest {
         robot4.move(Planet(UUID.randomUUID()), 0)
 
         val exceptionSlot = slot<FailureException>()
-        justRun { eventSender.handleException(capture(exceptionSlot), any()) }
+        justRun { eventSender.handleFailureException(capture(exceptionSlot), any()) }
 
         val planetsToResources = mapOf(
             robot1.planet.planetId to ResourceType.COAL,

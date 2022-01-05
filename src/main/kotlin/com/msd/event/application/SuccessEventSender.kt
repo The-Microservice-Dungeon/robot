@@ -1,12 +1,11 @@
-package com.msd.robot.application
+package com.msd.event.application
 
 import com.msd.application.dto.GameMapPlanetDto
 import com.msd.command.application.command.*
 import com.msd.domain.ResourceType
-import com.msd.event.application.EventSender
-import com.msd.event.application.EventType
 import com.msd.event.application.dto.*
 import com.msd.planet.application.PlanetMapper
+import com.msd.robot.application.ValidMineCommand
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
 import mu.KotlinLogging

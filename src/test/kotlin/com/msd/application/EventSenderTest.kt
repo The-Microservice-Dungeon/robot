@@ -67,7 +67,7 @@ internal class EventSenderTest(
         val movementCommand = MovementCommand(robotId, UUID.randomUUID(), UUID.randomUUID())
         val planetBlockedException = PlanetBlockedException("Planet is blocked")
         // when
-        eventSender.handleException(planetBlockedException, movementCommand)
+        eventSender.handleFailureException(planetBlockedException, movementCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -89,7 +89,7 @@ internal class EventSenderTest(
         val movementCommand = MovementCommand(robotId, UUID.randomUUID(), UUID.randomUUID())
         val notEnoughEnergyException = NotEnoughEnergyException("Not enough Energy")
         // when
-        eventSender.handleException(notEnoughEnergyException, movementCommand)
+        eventSender.handleFailureException(notEnoughEnergyException, movementCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -112,7 +112,7 @@ internal class EventSenderTest(
         val movementCommand = MovementCommand(robotId, UUID.randomUUID(), UUID.randomUUID())
         val targetPlanetNotReachableException = TargetPlanetNotReachableException("Planet not reachable")
         // when
-        eventSender.handleException(targetPlanetNotReachableException, movementCommand)
+        eventSender.handleFailureException(targetPlanetNotReachableException, movementCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -136,7 +136,7 @@ internal class EventSenderTest(
         val movementCommand = MovementCommand(robotId, UUID.randomUUID(), planetId)
         val unknownPlanetException = UnknownPlanetException(planetId)
         // when
-        eventSender.handleException(unknownPlanetException, movementCommand)
+        eventSender.handleFailureException(unknownPlanetException, movementCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -166,7 +166,7 @@ internal class EventSenderTest(
         val movementCommand = MovementCommand(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID())
         val robotNotFoundException = RobotNotFoundException("Robot Not Found")
         // when
-        eventSender.handleException(robotNotFoundException, movementCommand)
+        eventSender.handleFailureException(robotNotFoundException, movementCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -189,7 +189,7 @@ internal class EventSenderTest(
         val blockCommand = BlockCommand(robotId, UUID.randomUUID())
         val notEnoughEnergyException = NotEnoughEnergyException("Robot has not enough Energy")
         // when
-        eventSender.handleException(notEnoughEnergyException, blockCommand)
+        eventSender.handleFailureException(notEnoughEnergyException, blockCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -212,7 +212,7 @@ internal class EventSenderTest(
         val blockCommand = BlockCommand(UUID.randomUUID(), UUID.randomUUID())
         val robotNotFoundException = RobotNotFoundException("Robot not Found")
         // when
-        eventSender.handleException(robotNotFoundException, blockCommand)
+        eventSender.handleFailureException(robotNotFoundException, blockCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -235,7 +235,7 @@ internal class EventSenderTest(
         val regenCommand = EnergyRegenCommand(UUID.randomUUID(), UUID.randomUUID())
         val robotNotFoundException = RobotNotFoundException("Robot not Found")
         // when
-        eventSender.handleException(robotNotFoundException, regenCommand)
+        eventSender.handleFailureException(robotNotFoundException, regenCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -260,7 +260,7 @@ internal class EventSenderTest(
         val miningCommand = MineCommand(UUID.randomUUID(), UUID.randomUUID())
         val robotNotFoundException = RobotNotFoundException("Robot not found")
         // when
-        eventSender.handleException(robotNotFoundException, miningCommand)
+        eventSender.handleFailureException(robotNotFoundException, miningCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -288,7 +288,7 @@ internal class EventSenderTest(
         val miningCommand = MineCommand(robotId, UUID.randomUUID())
         val notEnoughEnergyException = NotEnoughEnergyException("Not enough energy")
         // when
-        eventSender.handleException(notEnoughEnergyException, miningCommand)
+        eventSender.handleFailureException(notEnoughEnergyException, miningCommand)
 
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
@@ -317,7 +317,7 @@ internal class EventSenderTest(
         val miningCommand = MineCommand(robotId, UUID.randomUUID())
         val noResourceOnPlanetException = NoResourceOnPlanetException(planet.planetId)
         // when
-        eventSender.handleException(noResourceOnPlanetException, miningCommand)
+        eventSender.handleFailureException(noResourceOnPlanetException, miningCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -352,7 +352,7 @@ internal class EventSenderTest(
         val miningCommand = MineCommand(robotId, UUID.randomUUID())
         val levelTooLowException = LevelTooLowException("Level too low")
         // when
-        eventSender.handleException(levelTooLowException, miningCommand)
+        eventSender.handleFailureException(levelTooLowException, miningCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -375,7 +375,7 @@ internal class EventSenderTest(
         val fightingCommand = FightingCommand(UUID.randomUUID(), robotId, UUID.randomUUID())
         val robotNotFoundException = RobotNotFoundException("Attacker not found")
         // when
-        eventSender.handleException(robotNotFoundException, fightingCommand)
+        eventSender.handleFailureException(robotNotFoundException, fightingCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -406,7 +406,7 @@ internal class EventSenderTest(
         val fightingCommand = FightingCommand(robotId, UUID.randomUUID(), UUID.randomUUID())
         val robotNotFoundException = RobotNotFoundException("Defender not found")
         // when
-        eventSender.handleException(robotNotFoundException, fightingCommand)
+        eventSender.handleFailureException(robotNotFoundException, fightingCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -439,7 +439,7 @@ internal class EventSenderTest(
         val fightingCommand = FightingCommand(robotId, defender.id, UUID.randomUUID())
         val notEnoughEnergyException = NotEnoughEnergyException("Not enough energy")
         // when
-        eventSender.handleException(notEnoughEnergyException, fightingCommand)
+        eventSender.handleFailureException(notEnoughEnergyException, fightingCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -472,7 +472,7 @@ internal class EventSenderTest(
         val fightingCommand = FightingCommand(robotId, defender.id, UUID.randomUUID())
         val targetRobotOutOfReachException = TargetRobotOutOfReachException("Target out of reach")
         // when
-        eventSender.handleException(targetRobotOutOfReachException, fightingCommand)
+        eventSender.handleFailureException(targetRobotOutOfReachException, fightingCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -507,7 +507,7 @@ internal class EventSenderTest(
         val fightingItemUsageCommand = FightingItemUsageCommand(robotId, AttackItemType.ROCKET, UUID.randomUUID(), UUID.randomUUID())
         val robotNotFoundException = RobotNotFoundException("Target Robot not found")
         // when
-        eventSender.handleException(robotNotFoundException, fightingItemUsageCommand)
+        eventSender.handleFailureException(robotNotFoundException, fightingItemUsageCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -530,7 +530,7 @@ internal class EventSenderTest(
         val fightingItemUsageCommand = FightingItemUsageCommand(UUID.randomUUID(), AttackItemType.ROCKET, UUID.randomUUID(), UUID.randomUUID())
         val robotNotFoundException = RobotNotFoundException("Attacker Robot not found")
         // when
-        eventSender.handleException(robotNotFoundException, fightingItemUsageCommand)
+        eventSender.handleFailureException(robotNotFoundException, fightingItemUsageCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -554,7 +554,7 @@ internal class EventSenderTest(
         val fightingItemUsageCommand = FightingItemUsageCommand(robotId, AttackItemType.LONG_RANGE_BOMBARDMENT, planetId, UUID.randomUUID())
         val unknownPlanetException = UnknownPlanetException(planetId)
         // when
-        eventSender.handleException(unknownPlanetException, fightingItemUsageCommand)
+        eventSender.handleFailureException(unknownPlanetException, fightingItemUsageCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -578,7 +578,7 @@ internal class EventSenderTest(
         val fightingItemUsageCommand = FightingItemUsageCommand(robotId, AttackItemType.ROCKET, planetId, UUID.randomUUID())
         val targetRobotOutOfReachException = TargetRobotOutOfReachException("Target out of reach")
         // when
-        eventSender.handleException(targetRobotOutOfReachException, fightingItemUsageCommand)
+        eventSender.handleFailureException(targetRobotOutOfReachException, fightingItemUsageCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -602,7 +602,7 @@ internal class EventSenderTest(
         val fightingItemUsageCommand = FightingItemUsageCommand(robotId, AttackItemType.ROCKET, planetId, UUID.randomUUID())
         val notEnoughItemsException = NotEnoughItemsException("Not enough items", AttackItemType.ROCKET)
         // when
-        eventSender.handleException(notEnoughItemsException, fightingItemUsageCommand)
+        eventSender.handleFailureException(notEnoughItemsException, fightingItemUsageCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -625,7 +625,7 @@ internal class EventSenderTest(
         val regenCommand = RepairItemUsageCommand(UUID.randomUUID(), RepairItemType.REPAIR_SWARM, UUID.randomUUID())
         val robotNotFoundException = RobotNotFoundException("Robot not Found")
         // when
-        eventSender.handleException(robotNotFoundException, regenCommand)
+        eventSender.handleFailureException(robotNotFoundException, regenCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -652,7 +652,7 @@ internal class EventSenderTest(
         val regenCommand = RepairItemUsageCommand(UUID.randomUUID(), RepairItemType.REPAIR_SWARM, UUID.randomUUID())
         val noteEnoughItemsException = NotEnoughItemsException("Not Enough Items", RepairItemType.REPAIR_SWARM)
         // when
-        eventSender.handleException(noteEnoughItemsException, regenCommand)
+        eventSender.handleFailureException(noteEnoughItemsException, regenCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -679,7 +679,7 @@ internal class EventSenderTest(
         val regenCommand = MovementItemsUsageCommand(UUID.randomUUID(), MovementItemType.WORMHOLE, UUID.randomUUID())
         val notEnoughItemsException = NotEnoughItemsException("Not Enough Items", MovementItemType.WORMHOLE)
         // when
-        eventSender.handleException(notEnoughItemsException, regenCommand)
+        eventSender.handleFailureException(notEnoughItemsException, regenCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -706,7 +706,7 @@ internal class EventSenderTest(
         val regenCommand = MovementItemsUsageCommand(UUID.randomUUID(), MovementItemType.WORMHOLE, UUID.randomUUID())
         val planetBlockedException = PlanetBlockedException("Planet blocked")
         // when
-        eventSender.handleException(planetBlockedException, regenCommand)
+        eventSender.handleFailureException(planetBlockedException, regenCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)
@@ -733,7 +733,7 @@ internal class EventSenderTest(
         val regenCommand = MovementItemsUsageCommand(UUID.randomUUID(), MovementItemType.WORMHOLE, UUID.randomUUID())
         val robotNotFoundException = RobotNotFoundException("Robot not found")
         // when
-        eventSender.handleException(robotNotFoundException, regenCommand)
+        eventSender.handleFailureException(robotNotFoundException, regenCommand)
         // then
         val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
         assertNotNull(singleRecord!!)

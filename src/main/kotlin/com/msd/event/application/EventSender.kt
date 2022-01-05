@@ -27,101 +27,58 @@ class EventSender(
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Convert the Exception into a corresponding Kafka Event
+     * Convert the FailureException caused by domain logic into a corresponding Kafka Event.
      */
-    fun handleException(fe: FailureException, command: Command) {
-        logger.info("[${command.transactionUUID}] Handling FailureException of type ${fe::class}")
-        when (val event = getFailureEventFromCommandAndException(command, fe)) {
-            is MovementEventDTO -> {
-                kafkaMessageProducer.send(
-                    topicConfig.ROBOT_MOVEMENT,
-                    buildDomainEvent(
-                        event, EventType.MOVEMENT, command.transactionUUID
-                    )
-                )
-            }
-            is BlockEventDTO -> {
-                kafkaMessageProducer.send(
-                    topicConfig.ROBOT_BLOCKED,
-                    buildDomainEvent(
-                        event, EventType.PLANET_BLOCKED, command.transactionUUID
-                    )
-                )
-            }
-            is RegenerationEventDTO -> {
-                kafkaMessageProducer.send(
-                    topicConfig.ROBOT_REGENERATION,
-                    buildDomainEvent(
-                        event, EventType.REGENERATION, command.transactionUUID
-                    )
-                )
-            }
-            is MiningEventDTO -> {
-                kafkaMessageProducer.send(
-                    topicConfig.ROBOT_MINING,
-                    buildDomainEvent(
-                        event, EventType.MINING, command.transactionUUID
-                    )
-                )
-            }
-            is FightingEventDTO -> {
-                kafkaMessageProducer.send(
-                    topicConfig.ROBOT_FIGHTING,
-                    buildDomainEvent(
-                        event, EventType.FIGHTING, command.transactionUUID
-                    )
-                )
-            }
-            is ItemFightingEventDTO -> {
-                kafkaMessageProducer.send(
-                    topicConfig.ROBOT_ITEM_FIGHTING,
-                    buildDomainEvent(
-                        event, EventType.ITEM_FIGHTING, command.transactionUUID
-                    )
-                )
-            }
-            is ItemMovementEventDTO -> {
-                kafkaMessageProducer.send(
-                    topicConfig.ROBOT_ITEM_MOVEMENT,
-                    buildDomainEvent(
-                        event, EventType.ITEM_MOVEMENT, command.transactionUUID
-                    )
-                )
-            }
-            is ItemRepairEventDTO -> {
-                kafkaMessageProducer.send(
-                    topicConfig.ROBOT_ITEM_REPAIR,
-                    buildDomainEvent(
-                        event, EventType.ITEM_REPAIR, command.transactionUUID
-                    )
-                )
-            }
-        }
+    fun handleFailureException(fe: FailureException, command: Command) {
+        logger.info("[${command.transactionUUID}] Handling FailureException with message:\n\t${fe.message}")
+
+        val event = getFailureEventFromCommandAndException(command, fe)
+        val (topic, type) = getTopicAndTypeByEvent(event)
+        kafkaMessageProducer.send(topic, buildDomainEvent(event, type, command.transactionUUID))
     }
 
+    /**
+     * Handle a FailureException caused by domain logic with affects multiple commands by throwing a KafkaEvent for
+     * each command.
+     */
     fun handleAll(exception: FailureException, commands: List<Command>) {
         commands.forEach {
-            handleException(exception, it)
+            handleFailureException(exception, it)
         }
     }
 
     /**
-     * Send the Kafka DomainEvent with the given transactionId and put the given GenericEventDTO in
+     * Send the Kafka DomainEvent with the given transactionId and put the given GenericEventDTO in it.
      */
     fun sendEvent(event: GenericEventDTO, eventType: EventType, transactionId: UUID): UUID {
         val domainEvent = buildDomainEvent(event, eventType, transactionId)
         kafkaMessageProducer.send(
-            getTopicByEvent(event),
+            getTopicAndTypeByEvent(event).first,
             domainEvent
         )
         return UUID.fromString(domainEvent.id)
     }
 
+    /**
+     * Send a Kafka DomainEvent which does not directly correspond to a command an thus has no transactionId.
+     */
     fun sendGenericEvent(event: GenericEventDTO, eventType: EventType) {
         kafkaMessageProducer.send(
-            getTopicByEvent(event),
+            getTopicAndTypeByEvent(event).first,
             buildDomainEvent(event, eventType, UUID.fromString("00000000-0000-0000-0000-000000000000"))
         )
+    }
+
+    /**
+     * Handle RuntimeExceptions not caused by domain logic but by erroneous software behavior or during connections
+     * with other services.
+     */
+    fun handleRuntimeException(runtimeException: RuntimeException, commands: List<Command>) {
+        val failureException = FailureException(
+            "Unexpected exception occurred: " +
+                (runtimeException.message ?: "Unknown Error")
+        )
+        handleAll(failureException, commands)
     }
 
     private fun buildDomainEvent(
@@ -138,20 +95,20 @@ class EventSender(
         )
     }
 
-    private fun getTopicByEvent(event: GenericEventDTO): String {
+    private fun getTopicAndTypeByEvent(event: GenericEventDTO): Pair<String, EventType> {
         return when (event) {
-            is MovementEventDTO -> topicConfig.ROBOT_MOVEMENT
-            is BlockEventDTO -> topicConfig.ROBOT_BLOCKED
-            is MiningEventDTO -> topicConfig.ROBOT_MINING
-            is ResourceDistributionEventDTO -> topicConfig.ROBOT_RESOURCE_DISTRIBUTION
-            is RegenerationEventDTO -> topicConfig.ROBOT_REGENERATION
-            is FightingEventDTO -> topicConfig.ROBOT_FIGHTING
-            is ItemFightingEventDTO -> topicConfig.ROBOT_ITEM_FIGHTING
-            is NeighboursEventDTO -> topicConfig.ROBOT_NEIGHBOURS
-            is ItemRepairEventDTO -> topicConfig.ROBOT_ITEM_REPAIR
-            is ItemMovementEventDTO -> topicConfig.ROBOT_ITEM_MOVEMENT
-            is RobotDestroyedEventDTO -> topicConfig.ROBOT_DESTROYED
-            else -> throw RuntimeException("Unknown eventDTO")
+            is MovementEventDTO -> topicConfig.ROBOT_MOVEMENT to EventType.MOVEMENT
+            is BlockEventDTO -> topicConfig.ROBOT_BLOCKED to EventType.PLANET_BLOCKED
+            is MiningEventDTO -> topicConfig.ROBOT_MINING to EventType.MINING
+            is ResourceDistributionEventDTO -> topicConfig.ROBOT_RESOURCE_DISTRIBUTION to EventType.RESOURCE_DISTRIBUTION
+            is RegenerationEventDTO -> topicConfig.ROBOT_REGENERATION to EventType.REGENERATION
+            is FightingEventDTO -> topicConfig.ROBOT_FIGHTING to EventType.FIGHTING
+            is ItemFightingEventDTO -> topicConfig.ROBOT_ITEM_FIGHTING to EventType.ITEM_FIGHTING
+            is NeighboursEventDTO -> topicConfig.ROBOT_NEIGHBOURS to EventType.NEIGHBOURS
+            is ItemRepairEventDTO -> topicConfig.ROBOT_ITEM_REPAIR to EventType.ITEM_REPAIR
+            is ItemMovementEventDTO -> topicConfig.ROBOT_ITEM_MOVEMENT to EventType.ITEM_MOVEMENT
+            is RobotDestroyedEventDTO -> topicConfig.ROBOT_DESTROYED to EventType.DESTROYED
+            else -> throw RuntimeException("Unknown GenericEventDTO")
         }
     }
 
@@ -212,7 +169,7 @@ class EventSender(
                 e.message!!,
                 null
             )
-            else -> throw IllegalArgumentException("Not a proper Command")
+            else -> throw IllegalArgumentException("Unknown Subclass of Command")
         }
     }
 }

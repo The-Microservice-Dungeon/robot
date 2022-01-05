@@ -9,6 +9,7 @@ import com.msd.command.application.command.*
 import com.msd.core.FailureException
 import com.msd.domain.ResourceType
 import com.msd.event.application.EventSender
+import com.msd.event.application.SuccessEventSender
 import com.msd.event.application.dto.*
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.LevelTooLowException
@@ -50,23 +51,28 @@ class RobotApplicationService(
 
     @Async
     fun executeCommands(commands: List<Command>) {
-        when (commands[0]) {
-            is FightingCommand -> executeAttacks(commands as List<FightingCommand>)
-                .also { logger.info("Finished executing batch of FightingCommands") }
-            is FightingItemUsageCommand -> executeFightingItemUsageCommand(commands as List<FightingItemUsageCommand>)
-                .also { logger.info("Finished executing batch of ItemUsageCommands") }
-            is MineCommand -> executeMining(commands as List<MineCommand>)
-                .also { logger.info("Finished executing batch of MineCommands") }
-            is MovementItemsUsageCommand -> useMovementItem(commands as List<MovementItemsUsageCommand>)
-                .also { logger.info("Finished executing batch of MovementItemUsageCommands") }
-            is MovementCommand -> executeMoveCommands(commands as List<MovementCommand>)
-                .also { logger.info("Finished executing batch of MovementCommands") }
-            is BlockCommand -> executeBlockCommands(commands as List<BlockCommand>)
-                .also { logger.info("Finished executing batch of BlockCommands") }
-            is EnergyRegenCommand -> executeEnergyRegenCommands(commands as List<EnergyRegenCommand>)
-                .also { logger.info("Finished executing batch of EnergyRegenCommands") }
-            is RepairItemUsageCommand -> executeRepairItemUsageCommands(commands as List<RepairItemUsageCommand>)
-                .also { logger.info("Finished executing batch of RepairItemUsageCommands") }
+        try {
+            when (commands[0]) {
+                is FightingCommand -> executeAttacks(commands as List<FightingCommand>)
+                    .also { logger.info("Finished executing batch of FightingCommands") }
+                is FightingItemUsageCommand -> executeFightingItemUsageCommand(commands as List<FightingItemUsageCommand>)
+                    .also { logger.info("Finished executing batch of ItemUsageCommands") }
+                is MineCommand -> executeMining(commands as List<MineCommand>)
+                    .also { logger.info("Finished executing batch of MineCommands") }
+                is MovementItemsUsageCommand -> useMovementItem(commands as List<MovementItemsUsageCommand>)
+                    .also { logger.info("Finished executing batch of MovementItemUsageCommands") }
+                is MovementCommand -> executeMoveCommands(commands as List<MovementCommand>)
+                    .also { logger.info("Finished executing batch of MovementCommands") }
+                is BlockCommand -> executeBlockCommands(commands as List<BlockCommand>)
+                    .also { logger.info("Finished executing batch of BlockCommands") }
+                is EnergyRegenCommand -> executeEnergyRegenCommands(commands as List<EnergyRegenCommand>)
+                    .also { logger.info("Finished executing batch of EnergyRegenCommands") }
+                is RepairItemUsageCommand -> executeRepairItemUsageCommands(commands as List<RepairItemUsageCommand>)
+                    .also { logger.info("Finished executing batch of RepairItemUsageCommands") }
+            }
+        } catch (runtimeException: RuntimeException) {
+            // If nothing else caught the Exception, it is a bad one, but we still want to throw an event in that case
+            eventSender.handleRuntimeException(runtimeException, commands)
         }
     }
 
@@ -83,7 +89,9 @@ class RobotApplicationService(
                 robotPlanetPairs[command] = robotDomainService.useMovementItem(command.robotUUID, command.itemType)
                 logger.info("[${command.transactionUUID}] Successfully executed MovementItemUsageCommand")
             } catch (fe: FailureException) {
-                eventSender.handleException(fe, command)
+                eventSender.handleFailureException(fe, command)
+            } catch (runtimeException: RuntimeException) {
+                eventSender.handleRuntimeException(runtimeException, listOf(command))
             }
         }
         successEventSender.sendMovementItemEvents(robotPlanetPairs)
@@ -119,7 +127,9 @@ class RobotApplicationService(
             try {
                 successfulCommands[moveCommand] = move(moveCommand)
             } catch (fe: FailureException) {
-                eventSender.handleException(fe, moveCommand)
+                eventSender.handleFailureException(fe, moveCommand)
+            } catch (runtimeException: RuntimeException) {
+                eventSender.handleRuntimeException(runtimeException, listOf(moveCommand))
             }
         }
 
@@ -145,16 +155,16 @@ class RobotApplicationService(
         val planet = planetDto.toPlanet()
         try {
             robot.move(planet, cost)
+            robotDomainService.saveRobot(robot)
             logger.info("[${moveCommand.transactionUUID}] Successfully executed MoveCommand")
             return Triple(robot, cost, planetDto)
         } catch (pbe: PlanetBlockedException) {
             logger.info(
                 "[${moveCommand.transactionUUID}] " +
-                    "Impeded movement of robot ${robot.id} from moving because planet was blocked."
+                    "Impeded robot ${robot.id} from moving because planet was blocked."
             )
-            throw pbe
-        } finally {
             robotDomainService.saveRobot(robot)
+            throw pbe
         }
     }
 
@@ -173,7 +183,7 @@ class RobotApplicationService(
                 robotDomainService.saveRobot(robot)
                 successEventSender.sendBlockEvent(robot, blockCommand)
             } catch (fe: FailureException) {
-                eventSender.handleException(fe, blockCommand)
+                eventSender.handleFailureException(fe, blockCommand)
             }
         }
     }
@@ -194,7 +204,7 @@ class RobotApplicationService(
                 robotDomainService.saveRobot(robot)
                 successEventSender.sendEnergyRegenEvent(robot, energyRegenCommand)
             } catch (fe: FailureException) {
-                eventSender.handleException(fe, energyRegenCommand)
+                eventSender.handleFailureException(fe, energyRegenCommand)
             }
         }
     }
@@ -250,7 +260,7 @@ class RobotApplicationService(
                 successEventSender.sendFightingEvent(it, target, attacker)
                 battleFields.add(attacker.planet.planetId)
             } catch (fe: FailureException) {
-                eventSender.handleException(fe, it)
+                eventSender.handleFailureException(fe, it)
             }
         }
         logger.debug(
@@ -291,7 +301,7 @@ class RobotApplicationService(
                 val robots = robotDomainService.useRepairItem(command.robotUUID, command.itemType)
                 successEventSender.sendRepairItemEvent(command, robots)
             } catch (fe: FailureException) {
-                eventSender.handleException(fe, command)
+                eventSender.handleFailureException(fe, command)
             }
         }
     }
@@ -326,7 +336,7 @@ class RobotApplicationService(
                 successEventSender.sendAttackItemEvents(targetRobots, it, robot)
                 battleFields.add(battlefield)
             } catch (fe: FailureException) {
-                eventSender.handleException(fe, it)
+                eventSender.handleFailureException(fe, it)
             }
         }
         return battleFields
@@ -431,7 +441,7 @@ class RobotApplicationService(
                 validMineCommands.add(validMineCommand)
                 logger.debug("[${mineCommand.transactionUUID}] Created ValidMineCommand")
             } catch (re: FailureException) {
-                eventSender.handleException(re, mineCommand)
+                eventSender.handleFailureException(re, mineCommand)
             }
         }
         return validMineCommands
@@ -475,10 +485,21 @@ class RobotApplicationService(
             val minedAmount = gameMapService.mine(planet, amount)
             distributeMinedResources(miningRobotsOnPlanet, minedAmount, resource)
             logger.debug("Mined and distributed resources on planet $planet")
-        } catch (re: FailureException) {
-            eventSender.handleAll(re, validMineCommands.map { MineCommand(it.robot.id, it.transactionId) })
-        } catch (e: RuntimeException) {
+        } catch (failureException: FailureException) {
+            eventSender.handleAll(
+                failureException,
+                validMineCommands.map {
+                    MineCommand(it.robot.id, it.transactionId)
+                }
+            )
+        } catch (runtimeException: RuntimeException) {
             logger.error("[Mining] Error during mining call to map service for planet $planet")
+            eventSender.handleRuntimeException(
+                runtimeException,
+                validMineCommands.map {
+                    MineCommand(it.robot.id, it.transactionId)
+                }
+            )
         }
     }
 
