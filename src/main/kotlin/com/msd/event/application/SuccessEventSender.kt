@@ -210,7 +210,7 @@ class SuccessEventSender(
     fun sendSpawnEvent(player: UUID, robot: Robot, transactionId: UUID) {
         logger.info("Spawned robot with ID ${robot.id} on planet ${robot.planet}")
         eventSender.sendEvent(
-            SpawnEventDTO(robot.id, player, robotDomainService.getRobotsOnPlanet(robot.planet.planetId).map { it.id }),
+            SpawnEventDTO(robot.id, player, robotDomainService.getRobotsOnPlanet(robot.planet.planetId).map { it.id }.minus(robot.id)),
             EventType.ROBOT_SPAWNED,
             transactionId
         )

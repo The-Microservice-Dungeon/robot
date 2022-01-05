@@ -96,6 +96,7 @@ class ScenarioTests(
         startFightingContainer()
         startResourceDistributionContainer()
         startRobotDestroyedContainer()
+        startSpawnContainer()
         consumerRecords.clear()
 
         // //////////////////////  1. Spawn the robots  //////////////////////////////
@@ -220,8 +221,9 @@ class ScenarioTests(
             println(it.topic() + ": " + it.value())
         }
 
-        assertEquals(48, consumerRecords.size)
+        assertEquals(53, consumerRecords.size)
         assertEquals(3, consumerRecords.filter { it.topic() == topicConfig.ROBOT_DESTROYED }.size)
+        assertEquals(5, consumerRecords.filter { it.topic() == topicConfig.ROBOT_SPAWNED }.size)
     }
 
     @Test
@@ -231,6 +233,7 @@ class ScenarioTests(
         startResourceDistributionContainer()
         startMiningContainer()
         startRobotDestroyedContainer()
+        startSpawnContainer()
 
         consumerRecords.clear()
 
@@ -457,18 +460,21 @@ class ScenarioTests(
         }
 
         /*
+            4 Spawn events
             16 Mining Events (4 * 4 Mine Commands)
             7 Fighting Events ( 3 * Rocket + 4 Long Range Bombardment)
             4 Item Fighting Events
             3 Resource Distribution Events ( 3 remaining robots on planet)
             = 30
          */
-        assertEquals(31, consumerRecords.size)
+        assertEquals(35, consumerRecords.size)
         assertEquals(1, consumerRecords.filter { it.topic() == topicConfig.ROBOT_DESTROYED }.size)
+        assertEquals(4, consumerRecords.filter { it.topic() == topicConfig.ROBOT_SPAWNED }.size)
     }
 
     @Test
     fun `Robots block, fight, then regenerate, repair or flee with movement-item`() {
+        startSpawnContainer()
         startFightingContainer()
         startPlanetBlockedContainer()
         startItemMovementContainer()
@@ -588,13 +594,13 @@ class ScenarioTests(
         }
 
         /*
+        3 spawn events
         9 fight events
         1 block event
         1 repair item event
-        1 movement event
         1 item movement event
         1 regenerate event
          */
-        // assertEquals(14, consumerRecords.size)
+        assertEquals(16, consumerRecords.size)
     }
 }

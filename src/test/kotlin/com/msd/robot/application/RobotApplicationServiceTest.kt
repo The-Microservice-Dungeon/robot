@@ -119,6 +119,7 @@ class RobotApplicationServiceTest {
         justRun { successEventSender.sendResourceDistributionEvent(any()) }
         justRun { successEventSender.sendEnergyRegenEvent(any(), any()) }
         justRun { successEventSender.sendBlockEvent(any(), any()) }
+        justRun { successEventSender.sendSpawnEvent(any(), any(), any()) }
     }
 
     @Test
@@ -852,7 +853,7 @@ class RobotApplicationServiceTest {
         every { upgradeValuesRepository.findByIdOrNull(any()) } returns UpgradeValues()
         every { energyCostCalculationValuesRepository.findByIdOrNull(any()) } returns EnergyCostCalculationValues()
         // when
-        robotApplicationService.spawn(player1Id, planet1.planetId)
+        robotApplicationService.spawn(player1Id, planet1.planetId, UUID.randomUUID())
         // then
         assertEquals(player1Id, slot.captured.player)
         assertEquals(planet1.planetId, slot.captured.planet.planetId)
