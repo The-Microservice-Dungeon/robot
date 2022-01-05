@@ -26,7 +26,7 @@ class RobotController(
      */
     @PostMapping
     fun spawnRobot(@RequestBody spawnDto: RobotSpawnDto): ResponseEntity<RobotDto> {
-        val robot = robotApplicationService.spawn(spawnDto.player, spawnDto.planet)
+        val robot = robotApplicationService.spawn(spawnDto.player, spawnDto.planet, spawnDto.transactionId)
         return ResponseEntity.status(HttpStatus.CREATED).body(robotMapper.robotToRobotDto(robot))
     }
 

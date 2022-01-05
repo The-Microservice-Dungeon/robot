@@ -103,12 +103,12 @@ class RobotApplicationService(
      * @param player  the `UUID` of the player
      * @param planet the `UUID` of the `Planet`
      */
-    fun spawn(player: UUID, planet: UUID): Robot {
+    fun spawn(player: UUID, planet: UUID, transactionId: UUID): Robot {
         val upgradeValues = upgradeValuesRepository.findByIdOrNull("VALUES") ?: throw EntityNotFoundException("Upgrade Values not found")
         val energyCostValues = energyCostCalculationValuesRepository.findByIdOrNull("ENERGY_COST_CALCULATION") ?: throw EntityNotFoundException("Energy cost values not found")
         val robot = Robot(player, Planet(planet), upgradeValues, energyCostValues)
         robotDomainService.saveRobot(robot)
-        logger.info("Spawned robot with ID ${robot.id} on planet $planet")
+        successEventSender.sendSpawnEvent(player, robot, transactionId)
         return robot
     }
 
