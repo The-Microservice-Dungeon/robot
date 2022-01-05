@@ -35,9 +35,6 @@ class KafkaConsumerConfig {
     fun kafkaListenerContainerFactory(): ConcurrentKafkaListenerContainerFactory<String, String> {
         val factory = ConcurrentKafkaListenerContainerFactory<String, String>()
         factory.consumerFactory = consumerFactory()
-        factory.setRecordFilterStrategy {
-            it.value().equals("ended")
-        }
         return factory
     }
 }

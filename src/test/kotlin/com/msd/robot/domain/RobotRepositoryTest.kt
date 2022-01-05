@@ -8,6 +8,7 @@ import org.junit.jupiter.api.assertAll
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
@@ -16,9 +17,11 @@ import javax.persistence.EntityNotFoundException
 @SpringBootTest
 @ActiveProfiles(profiles = ["test"])
 @Transactional
+@DirtiesContext
 class RobotRepositoryTest(
     @Autowired val robotRepository: RobotRepository
 ) {
+    // TODO fix these tests not running when they're not the first. Some tests drops the database and these tests don't pass anymore since there is no database
     val player1Id: UUID = UUID.randomUUID()
     val player2Id: UUID = UUID.randomUUID()
 

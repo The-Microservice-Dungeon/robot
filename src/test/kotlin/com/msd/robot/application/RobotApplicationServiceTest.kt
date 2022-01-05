@@ -17,6 +17,10 @@ import com.msd.robot.domain.exception.NotEnoughEnergyException
 import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.robot.domain.exception.UpgradeException
+import com.msd.robot.domain.gameplayVariables.EnergyCostCalculationValues
+import com.msd.robot.domain.gameplayVariables.EnergyCostCalculationValuesRepository
+import com.msd.robot.domain.gameplayVariables.UpgradeValues
+import com.msd.robot.domain.gameplayVariables.UpgradeValuesRepository
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
@@ -65,6 +69,12 @@ class RobotApplicationServiceTest {
     @MockK
     lateinit var successEventSender: SuccessEventSender
 
+    @MockK
+    lateinit var energyCostCalculationValuesRepository: EnergyCostCalculationValuesRepository
+
+    @MockK
+    lateinit var upgradeValuesRepository: UpgradeValuesRepository
+
     lateinit var robotApplicationService: RobotApplicationService
     lateinit var robotDomainService: RobotDomainService
 
@@ -75,8 +85,7 @@ class RobotApplicationServiceTest {
     fun setup() {
         MockKAnnotations.init(this)
         robotDomainService = RobotDomainService(robotRepository, gameMapMockService, eventSender)
-        robotApplicationService =
-            RobotApplicationService(gameMapMockService, robotDomainService, eventSender, successEventSender)
+        robotApplicationService = RobotApplicationService(gameMapMockService, robotDomainService, upgradeValuesRepository, energyCostCalculationValuesRepository, eventSender, successEventSender)
 
         planet1 = Planet(UUID.randomUUID(), ResourceType.COAL)
         planet2 = Planet(UUID.randomUUID(), ResourceType.IRON)
@@ -842,6 +851,8 @@ class RobotApplicationServiceTest {
         // given
         val slot = CapturingSlot<Robot>()
         every { robotRepository.save(capture(slot)) } returns robot1 // we don't care about the return value, only the capture
+        every { upgradeValuesRepository.findByIdOrNull(any()) } returns UpgradeValues()
+        every { energyCostCalculationValuesRepository.findByIdOrNull(any()) } returns EnergyCostCalculationValues()
         // when
         robotApplicationService.spawn(player1Id, planet1.planetId)
         // then
