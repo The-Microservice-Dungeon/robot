@@ -37,8 +37,15 @@ topics:
   robot-item-movement: item-movement
   robot-resource-distribution: resource-distribution
   robot-destroyed: robot-destroyed
+logging:
+  file:
+    path: ./logs
 
-
+management:
+  endpoints:
+    web:
+      exposure:
+        include: logs
 ---
 spring:
   config:
