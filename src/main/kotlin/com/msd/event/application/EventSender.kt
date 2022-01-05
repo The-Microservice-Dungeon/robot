@@ -30,7 +30,7 @@ class EventSender(
      * Convert the FailureException caused by domain logic into a corresponding Kafka Event.
      */
     fun handleFailureException(fe: FailureException, command: Command) {
-        logger.info("[${command.transactionUUID}] Handling FailureException of type ${fe::class}")
+        logger.info("[${command.transactionUUID}] Handling FailureException with message:\n\t${fe.message}")
 
         val event = getFailureEventFromCommandAndException(command, fe)
         val (topic, type) = getTopicAndTypeByEvent(event)

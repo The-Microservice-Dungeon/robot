@@ -77,21 +77,7 @@ class CommandControllerTest(
     private lateinit var robot8: Robot
     private lateinit var robots: List<Robot>
 
-    companion object {
-        val mockGameServiceWebClient = MockWebServer()
-
-        @BeforeAll
-        @JvmStatic
-        internal fun setUp() {
-            mockGameServiceWebClient.start(port = 8081)
-        }
-
-        @AfterAll
-        @JvmStatic
-        internal fun tearDown() {
-            mockGameServiceWebClient.shutdown()
-        }
-    }
+    private val mockGameServiceWebClient = MockWebServer()
 
     @BeforeEach
     fun `setup database`() {
@@ -106,6 +92,14 @@ class CommandControllerTest(
         robots = listOf(robot1, robot2, robot3, robot4, robot5, robot6, robot7, robot8)
 
         consumerRecords = LinkedBlockingQueue()
+
+        mockGameServiceWebClient.start(port = 8081)
+    }
+
+    @AfterEach
+    override fun tearDown() {
+        super.tearDown()
+        mockGameServiceWebClient.shutdown()
     }
 
     @Test

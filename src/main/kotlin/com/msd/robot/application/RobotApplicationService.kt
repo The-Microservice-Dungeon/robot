@@ -161,7 +161,7 @@ class RobotApplicationService(
         } catch (pbe: PlanetBlockedException) {
             logger.info(
                 "[${moveCommand.transactionUUID}] " +
-                    "Impeded movement of robot ${robot.id} from moving because planet was blocked."
+                    "Impeded robot ${robot.id} from moving because planet was blocked."
             )
             robotDomainService.saveRobot(robot)
             throw pbe

@@ -166,9 +166,7 @@ class RobotApplicationServiceTest {
         every { gameMapMockService.retrieveTargetPlanetIfRobotCanReach(any(), any()) } throws ClientException("")
 
         // when
-        assertThrows<ClientException> {
-            robotApplicationService.executeMoveCommands(listOf(command))
-        }
+        robotApplicationService.executeMoveCommands(listOf(command))
 
         // then
         assertEquals(planet1, robot1.planet)
