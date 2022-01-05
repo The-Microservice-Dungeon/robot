@@ -48,6 +48,7 @@ class KafkaMessageProducer(
         val events = eventRepository.findAll()
         events.forEach {
             val event = getDomainEventFromString(it.eventString, it.eventType)
+            eventRepository.delete(it)
             send(it.topic, event)
         }
     }
