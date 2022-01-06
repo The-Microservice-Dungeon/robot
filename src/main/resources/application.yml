@@ -38,8 +38,15 @@ topics:
   robot-resource-distribution: resource-distribution
   robot-destroyed: robot-destroyed
   spawn-notification: spawn-notification
+logging:
+  file:
+    path: ./logs
 
-
+management:
+  endpoints:
+    web:
+      exposure:
+        include: logs
 ---
 spring:
   config:
@@ -63,7 +70,7 @@ spring:
     password: ${DB_PASSWORD:root}
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: create
     properties:
       dialect: org.hibernate.dialect.MariaDB106Dialect
 microservice:
