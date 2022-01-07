@@ -348,7 +348,7 @@ components:
                     example: 30
     item-movement:
       description: >
-        Usage of an item that affects position of a robot
+        Usage of an item that affects position of a robot. Is thrown together with a `movement` and a `neighbours` event` if successful.
       traits:
         - $ref: '#/components/messageTraits/DefaultTradingKafkaMessage'
       payload:
