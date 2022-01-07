@@ -100,6 +100,22 @@ class ScenarioTests(
         consumerRecords.clear()
 
         // //////////////////////  1. Spawn the robots  //////////////////////////////
+        val planet1GameMapDto = GameMapPlanetDto(planet1, 3, resource = ResourceDto(ResourceType.COAL))
+        val planet2GameMapDto = GameMapPlanetDto(planet2, 3, resource = ResourceDto(ResourceType.COAL))
+
+        for (i in 1..3)
+            mockGameServiceWebClient.enqueue(
+                MockResponse().setResponseCode(200)
+                    .setBody(jacksonObjectMapper().writeValueAsString(planet1GameMapDto))
+                    .setHeader("Content-Type", "application/json")
+            )
+        for (i in 1..2)
+            mockGameServiceWebClient.enqueue(
+                MockResponse().setResponseCode(200)
+                    .setBody(jacksonObjectMapper().writeValueAsString(planet2GameMapDto))
+                    .setHeader("Content-Type", "application/json")
+            )
+
         // player1, all robots on planet1
         var robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, planet1)
         val robot1 = mapper.readValue(
@@ -221,9 +237,11 @@ class ScenarioTests(
             println(it.topic() + ": " + it.value())
         }
 
-        assertEquals(53, consumerRecords.size)
+        assertEquals(58, consumerRecords.size)
         assertEquals(3, consumerRecords.filter { it.topic() == topicConfig.ROBOT_DESTROYED }.size)
         assertEquals(5, consumerRecords.filter { it.topic() == topicConfig.ROBOT_SPAWNED }.size)
+        // 5 at spawn and 5 from movement
+        assertEquals(10, consumerRecords.filter { it.topic() == topicConfig.ROBOT_NEIGHBOURS }.size)
     }
 
     @Test
@@ -238,6 +256,21 @@ class ScenarioTests(
         consumerRecords.clear()
 
         // player1, all robots on planet1
+        val planet1GameMapDto = GameMapPlanetDto(planet1, 3, resource = ResourceDto(ResourceType.COAL))
+        val planet2GameMapDto = GameMapPlanetDto(planet2, 3, resource = ResourceDto(ResourceType.COAL))
+
+        for (i in 1..3)
+            mockGameServiceWebClient.enqueue(
+                MockResponse().setResponseCode(200)
+                    .setBody(jacksonObjectMapper().writeValueAsString(planet1GameMapDto))
+                    .setHeader("Content-Type", "application/json")
+            )
+        mockGameServiceWebClient.enqueue(
+            MockResponse().setResponseCode(200)
+                .setBody(jacksonObjectMapper().writeValueAsString(planet2GameMapDto))
+                .setHeader("Content-Type", "application/json")
+        )
+
         var robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, planet1)
         val robot1 = mapper.readValue(
             mockMvc.post("/robots") {
@@ -354,7 +387,6 @@ class ScenarioTests(
             "mine ${robot4.id} ${UUID.randomUUID()}"
         )
 
-        val planet1GameMapDto = GameMapPlanetDto(planet1, 3, resource = ResourceDto(ResourceType.COAL))
         val miningResponse = MineResponseDto(19) // 10 + 5 + 2 + 2
         for (i in 1..3) {
             mockGameServiceWebClient.enqueue(
@@ -483,6 +515,15 @@ class ScenarioTests(
         startItemRepairContainer()
 
         consumerRecords.clear()
+
+        val planet1GameMapDto = GameMapPlanetDto(planet1, 3, resource = ResourceDto(ResourceType.COAL))
+
+        for (i in 1..3)
+            mockGameServiceWebClient.enqueue(
+                MockResponse().setResponseCode(200)
+                    .setBody(jacksonObjectMapper().writeValueAsString(planet1GameMapDto))
+                    .setHeader("Content-Type", "application/json")
+            )
 
         var robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, planet1)
         val robot1 = mapper.readValue(

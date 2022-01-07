@@ -3,7 +3,10 @@ package com.msd.robot.application
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.application.AbstractKafkaProducerTest
+import com.msd.application.dto.GameMapPlanetDto
+import com.msd.application.dto.ResourceDto
 import com.msd.domain.DomainEvent
+import com.msd.domain.ResourceType
 import com.msd.event.application.EventType
 import com.msd.event.application.ProducerTopicConfiguration
 import com.msd.event.application.dto.SpawnEventDTO
@@ -13,9 +16,13 @@ import com.msd.robot.application.dtos.RobotDto
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
 import com.msd.robot.domain.UpgradeType
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -51,6 +58,22 @@ class RobotControllerTest(
     val player1Id: UUID = UUID.fromString("d43608d5-2107-47a0-bd4f-6720dfa53c4d")
 
     val planet1Id: UUID = UUID.fromString("8f3c39b1-c439-4646-b646-ace4839d8849")
+
+    companion object {
+        val mockGameServiceWebClient = MockWebServer()
+
+        @BeforeAll
+        @JvmStatic
+        internal fun setUp() {
+            mockGameServiceWebClient.start(port = 8081)
+        }
+
+        @AfterAll
+        @JvmStatic
+        internal fun tearDown() {
+            mockGameServiceWebClient.shutdown()
+        }
+    }
 
     @Test
     fun `Sending Spawn Command with invalid planet UUID returns 400`() {
@@ -109,6 +132,13 @@ class RobotControllerTest(
     @Test
     fun `Sending a spawn command leads to a robot being present in the repository`() {
         startSpawnContainer()
+
+        val planet1GameMapDto = GameMapPlanetDto(planet1Id, 3, resource = ResourceDto(ResourceType.COAL))
+        mockGameServiceWebClient.enqueue(
+            MockResponse().setResponseCode(200)
+                .setBody(jacksonObjectMapper().writeValueAsString(planet1GameMapDto))
+                .setHeader("Content-Type", "application/json")
+        )
 
         val transactionId = UUID.randomUUID()
         val spawnDto = """
