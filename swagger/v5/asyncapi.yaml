@@ -136,7 +136,7 @@ components:
                 description: Planet type (`default` or `spacestation`) of the planet
               resourceType:
                 type: string
-                enum: [COAL, IRON, GEM, GOLD, PLATIN]
+                enum: [COAL, IRON, GEM, GOLD, PLATIN, null]
           robots:
             type: array
             items:
@@ -213,7 +213,7 @@ components:
             description: Amount of the mined resource in the inventory after mining
           resourceType:
             type: string
-            enum: [COAL, IRON, GEM, GOLD, PLATIN, NONE]
+            enum: [COAL, IRON, GEM, GOLD, PLATIN, null]
     fighting:
       description: >
         Result of a fight
