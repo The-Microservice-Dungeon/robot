@@ -132,7 +132,7 @@ components:
               #  description: Recharge multiplicator of the planet
               planetType:
                 type: string
-                enum: [DEFAULTf, SPACESTATION]
+                enum: [DEFAULT, SPACESTATION]
                 description: Planet type (`default` or `spacestation`) of the planet
               resourceType:
                 type: string
