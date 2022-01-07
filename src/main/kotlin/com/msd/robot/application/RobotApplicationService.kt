@@ -108,7 +108,7 @@ class RobotApplicationService(
         val energyCostValues = energyCostCalculationValuesRepository.findByIdOrNull("ENERGY_COST_CALCULATION") ?: throw EntityNotFoundException("Energy cost values not found")
         val robot = Robot(player, Planet(planet), upgradeValues, energyCostValues)
         robotDomainService.saveRobot(robot)
-        successEventSender.sendSpawnEvent(player, robot, transactionId)
+        successEventSender.sendSpawnEvents(player, robot, transactionId)
         return robot
     }
 

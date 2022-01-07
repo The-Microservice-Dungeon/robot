@@ -1,5 +1,6 @@
 package com.msd.event.application
 
+import com.msd.application.GameMapService
 import com.msd.application.dto.GameMapPlanetDto
 import com.msd.command.application.command.*
 import com.msd.domain.ResourceType
@@ -16,7 +17,8 @@ import java.util.*
 class SuccessEventSender(
     val eventSender: EventSender,
     val planetMapper: PlanetMapper,
-    val robotDomainService: RobotDomainService
+    val robotDomainService: RobotDomainService,
+    val gameMapService: GameMapService
 ) {
 
     private val logger = KotlinLogging.logger {}
@@ -207,11 +209,21 @@ class SuccessEventSender(
         )
     }
 
-    fun sendSpawnEvent(player: UUID, robot: Robot, transactionId: UUID) {
+    fun sendSpawnEvents(player: UUID, robot: Robot, transactionId: UUID) {
         logger.info("Spawned robot with ID ${robot.id} on planet ${robot.planet}")
         eventSender.sendEvent(
             SpawnEventDTO(robot.id, player, robotDomainService.getRobotsOnPlanet(robot.planet.planetId).map { it.id }.minus(robot.id)),
             EventType.ROBOT_SPAWNED,
+            transactionId
+        )
+        val planetDto = gameMapService.getPlanet(robot.planet.planetId)
+        eventSender.sendEvent(
+            NeighboursEventDTO(
+                planetDto.neighbours.map {
+                    NeighboursEventDTO.NeighbourDTO(it.planetId, it.movementDifficulty, it.direction)
+                }
+            ),
+            EventType.NEIGHBOURS,
             transactionId
         )
     }

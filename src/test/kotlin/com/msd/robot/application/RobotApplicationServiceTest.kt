@@ -119,7 +119,7 @@ class RobotApplicationServiceTest {
         justRun { successEventSender.sendResourceDistributionEvent(any()) }
         justRun { successEventSender.sendEnergyRegenEvent(any(), any()) }
         justRun { successEventSender.sendBlockEvent(any(), any()) }
-        justRun { successEventSender.sendSpawnEvent(any(), any(), any()) }
+        justRun { successEventSender.sendSpawnEvents(any(), any(), any()) }
     }
 
     @Test
