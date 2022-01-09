@@ -2,6 +2,7 @@ package com.msd.robot.application
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.msd.application.AbstractKafkaProducerTest
 import com.msd.application.dto.GameMapPlanetDto
 import com.msd.application.dto.ResourceDto
@@ -145,18 +146,21 @@ class RobotControllerTest(
             {
                 "transactionId": "$transactionId",
                 "player": "$player1Id",
-                "planet": "$planet1Id"
+                "planet": "$planet1Id",
+                "quantity": 1
             }
         """.trimIndent()
 
-        val result = mockMvc.post("/robots") {
-            contentType = MediaType.APPLICATION_JSON
-            content = spawnDto
-        }.andExpect {
-            status { isCreated() }
-        }.andReturn()
+        val results: List<RobotDto> = mapper.readValue(
+            mockMvc.post("/robots") {
+                contentType = MediaType.APPLICATION_JSON
+                content = spawnDto
+            }.andExpect {
+                status { isCreated() }
+            }.andReturn().response.contentAsString
+        )
 
-        val resultRobot = mapper.readValue(result.response.contentAsString, RobotDto::class.java)
+        val resultRobot = results[0]
 
         assert(robotRepository.existsById(resultRobot.id))
 
