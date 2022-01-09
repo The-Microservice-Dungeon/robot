@@ -3,6 +3,7 @@ package com.msd.robot.application
 import com.msd.domain.ResourceType
 import com.msd.robot.application.dtos.*
 import com.msd.robot.application.mappers.RobotMapper
+import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -25,9 +26,13 @@ class RobotController(
      * @see <a href="https://the-microservice-dungeon.github.io/docs/openapi/robot#tag/robot/paths/~1robots/post"></a>
      */
     @PostMapping
-    fun spawnRobot(@RequestBody spawnDto: RobotSpawnDto): ResponseEntity<RobotDto> {
-        val robot = robotApplicationService.spawn(spawnDto.player, spawnDto.planet, spawnDto.transactionId)
-        return ResponseEntity.status(HttpStatus.CREATED).body(robotMapper.robotToRobotDto(robot))
+    fun spawnRobots(@RequestBody spawnDto: RobotSpawnDto): ResponseEntity<List<RobotDto>> {
+        val robots = mutableListOf<Robot>()
+        for (i in 1..spawnDto.quantity)
+            robots.add(robotApplicationService.spawn(spawnDto.player, spawnDto.planet, spawnDto.transactionId))
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+            robots.map { robot -> robotMapper.robotToRobotDto(robot) }
+        )
     }
 
     /**
