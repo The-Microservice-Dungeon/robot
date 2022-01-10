@@ -1,5 +1,6 @@
 package com.msd.event.application
 
+import com.msd.application.GameMapService
 import com.msd.application.dto.GameMapPlanetDto
 import com.msd.command.application.command.*
 import com.msd.domain.ResourceType
@@ -16,7 +17,8 @@ import java.util.*
 class SuccessEventSender(
     val eventSender: EventSender,
     val planetMapper: PlanetMapper,
-    val robotDomainService: RobotDomainService
+    val robotDomainService: RobotDomainService,
+    val gameMapService: GameMapService
 ) {
 
     private val logger = KotlinLogging.logger {}
@@ -81,48 +83,48 @@ class SuccessEventSender(
      */
     fun sendAttackItemEvents(
         targetRobots: List<Robot>,
-        it: FightingItemUsageCommand,
+        fightingItemUsageCommand: FightingItemUsageCommand,
         robot: Robot
     ) {
-        logger.info("[${it.transactionUUID}] Successfully executed AttackItemUsageCommand")
+        logger.info("[${fightingItemUsageCommand.transactionUUID}] Successfully executed AttackItemUsageCommand")
         val causedFightingEvents = targetRobots.map { targetRobot ->
             eventSender.sendEvent(
                 FightingEventDTO(
                     true,
                     "Attacking successful",
-                    it.robotUUID,
+                    fightingItemUsageCommand.robotUUID,
                     targetRobot.id,
                     targetRobot.health,
                     robot.energy
                 ),
                 EventType.FIGHTING,
-                it.transactionUUID
+                fightingItemUsageCommand.transactionUUID
             )
         }
         eventSender.sendEvent(
             ItemFightingEventDTO(
                 true,
                 "Item usage successful",
-                robot.inventory.getItemAmountByType(it.itemType),
+                robot.inventory.getItemAmountByType(fightingItemUsageCommand.itemType),
                 causedFightingEvents
             ),
             EventType.ITEM_FIGHTING,
-            it.transactionUUID
+            fightingItemUsageCommand.transactionUUID
         )
     }
 
-    fun sendMiningEvent(it: ValidMineCommand) {
-        logger.debug("[${it.transactionId}] Sending event for successful mining")
+    fun sendMiningEvent(mindCommand: ValidMineCommand) {
+        logger.debug("[${mindCommand.transactionId}] Sending event for successful mining")
         eventSender.sendEvent(
             MiningEventDTO(
                 true,
-                "Robot ${it.robot.id} mined successfully",
-                it.robot.energy,
-                it.robot.inventory.getStorageUsageForResource(it.resource),
-                it.resource.toString()
+                "Robot ${mindCommand.robot.id} mined successfully",
+                mindCommand.robot.energy,
+                mindCommand.robot.inventory.getStorageUsageForResource(mindCommand.resource),
+                mindCommand.resource.toString()
             ),
             EventType.MINING,
-            it.transactionId
+            mindCommand.transactionId
         )
     }
 
@@ -143,22 +145,22 @@ class SuccessEventSender(
     }
 
     fun sendFightingEvent(
-        it: FightingCommand,
+        fightingCommand: FightingCommand,
         target: Robot,
         attacker: Robot
     ) {
-        logger.info("[${it.transactionUUID}] Successfully executed FightingCommand")
+        logger.info("[${fightingCommand.transactionUUID}] Successfully executed FightingCommand")
         eventSender.sendEvent(
             FightingEventDTO(
                 true,
                 "Attacking successful",
-                it.robotUUID,
-                it.targetRobotUUID,
+                fightingCommand.robotUUID,
+                fightingCommand.targetRobotUUID,
                 target.health,
                 attacker.energy
             ),
             EventType.FIGHTING,
-            it.transactionUUID
+            fightingCommand.transactionUUID
         )
     }
 
@@ -192,18 +194,37 @@ class SuccessEventSender(
         )
     }
 
-    fun sendResourceDistributionEvent(it: Robot) {
-        logger.info("Distributed resources to robot ${it.id}")
+    fun sendResourceDistributionEvent(robot: Robot) {
+        logger.info("Distributed resources to robot ${robot.id}")
         eventSender.sendGenericEvent(
             ResourceDistributionEventDTO(
-                it.id,
-                it.inventory.getStorageUsageForResource(ResourceType.COAL),
-                it.inventory.getStorageUsageForResource(ResourceType.IRON),
-                it.inventory.getStorageUsageForResource(ResourceType.GEM),
-                it.inventory.getStorageUsageForResource(ResourceType.GOLD),
-                it.inventory.getStorageUsageForResource(ResourceType.PLATIN),
+                robot.id,
+                robot.inventory.getStorageUsageForResource(ResourceType.COAL),
+                robot.inventory.getStorageUsageForResource(ResourceType.IRON),
+                robot.inventory.getStorageUsageForResource(ResourceType.GEM),
+                robot.inventory.getStorageUsageForResource(ResourceType.GOLD),
+                robot.inventory.getStorageUsageForResource(ResourceType.PLATIN),
             ),
             EventType.RESOURCE_DISTRIBUTION
+        )
+    }
+
+    fun sendSpawnEvents(player: UUID, robot: Robot, transactionId: UUID) {
+        logger.info("Spawned robot with ID ${robot.id} on planet ${robot.planet}")
+        eventSender.sendEvent(
+            SpawnEventDTO(robot.id, player, robotDomainService.getRobotsOnPlanet(robot.planet.planetId).map { it.id }.minus(robot.id)),
+            EventType.ROBOT_SPAWNED,
+            transactionId
+        )
+        val planetDto = gameMapService.getPlanet(robot.planet.planetId)
+        eventSender.sendEvent(
+            NeighboursEventDTO(
+                planetDto.neighbours.map {
+                    NeighboursEventDTO.NeighbourDTO(it.planetId, it.movementDifficulty, it.direction)
+                }
+            ),
+            EventType.NEIGHBOURS,
+            transactionId
         )
     }
 }

@@ -39,4 +39,7 @@ class ProducerTopicConfiguration {
 
     @Value("robot-destroyed")
     lateinit var ROBOT_DESTROYED: String
+
+    @Value("spawn-notification")
+    lateinit var ROBOT_SPAWNED: String
 }

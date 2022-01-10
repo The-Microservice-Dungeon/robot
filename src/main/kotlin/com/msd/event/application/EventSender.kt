@@ -108,6 +108,7 @@ class EventSender(
             is ItemRepairEventDTO -> topicConfig.ROBOT_ITEM_REPAIR to EventType.ITEM_REPAIR
             is ItemMovementEventDTO -> topicConfig.ROBOT_ITEM_MOVEMENT to EventType.ITEM_MOVEMENT
             is RobotDestroyedEventDTO -> topicConfig.ROBOT_DESTROYED to EventType.DESTROYED
+            is SpawnEventDTO -> topicConfig.ROBOT_SPAWNED to EventType.ROBOT_SPAWNED
             else -> throw RuntimeException("Unknown GenericEventDTO")
         }
     }

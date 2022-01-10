@@ -94,6 +94,27 @@ class GameMapService(
         }
     }
 
+    fun getPlanet(planetId: UUID): GameMapPlanetDto {
+        val uriSpec = gameMapClient.get()
+        val querySpec = uriSpec.uri {
+            it.path("${GameMapServiceMetaData.PLANETS_URI}/$planetId").build()
+        }
+        try {
+            val response = querySpec.exchangeToMono { response ->
+                if (response.statusCode() == HttpStatus.OK)
+                    response.bodyToMono<String>()
+                else if (response.statusCode() == HttpStatus.BAD_REQUEST)
+                    throw FailureException("The requested planet does not exist")
+                else
+                    throw ClientException("Could not get planet data from MapService")
+            }.block()!!
+            return jacksonObjectMapper().readValue(response)
+        } catch (wcre: WebClientRequestException) {
+            logger.error("Map Service Client failed to connect to the map service with exception: ${wcre.message}")
+            throw ClientException("Could not connect to Map Service")
+        }
+    }
+
     /**
      * Retrieves all `Planets` from the Map Service
      *

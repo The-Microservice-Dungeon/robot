@@ -2,14 +2,28 @@ package com.msd.robot.application
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+import com.msd.application.AbstractKafkaProducerTest
+import com.msd.application.dto.GameMapPlanetDto
+import com.msd.application.dto.ResourceDto
+import com.msd.domain.DomainEvent
+import com.msd.domain.ResourceType
+import com.msd.event.application.EventType
+import com.msd.event.application.ProducerTopicConfiguration
+import com.msd.event.application.dto.SpawnEventDTO
 import com.msd.planet.domain.Planet
 import com.msd.robot.application.dtos.RestorationDTO
 import com.msd.robot.application.dtos.RobotDto
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
 import com.msd.robot.domain.UpgradeType
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -17,25 +31,52 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.kafka.test.EmbeddedKafkaBroker
+import org.springframework.kafka.test.context.EmbeddedKafka
+import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @ActiveProfiles(profiles = ["no-async", " test"])
 @Transactional
+@DirtiesContext
+@EmbeddedKafka(
+    partitions = 1,
+    brokerProperties = ["listeners=PLAINTEXT://\${spring.kafka.bootstrap-servers}", "port=9092"]
+)
 class RobotControllerTest(
     @Autowired private var mockMvc: MockMvc,
     @Autowired private var robotRepository: RobotRepository,
     @Autowired private var mapper: ObjectMapper,
-) {
+    @Autowired private val embeddedKafka: EmbeddedKafkaBroker,
+    @Autowired private val topicConfig: ProducerTopicConfiguration
+) : AbstractKafkaProducerTest(embeddedKafka, topicConfig) {
 
     val player1Id: UUID = UUID.fromString("d43608d5-2107-47a0-bd4f-6720dfa53c4d")
 
     val planet1Id: UUID = UUID.fromString("8f3c39b1-c439-4646-b646-ace4839d8849")
+
+    companion object {
+        val mockGameServiceWebClient = MockWebServer()
+
+        @BeforeAll
+        @JvmStatic
+        internal fun setUp() {
+            mockGameServiceWebClient.start(port = 8081)
+        }
+
+        @AfterAll
+        @JvmStatic
+        internal fun tearDown() {
+            mockGameServiceWebClient.shutdown()
+        }
+    }
 
     @Test
     fun `Sending Spawn Command with invalid planet UUID returns 400`() {
@@ -93,24 +134,52 @@ class RobotControllerTest(
 
     @Test
     fun `Sending a spawn command leads to a robot being present in the repository`() {
+        startSpawnContainer()
+
+        val planet1GameMapDto = GameMapPlanetDto(planet1Id, 3, resource = ResourceDto(ResourceType.COAL))
+        mockGameServiceWebClient.enqueue(
+            MockResponse().setResponseCode(200)
+                .setBody(jacksonObjectMapper().writeValueAsString(planet1GameMapDto))
+                .setHeader("Content-Type", "application/json")
+        )
+
+        val transactionId = UUID.randomUUID()
         val spawnDto = """
             {
-                "transactionId": "${UUID.randomUUID()}",
+                "transactionId": "$transactionId",
                 "player": "$player1Id",
-                "planet": "$planet1Id"
+                "planet": "$planet1Id",
+                "quantity": 1
             }
         """.trimIndent()
 
-        val result = mockMvc.post("/robots") {
-            contentType = MediaType.APPLICATION_JSON
-            content = spawnDto
-        }.andExpect {
-            status { isCreated() }
-        }.andReturn()
+        val results: List<RobotDto> = mapper.readValue(
+            mockMvc.post("/robots") {
+                contentType = MediaType.APPLICATION_JSON
+                content = spawnDto
+            }.andExpect {
+                status { isCreated() }
+            }.andReturn().response.contentAsString
+        )
 
-        val resultRobot = mapper.readValue(result.response.contentAsString, RobotDto::class.java)
+        val resultRobot = results[0]
 
         assert(robotRepository.existsById(resultRobot.id))
+
+        val singleRecord = consumerRecords.poll(100, TimeUnit.MILLISECONDS)
+        Assertions.assertNotNull(singleRecord!!)
+        assertEquals(topicConfig.ROBOT_SPAWNED, singleRecord.topic())
+        val domainEvent = DomainEvent.build(
+            jacksonObjectMapper().readValue(singleRecord.value(), SpawnEventDTO::class.java),
+            singleRecord.headers()
+        )
+
+        eventTestUtils.checkHeaders(transactionId, EventType.ROBOT_SPAWNED, domainEvent)
+        eventTestUtils.checkSpawnPayload(
+            player1Id,
+            listOf<UUID>(),
+            domainEvent.payload
+        )
     }
 
     @Test
