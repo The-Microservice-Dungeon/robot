@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit
 @DirtiesContext
 @EmbeddedKafka(
     partitions = 1,
-    brokerProperties = ["listeners=PLAINTEXT://\${spring.kafka.bootstrap-servers}", "port=9092"]
+    brokerProperties = ["listeners=PLAINTEXT://\${spring.kafka.bootstrap-servers}", "port=29092"]
 )
 @Transactional
 @ActiveProfiles(profiles = ["test", "no-async"])
