@@ -62,7 +62,7 @@ internal class GameRoundEventConsumerTest(
         // given
         planets.forEach { it.blocked = true }
         planetRepository.saveAll(planets)
-        val record = ConsumerRecord(roundTopic, 1, 0, "", jacksonObjectMapper().writeValueAsString(RoundStatusDTO(0, RoundStatus.ENDED)))
+        val record = ConsumerRecord(roundTopic, 1, 0, "", jacksonObjectMapper().writeValueAsString(RoundStatusDTO(0, RoundStatus.ENDED, UUID.randomUUID())))
         // when
         gameRoundEventConsumer.gameRoundListener(record)
         // then
@@ -76,7 +76,7 @@ internal class GameRoundEventConsumerTest(
         // given
         planets.forEach { it.blocked = true }
         planetRepository.saveAll(planets)
-        val record = ConsumerRecord(roundTopic, 1, 0, "", jacksonObjectMapper().writeValueAsString(RoundStatusDTO(0, RoundStatus.STARTED)))
+        val record = ConsumerRecord(roundTopic, 1, 0, "", jacksonObjectMapper().writeValueAsString(RoundStatusDTO(0, RoundStatus.STARTED, UUID.randomUUID())))
         // when
         gameRoundEventConsumer.gameRoundListener(record)
         // then
