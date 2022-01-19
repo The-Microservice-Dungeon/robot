@@ -148,7 +148,7 @@ class RobotControllerTest(
             {
                 "transactionId": "$transactionId",
                 "player": "$player1Id",
-                "planet": "$planet1Id",
+                "planets": ["$planet1Id"],
                 "quantity": 1
             }
         """.trimIndent()
