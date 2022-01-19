@@ -117,7 +117,7 @@ class ScenarioTests(
             )
 
         // player1, all robots on planet1
-        var robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, listOf(planet1), 3)
+        var robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, listOf(planet1, planet1, planet1), 3)
         val robotsPlayer1: List<RobotDto> = mapper.readValue(
             mockMvc.post("/robots") {
                 contentType = MediaType.APPLICATION_JSON
@@ -129,7 +129,7 @@ class ScenarioTests(
         val robot3 = robotsPlayer1[2]
 
         // player2, all robots on on planet2
-        robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player2, listOf(planet2), 2)
+        robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player2, listOf(planet2, planet2), 2)
         val robotsPlayer2: List<RobotDto> = mapper.readValue(
             mockMvc.post("/robots") {
                 contentType = MediaType.APPLICATION_JSON
@@ -248,7 +248,7 @@ class ScenarioTests(
                 .setHeader("Content-Type", "application/json")
         )
 
-        var robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, listOf(planet1), 3)
+        var robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, listOf(planet1, planet1, planet1), 3)
         val robotsPlayer1: List<RobotDto> = mapper.readValue(
             mockMvc.post("/robots") {
                 contentType = MediaType.APPLICATION_JSON
@@ -496,7 +496,7 @@ class ScenarioTests(
         )
         val robot1 = robotsPlayer1[0]
 
-        robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player2, listOf(planet1), 2)
+        robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player2, listOf(planet1, planet1), 2)
         val robotsPlayer2: List<RobotDto> = mapper.readValue(
             mockMvc.post("/robots") {
                 contentType = MediaType.APPLICATION_JSON
