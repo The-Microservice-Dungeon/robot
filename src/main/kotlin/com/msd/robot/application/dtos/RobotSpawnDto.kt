@@ -5,6 +5,6 @@ import java.util.*
 class RobotSpawnDto(
     val transactionId: UUID,
     val player: UUID,
-    val planet: UUID,
+    val planets: List<UUID>,
     val quantity: Int
 )
