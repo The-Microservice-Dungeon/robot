@@ -28,7 +28,7 @@ class RobotController(
     @PostMapping
     fun spawnRobots(@RequestBody spawnDto: RobotSpawnDto): ResponseEntity<List<RobotDto>> {
         val robots = mutableListOf<Robot>()
-        for (i in 1..spawnDto.quantity)
+        for (i in 0 until spawnDto.quantity)
             robots.add(robotApplicationService.spawn(spawnDto.player, spawnDto.planets[i], spawnDto.transactionId))
         return ResponseEntity.status(HttpStatus.CREATED).body(
             robots.map { robot -> robotMapper.robotToRobotDto(robot) }
