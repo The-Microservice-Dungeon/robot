@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit
     brokerProperties = ["listeners=PLAINTEXT://\${spring.kafka.bootstrap-servers}", "port=9092"]
 )
 @Transactional
-@ActiveProfiles(profiles = ["test"])
+@ActiveProfiles(profiles = ["test", "no-async"])
 internal class EventSenderTest(
     @Autowired private val eventSender: EventSender,
     @Autowired private val embeddedKafka: EmbeddedKafkaBroker,

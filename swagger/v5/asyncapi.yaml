@@ -101,7 +101,7 @@ components:
   messages:
     movement:
       description: >
-        Announces whether a movemnt has been successfull and provides data about planet. transactionId is empty for obscuration.
+        Announces whether a movement has been successful  and provides data about planet. transactionId is empty for obscuration. Every successful movement event is thrown together with a `neighbours` event, which informs the player about the surrounding planets.
       traits:
         - $ref: '#/components/messageTraits/DefaultTradingKafkaMessage'
       payload:
@@ -109,7 +109,7 @@ components:
         properties:
           success:
             type: boolean
-            description: true if movement associated with transactionId has been successfull. Maybe transactionId needs to be redacted?
+            description: true if movement associated with transactionId has been successfull.
           message: 
             type: string
             example: Movement successfull/Planet does not exist
@@ -132,11 +132,11 @@ components:
               #  description: Recharge multiplicator of the planet
               planetType:
                 type: string
-                enum: [DEFAULTf, SPACESTATION]
+                enum: [DEFAULT, SPACESTATION]
                 description: Planet type (`default` or `spacestation`) of the planet
               resourceType:
                 type: string
-                enum: [COAL, IRON, GEM, GOLD, PLATIN]
+                enum: [COAL, IRON, GEM, GOLD, PLATIN, null]
           robots:
             type: array
             items:
@@ -213,10 +213,10 @@ components:
             description: Amount of the mined resource in the inventory after mining
           resourceType:
             type: string
-            enum: [COAL, IRON, GEM, GOLD, PLATIN, NONE]
+            enum: [COAL, IRON, GEM, GOLD, PLATIN, null]
     fighting:
       description: >
-        Result of a fight
+        Result of a fight. If a robot gets destroyed, a `robot-destroyed` event is thrown.
       traits:
         - $ref: '#/components/messageTraits/DefaultTradingKafkaMessage'
       payload:
@@ -298,7 +298,7 @@ components:
             description: Remaining energy after regeneration
     item-fighting:
       description: >
-        Usage of fighting item
+        Usage of fighting item.  If a robot gets destroyed, a `robot-destroyed` event is thrown.
       traits:
         - $ref: '#/components/messageTraits/DefaultTradingKafkaMessage'
       payload:
@@ -319,7 +319,7 @@ components:
             items: 
               type: string
               format: uuid
-            description: eventId, associated to a fighting event for every robot that is attacked
+            description: eventId, associated to a `fighting` event for every robot that is attacked
     item-repair:
       description: >
         Repair Swarm is used
@@ -348,7 +348,7 @@ components:
                     example: 30
     item-movement:
       description: >
-        Usage of an item that affects position of a robot
+        Usage of an item that affects position of a robot. Is thrown together with a `movement` and a `neighbours` event` if successful.
       traits:
         - $ref: '#/components/messageTraits/DefaultTradingKafkaMessage'
       payload:
@@ -384,7 +384,7 @@ components:
 
     spawn-notification:
       description: >
-        Event shows a spawned robot.
+        Event shows a spawned robot. Is thrown togeth with a `neighbours` event, which informs the player about the surrounding planets.
       traits:
         - $ref: '#/components/messageTraits/DefaultTradingKafkaMessage'
       payload:

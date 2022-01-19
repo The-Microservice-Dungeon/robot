@@ -96,55 +96,49 @@ class ScenarioTests(
         startFightingContainer()
         startResourceDistributionContainer()
         startRobotDestroyedContainer()
+        startSpawnContainer()
         consumerRecords.clear()
 
         // //////////////////////  1. Spawn the robots  //////////////////////////////
+        val planet1GameMapDto = GameMapPlanetDto(planet1, 3, resource = ResourceDto(ResourceType.COAL))
+        val planet2GameMapDto = GameMapPlanetDto(planet2, 3, resource = ResourceDto(ResourceType.COAL))
+
+        for (i in 1..3)
+            mockGameServiceWebClient.enqueue(
+                MockResponse().setResponseCode(200)
+                    .setBody(jacksonObjectMapper().writeValueAsString(planet1GameMapDto))
+                    .setHeader("Content-Type", "application/json")
+            )
+        for (i in 1..2)
+            mockGameServiceWebClient.enqueue(
+                MockResponse().setResponseCode(200)
+                    .setBody(jacksonObjectMapper().writeValueAsString(planet2GameMapDto))
+                    .setHeader("Content-Type", "application/json")
+            )
+
         // player1, all robots on planet1
-        var robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, planet1)
-        val robot1 = mapper.readValue(
+        var robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, planet1, 3)
+        val robotsPlayer1: List<RobotDto> = mapper.readValue(
             mockMvc.post("/robots") {
                 contentType = MediaType.APPLICATION_JSON
                 content = mapper.writeValueAsString(robotSpawnDto)
-            }.andReturn().response.contentAsString,
-            RobotDto::class.java
+            }.andReturn().response.contentAsString
         )
-
-        robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, planet1)
-        val robot2 = mapper.readValue(
-            mockMvc.post("/robots") {
-                contentType = MediaType.APPLICATION_JSON
-                content = mapper.writeValueAsString(robotSpawnDto)
-            }.andReturn().response.contentAsString,
-            RobotDto::class.java
-        )
-
-        robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, planet1)
-        val robot3 = mapper.readValue(
-            mockMvc.post("/robots") {
-                contentType = MediaType.APPLICATION_JSON
-                content = mapper.writeValueAsString(robotSpawnDto)
-            }.andReturn().response.contentAsString,
-            RobotDto::class.java
-        )
+        val robot1 = robotsPlayer1[0]
+        val robot2 = robotsPlayer1[1]
+        val robot3 = robotsPlayer1[2]
 
         // player2, all robots on on planet2
-        robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player2, planet2)
-        val robot4 = mapper.readValue(
+        robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player2, planet2, 2)
+        val robotsPlayer2: List<RobotDto> = mapper.readValue(
             mockMvc.post("/robots") {
                 contentType = MediaType.APPLICATION_JSON
                 content = mapper.writeValueAsString(robotSpawnDto)
-            }.andReturn().response.contentAsString,
-            RobotDto::class.java
+            }.andReturn().response.contentAsString
         )
 
-        robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player2, planet2)
-        val robot5 = mapper.readValue(
-            mockMvc.post("/robots") {
-                contentType = MediaType.APPLICATION_JSON
-                content = mapper.writeValueAsString(robotSpawnDto)
-            }.andReturn().response.contentAsString,
-            RobotDto::class.java
-        )
+        val robot4 = robotsPlayer2[0]
+        val robot5 = robotsPlayer2[1]
 
         // ////////////////////////////////// 2. Move the robots to the same planet /////////////////////////
         // All robots move to planet3
@@ -220,8 +214,11 @@ class ScenarioTests(
             println(it.topic() + ": " + it.value())
         }
 
-        assertEquals(48, consumerRecords.size)
+        assertEquals(58, consumerRecords.size)
         assertEquals(3, consumerRecords.filter { it.topic() == topicConfig.ROBOT_DESTROYED }.size)
+        assertEquals(5, consumerRecords.filter { it.topic() == topicConfig.ROBOT_SPAWNED }.size)
+        // 5 at spawn and 5 from movement
+        assertEquals(10, consumerRecords.filter { it.topic() == topicConfig.ROBOT_NEIGHBOURS }.size)
     }
 
     @Test
@@ -231,47 +228,48 @@ class ScenarioTests(
         startResourceDistributionContainer()
         startMiningContainer()
         startRobotDestroyedContainer()
+        startSpawnContainer()
 
         consumerRecords.clear()
 
         // player1, all robots on planet1
-        var robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, planet1)
-        val robot1 = mapper.readValue(
-            mockMvc.post("/robots") {
-                contentType = MediaType.APPLICATION_JSON
-                content = mapper.writeValueAsString(robotSpawnDto)
-            }.andReturn().response.contentAsString,
-            RobotDto::class.java
+        val planet1GameMapDto = GameMapPlanetDto(planet1, 3, resource = ResourceDto(ResourceType.COAL))
+        val planet2GameMapDto = GameMapPlanetDto(planet2, 3, resource = ResourceDto(ResourceType.COAL))
+
+        for (i in 1..3)
+            mockGameServiceWebClient.enqueue(
+                MockResponse().setResponseCode(200)
+                    .setBody(jacksonObjectMapper().writeValueAsString(planet1GameMapDto))
+                    .setHeader("Content-Type", "application/json")
+            )
+        mockGameServiceWebClient.enqueue(
+            MockResponse().setResponseCode(200)
+                .setBody(jacksonObjectMapper().writeValueAsString(planet2GameMapDto))
+                .setHeader("Content-Type", "application/json")
         )
 
-        robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, planet1)
-        val robot2 = mapper.readValue(
+        var robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, planet1, 3)
+        val robotsPlayer1: List<RobotDto> = mapper.readValue(
             mockMvc.post("/robots") {
                 contentType = MediaType.APPLICATION_JSON
                 content = mapper.writeValueAsString(robotSpawnDto)
-            }.andReturn().response.contentAsString,
-            RobotDto::class.java
+            }.andReturn().response.contentAsString
         )
 
-        robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, planet1)
-        val robot3 = mapper.readValue(
-            mockMvc.post("/robots") {
-                contentType = MediaType.APPLICATION_JSON
-                content = mapper.writeValueAsString(robotSpawnDto)
-            }.andReturn().response.contentAsString,
-            RobotDto::class.java
-        )
+        val robot1 = robotsPlayer1[0]
+        val robot2 = robotsPlayer1[1]
+        val robot3 = robotsPlayer1[2]
 
         // player2, robot on on planet1
-        robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player2, planet1)
-        val robot4 = mapper.readValue(
+        robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player2, planet1, 1)
+        val robotsPlayer2: List<RobotDto> = mapper.readValue(
             mockMvc.post("/robots") {
                 contentType = MediaType.APPLICATION_JSON
                 content = mapper.writeValueAsString(robotSpawnDto)
-            }.andReturn().response.contentAsString,
-            RobotDto::class.java
+            }.andReturn().response.contentAsString
         )
 
+        val robot4 = robotsPlayer2[0]
         val robots = listOf(robot1, robot2, robot3, robot4)
 
         // ///////////////////////////////////////    Upgrading   /////////////////////////////////////////////
@@ -351,7 +349,6 @@ class ScenarioTests(
             "mine ${robot4.id} ${UUID.randomUUID()}"
         )
 
-        val planet1GameMapDto = GameMapPlanetDto(planet1, 3, resource = ResourceDto(ResourceType.COAL))
         val miningResponse = MineResponseDto(19) // 10 + 5 + 2 + 2
         for (i in 1..3) {
             mockGameServiceWebClient.enqueue(
@@ -457,18 +454,21 @@ class ScenarioTests(
         }
 
         /*
+            4 Spawn events
             16 Mining Events (4 * 4 Mine Commands)
             7 Fighting Events ( 3 * Rocket + 4 Long Range Bombardment)
             4 Item Fighting Events
             3 Resource Distribution Events ( 3 remaining robots on planet)
             = 30
          */
-        assertEquals(31, consumerRecords.size)
+        assertEquals(35, consumerRecords.size)
         assertEquals(1, consumerRecords.filter { it.topic() == topicConfig.ROBOT_DESTROYED }.size)
+        assertEquals(4, consumerRecords.filter { it.topic() == topicConfig.ROBOT_SPAWNED }.size)
     }
 
     @Test
     fun `Robots block, fight, then regenerate, repair or flee with movement-item`() {
+        startSpawnContainer()
         startFightingContainer()
         startPlanetBlockedContainer()
         startItemMovementContainer()
@@ -478,32 +478,33 @@ class ScenarioTests(
 
         consumerRecords.clear()
 
-        var robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, planet1)
-        val robot1 = mapper.readValue(
-            mockMvc.post("/robots") {
-                contentType = MediaType.APPLICATION_JSON
-                content = mapper.writeValueAsString(robotSpawnDto)
-            }.andReturn().response.contentAsString,
-            RobotDto::class.java
-        )
+        val planet1GameMapDto = GameMapPlanetDto(planet1, 3, resource = ResourceDto(ResourceType.COAL))
 
-        robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player2, planet1)
-        val robot2 = mapper.readValue(
-            mockMvc.post("/robots") {
-                contentType = MediaType.APPLICATION_JSON
-                content = mapper.writeValueAsString(robotSpawnDto)
-            }.andReturn().response.contentAsString,
-            RobotDto::class.java
-        )
+        for (i in 1..3)
+            mockGameServiceWebClient.enqueue(
+                MockResponse().setResponseCode(200)
+                    .setBody(jacksonObjectMapper().writeValueAsString(planet1GameMapDto))
+                    .setHeader("Content-Type", "application/json")
+            )
 
-        robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player2, planet1)
-        val robot3 = mapper.readValue(
+        var robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player1, planet1, 1)
+        val robotsPlayer1: List<RobotDto> = mapper.readValue(
             mockMvc.post("/robots") {
                 contentType = MediaType.APPLICATION_JSON
                 content = mapper.writeValueAsString(robotSpawnDto)
-            }.andReturn().response.contentAsString,
-            RobotDto::class.java
+            }.andReturn().response.contentAsString
         )
+        val robot1 = robotsPlayer1[0]
+
+        robotSpawnDto = RobotSpawnDto(UUID.randomUUID(), player2, planet1, 2)
+        val robotsPlayer2: List<RobotDto> = mapper.readValue(
+            mockMvc.post("/robots") {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(robotSpawnDto)
+            }.andReturn().response.contentAsString
+        )
+        val robot2 = robotsPlayer2[0]
+        val robot3 = robotsPlayer2[1]
 
         // ///////////////////////////////////////// Blocking ////////////////////////////////////////////////
         val blockCommand = "block ${robot1.id} ${UUID.randomUUID()}"
@@ -588,13 +589,13 @@ class ScenarioTests(
         }
 
         /*
+        3 spawn events
         9 fight events
         1 block event
         1 repair item event
-        1 movement event
         1 item movement event
         1 regenerate event
          */
-        // assertEquals(14, consumerRecords.size)
+        assertEquals(16, consumerRecords.size)
     }
 }

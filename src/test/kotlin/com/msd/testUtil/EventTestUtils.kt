@@ -274,4 +274,24 @@ class EventTestUtils {
             }
         )
     }
+
+    fun checkSpawnPayload(
+        expectedPlayer: UUID,
+        expectedRobots: List<UUID>,
+        payload: SpawnEventDTO
+    ) {
+        assertAll(
+            "check spawn event payload correct",
+            {
+                assertNotNull(payload.robotId)
+            },
+            {
+                assertEquals(expectedPlayer, payload.playerId)
+            },
+            {
+                assert(expectedRobots.containsAll(payload.otherSeeableRobots))
+                assert(payload.otherSeeableRobots.containsAll(expectedRobots))
+            }
+        )
+    }
 }

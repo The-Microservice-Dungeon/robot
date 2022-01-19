@@ -611,7 +611,21 @@ paths:
         use-item-movement [robotUUID] [itemType] [transactionUUID] <br><br>
         
         [targetUUID] is either a robot or a planet, depending on the item type <br>
-        [itemType] can be rocket, wormhole, bombardment, self_destruct, repair_swarm or nuke"
+        [itemType] can be rocket, wormhole, bombardment, self_destruct, repair_swarm or nuke <br> <br> <br>
+        
+        Corresponding events: <br>
+block -> planet-blocked <br>
+move -> movement, neighbours <br>
+fight -> fighting, resource-distribution <br>
+mine -> mining <br> 
+regenerate -> regeneration <br>
+use-item-fighting -> item-fighting, fighting, resource-distribution <br>
+use-item-repair -> item-repair <br>
+use-item-movement -> item-movement, movement, neighbours <br> <br>
+
+For further information about the corresponding events, please refer to our AsyncAPI.
+
+        "
       tags:
       - commands
       responses:

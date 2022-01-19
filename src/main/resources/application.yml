@@ -37,6 +37,7 @@ topics:
   robot-item-movement: item-movement
   robot-resource-distribution: resource-distribution
   robot-destroyed: robot-destroyed
+  spawn-notification: spawn-notification
 logging:
   file:
     path: ./logs
