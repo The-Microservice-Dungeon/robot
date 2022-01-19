@@ -38,7 +38,9 @@ class RestAPIExceptionHandler : ResponseEntityExceptionHandler() {
         status: HttpStatus,
         request: WebRequest
     ): ResponseEntity<Any> {
-        logger.info("Unreadable HTTP Request: ${request.getDescription(true)}")
+        logger.info("Unreadable HTTP Request: ${ex.message}")
+        logger.info("More information: ${ex.mostSpecificCause}")
+
         return ResponseEntity("Request could not be accepted", HttpStatus.BAD_REQUEST)
     }
 }
