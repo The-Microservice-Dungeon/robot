@@ -706,7 +706,7 @@ class CommandControllerTest(
         val planet1GameMapDto = GameMapPlanetDto(
             planet1Id,
             3,
-            PlanetType.DEFAULT,
+            false,
             ResourceDto(ResourceType.COAL)
         )
 
@@ -784,14 +784,14 @@ class CommandControllerTest(
         val planet1GameMapDto = GameMapPlanetDto(
             planet1Id,
             3,
-            PlanetType.DEFAULT,
+            false,
             ResourceDto(ResourceType.COAL)
         )
 
         val planet2GameMapDto = GameMapPlanetDto(
             planet1Id,
             3,
-            PlanetType.DEFAULT
+            false
         )
 
         val miningResponse = MineResponseDto(2)
@@ -862,7 +862,7 @@ class CommandControllerTest(
         val planet1GameMapDto = GameMapPlanetDto(
             planet1Id,
             3,
-            PlanetType.DEFAULT,
+            false,
             ResourceDto(ResourceType.COAL)
         )
 

@@ -7,6 +7,6 @@ import java.util.*
 data class PlanetDTO(
     val planetId: UUID,
     val movementDifficulty: Int,
-    val planetType: PlanetType,
+    val planetType: PlanetType?,
     val resourceType: ResourceType?
 )

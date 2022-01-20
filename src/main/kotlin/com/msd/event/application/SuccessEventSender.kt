@@ -6,6 +6,7 @@ import com.msd.command.application.command.*
 import com.msd.domain.ResourceType
 import com.msd.event.application.dto.*
 import com.msd.planet.application.PlanetMapper
+import com.msd.planet.domain.PlanetType
 import com.msd.robot.application.ValidMineCommand
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
@@ -60,7 +61,10 @@ class SuccessEventSender(
                 true,
                 "Movement successful",
                 robot.energy,
-                planetMapper.planetToPlanetDTO(robot.planet, cost, planetDto.planetType), // TODO planet type?
+                planetMapper.planetToPlanetDTO(
+                    robot.planet, cost,
+                    if (planetDto.spacestation) PlanetType.SPACE_STATION else PlanetType.DEFAULT
+                ),
                 robotDomainService.getRobotsOnPlanet(robot.planet.planetId).map { it.id }
             ),
             EventType.MOVEMENT,
