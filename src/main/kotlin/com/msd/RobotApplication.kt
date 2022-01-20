@@ -6,6 +6,7 @@ import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
+import org.springframework.web.filter.CommonsRequestLoggingFilter
 
 @SpringBootApplication
 class RobotApplication {
@@ -20,6 +21,17 @@ class RobotApplication {
         if (energyCostCalculationValuesRepository.findAll().toList().isEmpty()) {
             energyCostCalculationValuesRepository.save(EnergyCostCalculationValues())
         }
+    }
+
+    @Bean
+    fun logFilter(): CommonsRequestLoggingFilter? {
+        val filter = CommonsRequestLoggingFilter()
+        filter.setIncludeQueryString(true)
+        filter.setIncludePayload(true)
+        filter.setMaxPayloadLength(10000)
+        filter.setIncludeHeaders(false)
+        filter.setAfterMessagePrefix("REQUEST DATA : ")
+        return filter
     }
 }
 
