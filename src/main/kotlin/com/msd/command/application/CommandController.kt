@@ -20,7 +20,7 @@ class CommandController(
      * @param commandDto A DTO containing the list of commands
      * @return ResponseEntity stating the success of the Command Queueing
      */
-    @PostMapping
+    @PostMapping(consumes = ["application/json"], produces = ["application/json"])
     fun receiveCommand(@RequestBody commandDto: CommandDTO): ResponseEntity<Any> {
         val commands = commandService.parseCommandsFromStrings(commandDto.commands)
         robotService.executeCommands(commands)

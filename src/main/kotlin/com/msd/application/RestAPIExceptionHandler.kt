@@ -40,7 +40,7 @@ class RestAPIExceptionHandler : ResponseEntityExceptionHandler() {
     ): ResponseEntity<Any> {
         logger.info("Unreadable HTTP Request: ${ex.message}")
         logger.info("More information: ${ex.mostSpecificCause}")
-        logger.info(ex.stackTrace)
+        logger.info("Headers: " + headers.toSortedMap())
 
         return ResponseEntity("Request could not be accepted", HttpStatus.BAD_REQUEST)
     }
