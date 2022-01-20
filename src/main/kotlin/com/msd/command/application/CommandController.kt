@@ -22,7 +22,7 @@ class CommandController(
      */
     @PostMapping(consumes = ["application/json"], produces = ["application/json"])
     fun receiveCommand(@RequestBody commandDto: CommandDTO): ResponseEntity<Any> {
-        if (!commandDto.commands.isEmpty()) {
+        if (commandDto.commands.isNotEmpty()) {
             val commands = commandService.parseCommandsFromStrings(commandDto.commands)
             robotService.executeCommands(commands)
         }
