@@ -22,8 +22,10 @@ class CommandController(
      */
     @PostMapping(consumes = ["application/json"], produces = ["application/json"])
     fun receiveCommand(@RequestBody commandDto: CommandDTO): ResponseEntity<Any> {
-        val commands = commandService.parseCommandsFromStrings(commandDto.commands)
-        robotService.executeCommands(commands)
+        if (!commandDto.commands.isEmpty()) {
+            val commands = commandService.parseCommandsFromStrings(commandDto.commands)
+            robotService.executeCommands(commands)
+        }
         return ResponseEntity.accepted().body("Command batch accepted")
     }
 }

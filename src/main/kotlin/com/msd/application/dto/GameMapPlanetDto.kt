@@ -1,9 +1,11 @@
 package com.msd.application.dto
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.msd.planet.domain.Planet
 import java.util.*
 
+@JsonIgnoreProperties
 class GameMapPlanetDto(
     val id: UUID,
     @JsonProperty("movement_difficulty")
