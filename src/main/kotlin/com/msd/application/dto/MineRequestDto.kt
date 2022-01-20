@@ -2,7 +2,7 @@ package com.msd.application.dto
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
-@JsonIgnoreProperties
+@JsonIgnoreProperties(ignoreUnknown = true)
 class MineRequestDto(
     amount: Int
 ) {

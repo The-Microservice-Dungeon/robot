@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.msd.planet.domain.MapDirection
 import java.util.*
 
-@JsonIgnoreProperties
+@JsonIgnoreProperties(ignoreUnknown = true)
 class GameMapNeighbourDto(
     @JsonProperty("planet_id")
     val planetId: UUID,

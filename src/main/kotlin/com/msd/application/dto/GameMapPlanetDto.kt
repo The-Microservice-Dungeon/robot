@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.msd.planet.domain.Planet
 import java.util.*
 
-@JsonIgnoreProperties
+@JsonIgnoreProperties(ignoreUnknown = true)
 class GameMapPlanetDto(
     val id: UUID,
     @JsonProperty("movement_difficulty")
