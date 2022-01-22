@@ -28,7 +28,8 @@ class CommandController(
         if (commandDto.commands.isNotEmpty()) {
             val commands = commandService.parseCommandsFromStrings(commandDto.commands)
             logger.info("Starting execution of command batch")
-            robotService.executeCommands(commands)
+            val thread = Thread { robotService.executeCommands(commands) }
+            thread.start()
         }
         return ResponseEntity.accepted().body("Command batch accepted")
     }
