@@ -140,20 +140,26 @@ class RobotApplicationService(
     private fun move(
         moveCommand: MovementCommand
     ): Triple<Robot, Int, GameMapPlanetDto> {
+        logger.info("Entered move method")
         val robotId = moveCommand.robotUUID
 
         val robot = robotDomainService.getRobot(robotId)
+
+        logger.info("Retrieved robot")
 
         val planetDto =
             gameMapService.retrieveTargetPlanetIfRobotCanReach(
                 robot.planet.planetId,
                 moveCommand.targetPlanetUUID
             )
+        logger.info("Retrieved target planet")
         val cost = planetDto.movementDifficulty
         val planet = planetDto.toPlanet()
         try {
             robot.move(planet, cost)
+            logger.info("moved robot")
             robotDomainService.saveRobot(robot)
+            logger.info("saved robot")
             logger.info("[${moveCommand.transactionUUID}] Successfully executed MoveCommand")
             return Triple(robot, cost, planetDto)
         } catch (pbe: PlanetBlockedException) {
