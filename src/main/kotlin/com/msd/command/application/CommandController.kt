@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import kotlin.concurrent.thread
 
 @RestController
 @RequestMapping("/commands")
@@ -29,7 +30,12 @@ class CommandController(
     fun receiveCommand(@RequestBody commandDto: CommandDTO): ResponseEntity<Any> {
         if (commandDto.commands.isNotEmpty()) {
             val commands = commandService.parseCommandsFromStrings(commandDto.commands)
-            robotService.executeCommands(commands)
+            if (!environment.acceptsProfiles("no-async")) {
+                thread(start = true, isDaemon = false) {
+                    robotService.executeCommands(commands)
+                }
+            } else
+                robotService.executeCommands(commands)
         }
         return ResponseEntity.accepted().body("Command batch accepted")
     }

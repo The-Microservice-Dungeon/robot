@@ -209,6 +209,7 @@ class RobotDomainService(
      * @throws RobotNotFoundException  if there is no `Robot` with the specified ID
      */
     fun getRobot(robotId: UUID): Robot {
+        logger.info("entered getRobot")
         return robotRepository.findByIdOrNull(robotId)
             ?: throw RobotNotFoundException("Robot with ID $robotId not found")
     }
