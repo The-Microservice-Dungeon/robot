@@ -6,6 +6,7 @@ import com.msd.event.application.dto.*
 import mu.KotlinLogging
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.springframework.kafka.core.KafkaTemplate
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 
 @Component
@@ -42,6 +43,7 @@ class KafkaMessageProducer(
      * Automatically resends all failed Events after a certain time. Events are saved automatically in `EventRepository` when
      * there was a failure to send them. The DomainEvent will be serialized as a String and will therefore be deserialized
      */
+    @Scheduled(initialDelay = 30000L, fixedDelay = 15000)
     fun retryEvent() {
         val events = eventRepository.findAll()
         events.forEach {

@@ -23,6 +23,7 @@ import com.msd.robot.domain.gameplayVariables.EnergyCostCalculationValuesReposit
 import com.msd.robot.domain.gameplayVariables.UpgradeValuesRepository
 import mu.KotlinLogging
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import java.util.*
 import javax.persistence.EntityNotFoundException
@@ -47,7 +48,7 @@ class RobotApplicationService(
      *
      * @param commands  List of commands that need to be executed.
      */
-
+    @Async
     fun executeCommands(commands: List<Command>) {
         try {
             when (commands[0]) {

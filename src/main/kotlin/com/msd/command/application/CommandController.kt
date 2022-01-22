@@ -29,14 +29,7 @@ class CommandController(
     fun receiveCommand(@RequestBody commandDto: CommandDTO): ResponseEntity<Any> {
         if (commandDto.commands.isNotEmpty()) {
             val commands = commandService.parseCommandsFromStrings(commandDto.commands)
-            if (!environment.acceptsProfiles("no-async")) {
-                logger.info("Starting execution of command batch asynchronously")
-                val thread = Thread { robotService.executeCommands(commands) }
-                thread.start()
-            } else {
-                logger.info("Starting execution of command batch synchronously")
-                robotService.executeCommands(commands)
-            }
+            robotService.executeCommands(commands)
         }
         return ResponseEntity.accepted().body("Command batch accepted")
     }
