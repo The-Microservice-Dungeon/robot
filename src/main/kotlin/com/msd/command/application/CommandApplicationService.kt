@@ -181,8 +181,4 @@ class CommandApplicationService {
             else -> throw CommandParsingException("Unknown Command verb $verb")
         }
     }
-
-    fun executeAsync(commands: List<Command>) {
-        val thread = Thread(AsyncCommandExecutor())
-    }
 }
