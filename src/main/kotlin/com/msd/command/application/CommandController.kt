@@ -1,6 +1,7 @@
 package com.msd.command.application
 
 import com.msd.robot.application.RobotApplicationService
+import mu.KotlinLogging
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -14,6 +15,8 @@ class CommandController(
     val commandService: CommandApplicationService
 ) {
 
+    private val logger = KotlinLogging.logger {}
+
     /**
      * Receives a list of commands in a string representation and executes them asynchronously.
      *
@@ -24,6 +27,7 @@ class CommandController(
     fun receiveCommand(@RequestBody commandDto: CommandDTO): ResponseEntity<Any> {
         if (commandDto.commands.isNotEmpty()) {
             val commands = commandService.parseCommandsFromStrings(commandDto.commands)
+            logger.info("Starting execution of command batch")
             robotService.executeCommands(commands)
         }
         return ResponseEntity.accepted().body("Command batch accepted")

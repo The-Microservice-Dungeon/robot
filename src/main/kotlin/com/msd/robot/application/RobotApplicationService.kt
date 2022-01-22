@@ -54,21 +54,13 @@ class RobotApplicationService(
         try {
             when (commands[0]) {
                 is FightingCommand -> executeAttacks(commands as List<FightingCommand>)
-                    .also { logger.info("Finished executing batch of FightingCommands") }
                 is FightingItemUsageCommand -> executeFightingItemUsageCommand(commands as List<FightingItemUsageCommand>)
-                    .also { logger.info("Finished executing batch of ItemUsageCommands") }
                 is MineCommand -> executeMining(commands as List<MineCommand>)
-                    .also { logger.info("Finished executing batch of MineCommands") }
                 is MovementItemsUsageCommand -> useMovementItem(commands as List<MovementItemsUsageCommand>)
-                    .also { logger.info("Finished executing batch of MovementItemUsageCommands") }
                 is MovementCommand -> executeMoveCommands(commands as List<MovementCommand>)
-                    .also { logger.info("Finished executing batch of MovementCommands") }
                 is BlockCommand -> executeBlockCommands(commands as List<BlockCommand>)
-                    .also { logger.info("Finished executing batch of BlockCommands") }
                 is EnergyRegenCommand -> executeEnergyRegenCommands(commands as List<EnergyRegenCommand>)
-                    .also { logger.info("Finished executing batch of EnergyRegenCommands") }
                 is RepairItemUsageCommand -> executeRepairItemUsageCommands(commands as List<RepairItemUsageCommand>)
-                    .also { logger.info("Finished executing batch of RepairItemUsageCommands") }
             }
         } catch (runtimeException: RuntimeException) {
             // If nothing else caught the Exception, it is a bad one, but we still want to throw an event in that case
@@ -83,6 +75,8 @@ class RobotApplicationService(
      * @param command   the `MovementItemsUsageCommand` specifying which `Robot` should use which `item`
      */
     private fun useMovementItem(commands: List<MovementItemsUsageCommand>) {
+        logger.info("Starting execution of MovementItemUsageCommand-Batch")
+
         val robotPlanetPairs = mutableMapOf<MovementItemsUsageCommand, Pair<Robot, GameMapPlanetDto>>()
         commands.forEach { command ->
             try {
@@ -95,6 +89,8 @@ class RobotApplicationService(
             }
         }
         successEventSender.sendMovementItemEvents(robotPlanetPairs)
+
+        logger.info("Finished executing batch of ItemUsageCommands")
     }
 
     /**
@@ -122,6 +118,8 @@ class RobotApplicationService(
      * who send it and the target `Planets`
      */
     fun executeMoveCommands(moveCommands: List<MovementCommand>) {
+        logger.info("Starting execution of MovementCommand-Batch")
+
         val successfulCommands = mutableMapOf<MovementCommand, Triple<Robot, Int, GameMapPlanetDto>>()
         moveCommands.forEach { moveCommand ->
             try {
@@ -176,6 +174,8 @@ class RobotApplicationService(
      * @throws InvalidPlayerException  if the PlayerIDs specified in the `BlockCommand` and `Robot` don't match
      */
     fun executeBlockCommands(blockCommands: List<BlockCommand>) {
+        logger.info("Starting execution of BlockCommand-Batch")
+
         blockCommands.forEach { blockCommand ->
             try {
                 val robot = robotDomainService.getRobot(blockCommand.robotUUID)
@@ -197,6 +197,8 @@ class RobotApplicationService(
      * @throws RobotNotFoundException  When a `Robot` with the specified ID can't be found
      */
     fun executeEnergyRegenCommands(energyRegenCommands: List<EnergyRegenCommand>) {
+        logger.info("Starting execution of EnergyRegenCommand-Batch")
+
         energyRegenCommands.forEach { energyRegenCommand ->
             try {
                 val robot = robotDomainService.getRobot(energyRegenCommand.robotUUID)
@@ -236,8 +238,12 @@ class RobotApplicationService(
      * @param fightingCommands    A list of AttackCommands that should be executed
      */
     fun executeAttacks(fightingCommands: List<FightingCommand>) {
+        logger.info("Starting execution of FightingCommand-Batch")
+
         val battleFields = executeFights(fightingCommands)
         postFightCleanup(battleFields)
+
+        logger.info("Finished executing batch of FightingCommands")
     }
 
     /**
@@ -275,6 +281,7 @@ class RobotApplicationService(
      */
     private fun postFightCleanup(battleFields: MutableSet<UUID>) {
         logger.debug("Starting cleanup for planets after fight")
+
         battleFields.forEach { planetId ->
             val affectedRobots = robotDomainService.postFightCleanup(planetId)
             logger.debug(
@@ -296,6 +303,8 @@ class RobotApplicationService(
      * @param commands a list of [RepairItemUsageCommand]s which specify which `Robot` should use which item
      */
     fun executeRepairItemUsageCommands(commands: List<RepairItemUsageCommand>) {
+        logger.info("Starting execution of RepairItemUsageCommand-Batch")
+
         commands.forEach { command ->
             try {
                 val robots = robotDomainService.useRepairItem(command.robotUUID, command.itemType)
@@ -324,6 +333,8 @@ class RobotApplicationService(
     private fun useFightingItem(
         usageCommands: List<FightingItemUsageCommand>
     ): MutableSet<UUID> {
+        logger.info("Starting execution of FightingItemUsageCommand-Batch")
+
         val battleFields = mutableSetOf<UUID>()
         usageCommands.forEach {
             try {
@@ -350,7 +361,7 @@ class RobotApplicationService(
     fun repair(robotId: UUID) {
         val robot = robotDomainService.getRobot(robotId)
         robot.repair()
-        logger.info("Successfully repair robot $robotId")
+        logger.info("Successfully repaired robot $robotId")
         robotDomainService.saveRobot(robot)
     }
 
@@ -360,6 +371,8 @@ class RobotApplicationService(
      * @param mineCommands: A list of MineCommands that need to be executed.
      */
     fun executeMining(mineCommands: List<MineCommand>) {
+        logger.info("Starting execution of MiningCommand-Batch")
+
         val resourcesByPlanets = getResourcesOnPlanets(mineCommands)
         logger.debug("Fetched resources on planets")
         val validMineCommands = replaceIdsWithObjectsIfMineCommandIsValid(mineCommands, resourcesByPlanets)
@@ -372,6 +385,8 @@ class RobotApplicationService(
         validMineCommands.forEach {
             successEventSender.sendMiningEvent(it)
         }
+
+        logger.info("Finished executing batch of MineCommands")
     }
 
     /**
@@ -478,6 +493,7 @@ class RobotApplicationService(
         planet: UUID,
         amount: Int
     ) {
+
         val miningsOnPlanet = validMineCommands.filter { it.planet == planet }
         val miningRobotsOnPlanet = miningsOnPlanet.map { it.robot }
         val resource = miningsOnPlanet[0].resource

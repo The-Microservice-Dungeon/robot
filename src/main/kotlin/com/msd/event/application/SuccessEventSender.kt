@@ -55,7 +55,7 @@ class SuccessEventSender(
         moveCommand: Command,
         planetDto: GameMapPlanetDto
     ): UUID {
-        logger.info("[${moveCommand.transactionUUID}] Successfully executed AttackItemUsageCommand")
+        logger.info("[${moveCommand.transactionUUID}] Successfully executed MovementCommand")
         val id = eventSender.sendEvent(
             MovementEventDTO(
                 true,
