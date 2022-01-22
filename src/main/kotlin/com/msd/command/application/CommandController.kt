@@ -3,6 +3,7 @@ package com.msd.command.application
 import com.msd.robot.application.RobotApplicationService
 import mu.KotlinLogging
 import org.springframework.http.ResponseEntity
+import org.springframework.scheduling.annotation.EnableAsync
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/commands")
+@EnableAsync
 class CommandController(
     val robotService: RobotApplicationService,
     val commandService: CommandApplicationService
