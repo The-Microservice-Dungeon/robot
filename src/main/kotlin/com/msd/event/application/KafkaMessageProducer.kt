@@ -29,7 +29,7 @@ class KafkaMessageProducer(
 
         future.addCallback(
             {
-                logger.info("Message with key {${event.transactionId}} send successfully: ")
+                logger.info("Message with key {${event.transactionId}} successfully send to topic: " + topic)
             },
             {
                 logger.error("Failed to send message")
