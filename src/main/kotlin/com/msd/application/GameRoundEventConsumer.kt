@@ -16,8 +16,8 @@ class GameRoundEventConsumer(
 
     @KafkaListener(id = "gameRoundListener", topics = ["\${spring.kafka.topic.consumer.round}"])
     fun gameRoundListener(record: ConsumerRecord<String, String>) {
-        logger.info("Handling game round event")
         val payload = jacksonObjectMapper().readValue(record.value(), RoundStatusDTO::class.java)
+        logger.info("Handling game round event(Round " + payload.roundNumber + ": " + payload.roundStatus)
         if (payload.roundStatus == RoundStatus.ENDED) {
             planetDomainService.resetBlocks()
             logger.info("Reset blocked planets")

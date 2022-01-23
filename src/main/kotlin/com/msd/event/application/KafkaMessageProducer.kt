@@ -45,6 +45,7 @@ class KafkaMessageProducer(
      */
     @Scheduled(initialDelay = 30000L, fixedDelay = 15000)
     fun retryEvent() {
+        logger.info("Trying to resend failed events...")
         val events = eventRepository.findAll()
         events.forEach {
             val event = getDomainEventFromString(it.eventString, it.eventType)
