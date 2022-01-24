@@ -34,16 +34,16 @@ class Robot(
     @Type(type = "uuid-char")
     val player: UUID,
     planet: Planet,
-    @ManyToOne(cascade = [CascadeType.MERGE])
+    @ManyToOne(cascade = [CascadeType.MERGE], fetch = FetchType.EAGER)
     val upgradeValues: UpgradeValues = UpgradeValues(),
-    @ManyToOne(cascade = [CascadeType.MERGE])
+    @ManyToOne(cascade = [CascadeType.MERGE], fetch = FetchType.EAGER)
     val energyCostCalculationValues: EnergyCostCalculationValues = EnergyCostCalculationValues()
 ) {
     @Id
     @Type(type = "uuid-char")
     val id: UUID = UUID.randomUUID()
 
-    @ManyToOne(cascade = [CascadeType.MERGE])
+    @ManyToOne(cascade = [CascadeType.MERGE], fetch = FetchType.EAGER)
     var planet = planet
         private set
 
