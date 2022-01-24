@@ -12,15 +12,14 @@ spring:
     consumer:
       auto-offset-reset: earliest
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost:3307}/${DB_NAME:robot}?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true
-    driver-class-name: org.mariadb.jdbc.Driver
-    username: ${DB_USER:robot}
-    password: ${DB_PASSWORD:robot}
+    url: jdbc:h2:mem:mydb
+    username: sa
+    password: password
+    driverClassName: org.h2.Driver
   jpa:
+    spring.jpa.database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
-    properties:
-      dialect: org.hibernate.dialect.MariaDB106Dialect
 
 microservice:
   map:
