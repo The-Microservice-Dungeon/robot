@@ -13,11 +13,11 @@ spring:
       auto-offset-reset: earliest
   datasource:
     url: jdbc:h2:mem:mydb
-    username: sa
-    password: password
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:root}
     driverClassName: org.h2.Driver
   jpa:
-    spring.jpa.database-platform: org.hibernate.dialect.H2Dialect
+    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
   h2:
@@ -67,15 +67,14 @@ spring:
     consumer:
       auto-offset-reset: earliest
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost:3307}/${DB_NAME:robot}?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&useSSL=false&createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true
-    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:h2:mem:mydb
     username: ${DB_USER:root}
     password: ${DB_PASSWORD:root}
+    driverClassName: org.h2.Driver
   jpa:
     hibernate:
       ddl-auto: create
-    properties:
-      dialect: org.hibernate.dialect.MariaDB106Dialect
+    database-platform: org.hibernate.dialect.H2Dialect
 microservice:
   map:
     address: http://localhost:8081
