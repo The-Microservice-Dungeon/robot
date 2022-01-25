@@ -1,39 +1,10 @@
 package com.msd
 
-import com.msd.robot.domain.gameplayVariables.*
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
-import org.springframework.context.annotation.Bean
-import org.springframework.web.filter.CommonsRequestLoggingFilter
 
 @SpringBootApplication
-class RobotApplication {
-    @Bean
-    fun init(
-        @Autowired upgradeValuesRepository: UpgradeValuesRepository,
-        @Autowired energyCostCalculationValuesRepository: EnergyCostCalculationValuesRepository
-    ) = CommandLineRunner {
-        if (upgradeValuesRepository.findAll().toList().isEmpty()) {
-            upgradeValuesRepository.save(UpgradeValues())
-        }
-        if (energyCostCalculationValuesRepository.findAll().toList().isEmpty()) {
-            energyCostCalculationValuesRepository.save(EnergyCostCalculationValues())
-        }
-    }
-
-    @Bean
-    fun logFilter(): CommonsRequestLoggingFilter? {
-        val filter = CommonsRequestLoggingFilter()
-        filter.setIncludeQueryString(true)
-        filter.setIncludePayload(true)
-        filter.setMaxPayloadLength(10000)
-        filter.setIncludeHeaders(false)
-        filter.setAfterMessagePrefix("REQUEST DATA : ")
-        return filter
-    }
-}
+class RobotApplication
 
 fun main(args: Array<String>) {
     runApplication<RobotApplication>(*args)

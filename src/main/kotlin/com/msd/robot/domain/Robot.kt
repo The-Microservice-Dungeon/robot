@@ -1,71 +1,58 @@
 package com.msd.robot.domain
 
-import com.msd.admin.application.EnergyCostCalculationVerbs
-import com.msd.admin.application.GameplayVariablesLevelVerbs
 import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.exception.NotEnoughEnergyException
 import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.UpgradeException
-import com.msd.robot.domain.gameplayVariables.*
 import org.hibernate.annotations.Type
 import java.lang.IllegalArgumentException
 import java.util.*
 import javax.persistence.*
 import kotlin.math.round
 
-// TODO("Integrate EnergyCostCalculationObject")
-
-fun Map<GameplayVariablesLevelVerbs, Int>.getByVal(value: Int): Int {
-    return when (value) {
-        0 -> this[GameplayVariablesLevelVerbs.LVL0]!!
-        1 -> this[GameplayVariablesLevelVerbs.LVL1]!!
-        2 -> this[GameplayVariablesLevelVerbs.LVL2]!!
-        3 -> this[GameplayVariablesLevelVerbs.LVL3]!!
-        4 -> this[GameplayVariablesLevelVerbs.LVL4]!!
-        5 -> this[GameplayVariablesLevelVerbs.LVL5]!!
-
-        else -> throw IndexOutOfBoundsException()
-    }
+object UpgradeValues {
+    val storageByLevel = arrayOf(20, 50, 100, 200, 400, 1000)
+    val maxHealthByLevel = arrayOf(10, 25, 50, 100, 200, 500)
+    val attackDamageByLevel = arrayOf(1, 2, 5, 10, 20, 50)
+    val miningSpeedByLevel = arrayOf(2, 5, 10, 15, 20, 40)
+    val maxEnergyByLevel = arrayOf(20, 30, 40, 60, 100, 200)
+    val energyRegenByLevel = arrayOf(4, 6, 8, 10, 15, 20)
 }
 
 @Entity
 class Robot(
     @Type(type = "uuid-char")
     val player: UUID,
-    planet: Planet,
-    @ManyToOne(cascade = [CascadeType.MERGE], fetch = FetchType.EAGER)
-    val upgradeValues: UpgradeValues = UpgradeValues(),
-    @ManyToOne(cascade = [CascadeType.MERGE], fetch = FetchType.EAGER)
-    val energyCostCalculationValues: EnergyCostCalculationValues = EnergyCostCalculationValues()
+    planet: Planet
 ) {
     @Id
     @Type(type = "uuid-char")
     val id: UUID = UUID.randomUUID()
 
-    @ManyToOne(cascade = [CascadeType.MERGE], fetch = FetchType.EAGER)
+    @ManyToOne(cascade = [CascadeType.MERGE])
     var planet = planet
         private set
 
     var alive: Boolean = true
 
     val maxHealth
-        get() = upgradeValues.healthValues.getByVal(healthLevel)
+        get() = UpgradeValues.maxHealthByLevel[healthLevel]
 
     val maxEnergy
-        get() = upgradeValues.energyCapacityValues.getByVal(energyLevel)
+        get() = UpgradeValues.maxEnergyByLevel[energyLevel]
 
     val energyRegen
-        get() = upgradeValues.energyRegenerationValues.getByVal(energyRegenLevel)
+        get() = UpgradeValues.energyRegenByLevel[energyRegenLevel]
 
     val attackDamage: Int
-        get() = upgradeValues.damageValues.getByVal(damageLevel)
+        get() = UpgradeValues.attackDamageByLevel[damageLevel]
 
     @OneToOne(cascade = [CascadeType.ALL], fetch = FetchType.EAGER)
-    val inventory = Inventory(upgradeValues)
+    val inventory = Inventory()
 
     val miningSpeed: Int
-        get() = upgradeValues.miningSpeedValues.getByVal(miningSpeedLevel)
+        get() = UpgradeValues.miningSpeedByLevel[miningSpeedLevel]
 
     var health: Int = maxHealth
         private set(value) {
@@ -97,7 +84,7 @@ class Robot(
                 )
             else if (value <= healthLevel)
                 throw UpgradeException("Cannot downgrade Robot. Tried to go from level $healthLevel to level $value")
-            val diff = upgradeValues!!.healthValues.getByVal(value) - upgradeValues!!.healthValues.getByVal(field)
+            val diff = UpgradeValues.maxHealthByLevel[value] - UpgradeValues.maxHealthByLevel[field]
             field = value
             health += diff
         }
@@ -168,7 +155,7 @@ class Robot(
                 )
             else if (value <= energyLevel)
                 throw UpgradeException("Cannot downgrade Robot. Tried to go from level $energyLevel to level $value")
-            val diff = upgradeValues.energyCapacityValues.getByVal(value) - upgradeValues.energyCapacityValues.getByVal(field)
+            val diff = UpgradeValues.maxEnergyByLevel[value] - UpgradeValues.maxEnergyByLevel[field]
             field = value
             energy += diff
         }
@@ -199,7 +186,7 @@ class Robot(
      * @throws NotEnoughEnergyException if the `Robot` does not have enough energy to move to the `Planet`.
      */
     fun move(planet: Planet, cost: Int) {
-        this.reduceEnergy(round(energyCostCalculationValues.energyCostValues[EnergyCostCalculationVerbs.MOVEMENT_MULTIPLIER]!! * cost).toInt())
+        this.reduceEnergy(cost)
         if (this.planet.blocked)
             throw PlanetBlockedException("Can't move out of a blocked planet")
         this.planet = planet
@@ -211,7 +198,7 @@ class Robot(
      * @throws NotEnoughEnergyException if the robot has not enough energy to block
      */
     fun block() {
-        this.reduceEnergy(round(energyCostCalculationValues.energyCostValues[EnergyCostCalculationVerbs.BLOCKING_BASE_COST]!! + (energyCostCalculationValues.energyCostValues[EnergyCostCalculationVerbs.BLOCKING_MAX_ENERGY_PROPORTION]!! * maxEnergy)).toInt())
+        this.reduceEnergy(round(2 + 0.1 * maxEnergy).toInt())
         this.planet.blocked = true
     }
 
@@ -247,7 +234,7 @@ class Robot(
      * @throws NotEnoughEnergyException if the robot has not enough energy to attack
      */
     fun attack(otherRobot: Robot) {
-        reduceEnergy(round(energyCostCalculationValues.energyCostValues[EnergyCostCalculationVerbs.ATTACKING_MULTIPLIER]!! * (damageLevel + energyCostCalculationValues.energyCostValues[EnergyCostCalculationVerbs.ATTACKING_WEIGHT]!!)).toInt())
+        reduceEnergy(damageLevel + 1)
         otherRobot.receiveDamage(attackDamage)
     }
 

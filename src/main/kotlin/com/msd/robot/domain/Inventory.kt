@@ -8,16 +8,15 @@ import com.msd.item.domain.RepairItemType
 import com.msd.robot.domain.exception.InventoryFullException
 import com.msd.robot.domain.exception.NotEnoughResourcesException
 import com.msd.robot.domain.exception.UpgradeException
-import com.msd.robot.domain.gameplayVariables.UpgradeValues
 import org.hibernate.annotations.Type
 import java.util.*
-import javax.persistence.*
+import javax.persistence.ElementCollection
+import javax.persistence.Entity
+import javax.persistence.FetchType
+import javax.persistence.Id
 
 @Entity
-class Inventory(
-    @ManyToOne
-    val upgradeValues: UpgradeValues
-) {
+class Inventory {
     @Id
     @Type(type = "uuid-char")
     val id = UUID.randomUUID()
@@ -33,7 +32,7 @@ class Inventory(
             field = value
         }
     val maxStorage
-        get() = upgradeValues.storageValues.getByVal(storageLevel)
+        get() = UpgradeValues.storageByLevel[storageLevel]
     var usedStorage = 0
         private set
 

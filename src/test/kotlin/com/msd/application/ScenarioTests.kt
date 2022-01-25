@@ -16,8 +16,6 @@ import com.msd.planet.domain.PlanetRepository
 import com.msd.robot.application.dtos.RobotDto
 import com.msd.robot.application.dtos.RobotSpawnDto
 import com.msd.robot.domain.RobotRepository
-import com.msd.robot.domain.gameplayVariables.UpgradeValues
-import com.msd.robot.domain.getByVal
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.AfterAll
@@ -64,8 +62,6 @@ class ScenarioTests(
 
     val player1 = UUID.randomUUID()
     val player2 = UUID.randomUUID()
-
-    val upgradeValues = UpgradeValues()
 
     companion object {
         val mockGameServiceWebClient = MockWebServer()
@@ -559,7 +555,7 @@ class ScenarioTests(
             content = mapper.writeValueAsString(CommandDTO(repairCommand))
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
-        assertEquals(13 + upgradeValues.energyRegenerationValues.getByVal(0), robotRepo.findByIdOrNull(robot1.id)!!.energy)
+        assertEquals(13 + 4, robotRepo.findByIdOrNull(robot1.id)!!.energy)
         assertEquals(10, robotRepo.findByIdOrNull(robot2.id)!!.health)
         assertEquals(10, robotRepo.findByIdOrNull(robot3.id)!!.health)
 

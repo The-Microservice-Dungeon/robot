@@ -5,7 +5,6 @@ import com.msd.planet.domain.Planet
 import com.msd.robot.domain.exception.NotEnoughEnergyException
 import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.UpgradeException
-import com.msd.robot.domain.gameplayVariables.UpgradeValues
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -17,13 +16,12 @@ class RobotTest {
 
     private lateinit var robot1: Robot
     private lateinit var robot2: Robot
-    private val upgradeValues = UpgradeValues()
 
     @BeforeEach
     fun initializeRobots() {
         val planet = Planet(UUID.randomUUID())
-        robot1 = Robot(UUID.randomUUID(), planet, upgradeValues)
-        robot2 = Robot(UUID.randomUUID(), planet, upgradeValues)
+        robot1 = Robot(UUID.randomUUID(), planet)
+        robot2 = Robot(UUID.randomUUID(), planet)
     }
 
     @Test
@@ -142,7 +140,7 @@ class RobotTest {
         robot1.attack(robot2)
 
         // assert
-        assert(robot2.health == upgradeValues.healthValues.getByVal(0) - upgradeValues.damageValues.getByVal(0))
+        assert(robot2.health == 10 - 1)
     }
 
     @Test
@@ -193,30 +191,29 @@ class RobotTest {
     fun `Upgrading the level causes corresponding stat changes`() {
         // given
         for (upgradeType in UpgradeType.values()) robot1.upgrade(upgradeType, 1)
-
         // then
         assertAll(
             "Assert upgrading changes values",
             {
-                assertEquals(upgradeValues.storageValues.getByVal(1), robot1.inventory.maxStorage)
+                assertEquals(UpgradeValues.storageByLevel[1], robot1.inventory.maxStorage)
             },
             {
-                assertEquals(upgradeValues.healthValues.getByVal(1), robot1.maxHealth)
+                assertEquals(UpgradeValues.maxHealthByLevel[1], robot1.maxHealth)
             },
             {
-                assertEquals(upgradeValues.damageValues.getByVal(1), robot1.attackDamage)
+                assertEquals(UpgradeValues.attackDamageByLevel[1], robot1.attackDamage)
             },
             {
-                assertEquals(upgradeValues.miningSpeedValues.getByVal(1), robot1.miningSpeed)
+                assertEquals(UpgradeValues.miningSpeedByLevel[1], robot1.miningSpeed)
             },
             {
                 assertTrue(robot1.canMine(ResourceType.IRON))
             },
             {
-                assertEquals(upgradeValues.energyCapacityValues.getByVal(1), robot1.maxEnergy)
+                assertEquals(UpgradeValues.maxEnergyByLevel[1], robot1.maxEnergy)
             },
             {
-                assertEquals(upgradeValues.energyRegenerationValues.getByVal(1), robot1.energyRegen)
+                assertEquals(UpgradeValues.energyRegenByLevel[1], robot1.energyRegen)
             }
         )
     }
