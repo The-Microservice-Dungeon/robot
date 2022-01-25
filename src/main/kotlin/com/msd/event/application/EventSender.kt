@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service
 import java.lang.RuntimeException
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 @Service
@@ -86,12 +87,13 @@ class EventSender(
         eventType: EventType,
         transactionId: UUID
     ): DomainEvent<Any> {
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
         return DomainEvent(
             eventDTO,
             eventType.eventString,
             transactionId.toString(),
             eventVersion,
-            OffsetDateTime.now(ZoneOffset.UTC).toString()
+            OffsetDateTime.now(ZoneOffset.UTC).format(formatter).toString()
         )
     }
 
