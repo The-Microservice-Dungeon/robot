@@ -80,7 +80,7 @@ class RobotLoadTest(
         Assertions.assertEquals(10000, robots.size)
 
         var repoRobot: Robot? = null
-        val timePassed: Duration = measureTime {
+        val timePassed = measureTime {
             repoRobot = robotRepository.findByIdOrNull(robot.id)!!
         }
         logger.info("$timePassed has passed while looking for the specified Robot")
