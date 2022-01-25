@@ -4,7 +4,6 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.application.dto.RoundStatusDTO
 import com.msd.planet.domain.Planet
 import com.msd.planet.domain.PlanetRepository
-import com.msd.robot.domain.gameplayVariables.*
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
