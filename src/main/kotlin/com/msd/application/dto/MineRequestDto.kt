@@ -9,6 +9,6 @@ class MineRequestDto(
     val mining: MiningDto = MiningDto(amount)
 
     class MiningDto(
-        amount_requested: Int
+        val amount_requested: Int
     )
 }

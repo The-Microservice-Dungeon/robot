@@ -4,7 +4,7 @@ spring:
   kafka:
     group-id: robot
     enabled: true
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_ADDRESS}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_ADDRESS:localhost:29092}
     bootstrap-port: ${KAFKA_BOOTSTRAP_PORT}
     topic:
       consumer:
@@ -24,10 +24,12 @@ spring:
     console.path: /h2-console
     console.settings.trace: false
     spring.h2.console.settings.web-allow-others: false
+    console:
+      enabled: true
 
 microservice:
   map:
-    address: ${MAP_SERVICE}
+    address: ${MAP_SERVICE:http://localhost:8081}
 topics:
   robot-movement: movement
   robot-neighbours: neighbours
@@ -50,6 +52,8 @@ management:
     web:
       exposure:
         include: logs
+server:
+  port: 8082
 ---
 spring:
   config:

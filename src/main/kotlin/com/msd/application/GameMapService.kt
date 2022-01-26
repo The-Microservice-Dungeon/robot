@@ -158,7 +158,8 @@ class GameMapService(
                     throw UnknownPlanetException(planetId)
                 else {
                     logger.error("Received non-200 Return Code: " + response.statusCode())
-                    logger.error("GameMap Client returned internal error when retrieving targetPlanet for movement")
+                    logger.error("GameMap Client returned internal error while retrieving resource from planet")
+                    logger.info { response.statusCode() }
                     throw ClientException(
                         "GameMap Client returned internal error when retrieving resource on planet $planetId"
                     )
@@ -184,7 +185,7 @@ class GameMapService(
                 else if (response.statusCode() == HttpStatus.NOT_FOUND)
                     throw UnknownPlanetException(planetId)
                 else {
-                    logger.error("GameMap Client returned internal error when retrieving targetPlanet for movement")
+                    logger.error("GameMap Client returned internal error while mining on planet $planetId")
                     throw ClientException("Map Service returned internal error when trying to mine on planet $planetId")
                 }
             }.block()!!
