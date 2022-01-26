@@ -136,7 +136,7 @@ components:
                 description: Planet type (`default` or `spacestation`) of the planet
               resourceType:
                 type: string
-                enum: [COAL, IRON, GEM, GOLD, PLATIN, null]
+                enum: [coal, iron, gem, gold, platin, null]
           robots:
             type: array
             items:
@@ -213,7 +213,7 @@ components:
             description: Amount of the mined resource in the inventory after mining
           resourceType:
             type: string
-            enum: [COAL, IRON, GEM, GOLD, PLATIN, null]
+            enum: [coal, iron, gem, gold, platin, none]
     fighting:
       description: >
         Result of a fight. If a robot gets destroyed, a `robot-destroyed` event is thrown.
