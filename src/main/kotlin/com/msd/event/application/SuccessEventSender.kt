@@ -1,5 +1,6 @@
 package com.msd.event.application
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.msd.application.GameMapService
 import com.msd.application.dto.GameMapPlanetDto
 import com.msd.command.application.command.*
@@ -19,7 +20,8 @@ class SuccessEventSender(
     val eventSender: EventSender,
     val planetMapper: PlanetMapper,
     val robotDomainService: RobotDomainService,
-    val gameMapService: GameMapService
+    val gameMapService: GameMapService,
+    val objectMapper: ObjectMapper
 ) {
 
     private val logger = KotlinLogging.logger {}
@@ -125,7 +127,7 @@ class SuccessEventSender(
                 "Robot ${mindCommand.robot.id} mined successfully",
                 mindCommand.robot.energy,
                 mindCommand.robot.inventory.getStorageUsageForResource(mindCommand.resource),
-                mindCommand.resource
+                objectMapper.writeValueAsString(mindCommand.resource)
             ),
             EventType.MINING,
             mindCommand.transactionId
