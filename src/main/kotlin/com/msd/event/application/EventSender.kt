@@ -9,7 +9,6 @@ import com.msd.robot.domain.RobotRepository
 import mu.KotlinLogging
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
-import java.lang.RuntimeException
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -136,9 +135,9 @@ class EventSender(
             )
             is MineCommand -> {
                 val planetResource = if (robot != null)
-                    planetRepository.findByIdOrNull(robot.planet.planetId)?.resourceType?.toString() ?: "NONE"
+                    planetRepository.findByIdOrNull(robot.planet.planetId)?.resourceType?.toString() ?: "none"
                 else
-                    "NONE"
+                    "none"
                 MiningEventDTO(
                     false, e.message!!, robot?.energy, 0, planetResource
                 )

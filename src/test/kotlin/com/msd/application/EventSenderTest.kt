@@ -19,7 +19,8 @@ import com.msd.robot.domain.LevelTooLowException
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
 import com.msd.robot.domain.exception.*
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -272,7 +273,7 @@ internal class EventSenderTest(
         )
 
         eventTestUtils.checkHeaders(miningCommand.transactionUUID, EventType.MINING, domainEvent)
-        eventTestUtils.checkMiningPayload(false, "Robot not found", null, 0, "NONE", domainEvent.payload)
+        eventTestUtils.checkMiningPayload(false, "Robot not found", null, 0, "none", domainEvent.payload)
     }
 
     @Test
@@ -334,7 +335,7 @@ internal class EventSenderTest(
             "Map Service did not return any resource on the planet ${planet.planetId}",
             20,
             0,
-            "NONE",
+            "none",
             domainEvent.payload
         )
     }

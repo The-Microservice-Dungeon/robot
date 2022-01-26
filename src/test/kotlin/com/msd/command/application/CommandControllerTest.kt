@@ -766,7 +766,7 @@ class CommandControllerTest(
             "Map Service did not return any resource on the planet $planet2Id",
             20,
             0,
-            "NONE",
+            "none",
             domainEvent1.payload
         )
     }
@@ -841,7 +841,7 @@ class CommandControllerTest(
             "Robot ${robot1.id} mined successfully",
             20,
             2,
-            ResourceType.COAL.toString(),
+            "coal",
             domainEvent2.payload
         )
 
@@ -851,7 +851,7 @@ class CommandControllerTest(
             "Map Service did not return any resource on the planet $planet2Id",
             20,
             0,
-            "NONE",
+            "none",
             domainEvent1.payload
         )
     }
@@ -894,7 +894,7 @@ class CommandControllerTest(
             "Unexpected exception occurred: Could not connect to Map Service",
             20,
             0,
-            "NONE",
+            "none",
             domainEvent.payload
         )
     }
