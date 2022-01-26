@@ -353,7 +353,7 @@ class ScenarioTests(
                     .setHeader("Content-Type", "application/json")
             )
             mockGameServiceWebClient.enqueue(
-                MockResponse().setResponseCode(200)
+                MockResponse().setResponseCode(201)
                     .setBody(jacksonObjectMapper().writeValueAsString(miningResponse))
                     .setHeader("Content-Type", "application/json")
             )
@@ -366,7 +366,7 @@ class ScenarioTests(
                 .setHeader("Content-Type", "application/json")
         )
         mockGameServiceWebClient.enqueue(
-            MockResponse().setResponseCode(200)
+            MockResponse().setResponseCode(201)
                 .setBody(jacksonObjectMapper().writeValueAsString(MineResponseDto(10)))
                 .setHeader("Content-Type", "application/json")
         )
@@ -457,6 +457,7 @@ class ScenarioTests(
             3 Resource Distribution Events ( 3 remaining robots on planet)
             = 30
          */
+        Thread.sleep(50)
         assertEquals(35, consumerRecords.size)
         assertEquals(1, consumerRecords.filter { it.topic() == topicConfig.ROBOT_DESTROYED }.size)
         assertEquals(4, consumerRecords.filter { it.topic() == topicConfig.ROBOT_SPAWNED }.size)

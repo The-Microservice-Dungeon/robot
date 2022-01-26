@@ -24,8 +24,10 @@ import com.msd.robot.domain.RobotRepository
 import com.msd.robot.domain.UpgradeType
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -722,7 +724,7 @@ class CommandControllerTest(
                 .setHeader("Content-Type", "application/json")
         )
         mockGameServiceWebClient.enqueue(
-            MockResponse().setResponseCode(200)
+            MockResponse().setResponseCode(201)
                 .setBody(jacksonObjectMapper().writeValueAsString(miningResponse))
                 .setHeader("Content-Type", "application/json")
         )
@@ -807,7 +809,7 @@ class CommandControllerTest(
                 .setHeader("Content-Type", "application/json")
         )
         mockGameServiceWebClient.enqueue(
-            MockResponse().setResponseCode(200)
+            MockResponse().setResponseCode(201)
                 .setBody(jacksonObjectMapper().writeValueAsString(miningResponse))
                 .setHeader("Content-Type", "application/json")
         )

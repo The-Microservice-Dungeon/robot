@@ -492,7 +492,7 @@ class RobotApplicationService(
         try {
             val minedAmount = gameMapService.mine(planet, amount)
             distributeMinedResources(miningRobotsOnPlanet, minedAmount, resource)
-            logger.debug("Mined and distributed resources on planet $planet")
+            logger.debug("Mined and distributed resources on planet $planet: $minedAmount $resource")
         } catch (failureException: FailureException) {
             eventSender.handleAll(
                 failureException,
