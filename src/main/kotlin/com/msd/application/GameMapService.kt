@@ -157,6 +157,7 @@ class GameMapService(
                 else if (response.statusCode().is4xxClientError)
                     throw UnknownPlanetException(planetId)
                 else {
+                    logger.error("Received non-200 Return Code: " + response.statusCode())
                     logger.error("GameMap Client returned internal error when retrieving targetPlanet for movement")
                     throw ClientException(
                         "GameMap Client returned internal error when retrieving resource on planet $planetId"
@@ -178,7 +179,7 @@ class GameMapService(
 
         try {
             val response = querySpec.exchangeToMono { response ->
-                if (response.statusCode() == HttpStatus.OK)
+                if (response.statusCode() == HttpStatus.CREATED)
                     response.bodyToMono<MineResponseDto>()
                 else if (response.statusCode() == HttpStatus.NOT_FOUND)
                     throw UnknownPlanetException(planetId)
