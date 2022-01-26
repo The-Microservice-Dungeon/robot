@@ -5,7 +5,8 @@ import com.msd.application.dto.RoundStatusDTO
 import com.msd.planet.domain.Planet
 import com.msd.planet.domain.PlanetRepository
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
@@ -61,7 +62,7 @@ internal class GameRoundEventConsumerTest(
         // given
         planets.forEach { it.blocked = true }
         planetRepository.saveAll(planets)
-        val record = ConsumerRecord(roundTopic, 1, 0, "", jacksonObjectMapper().writeValueAsString(RoundStatusDTO(0, RoundStatus.ENDED, UUID.randomUUID())))
+        val record = ConsumerRecord(roundTopic, 1, 0, "", jacksonObjectMapper().writeValueAsString(RoundStatusDTO(0, RoundStatus.ENDED, UUID.randomUUID(), UUID.randomUUID())))
         // when
         gameRoundEventConsumer.gameRoundListener(record)
         // then
@@ -75,7 +76,7 @@ internal class GameRoundEventConsumerTest(
         // given
         planets.forEach { it.blocked = true }
         planetRepository.saveAll(planets)
-        val record = ConsumerRecord(roundTopic, 1, 0, "", jacksonObjectMapper().writeValueAsString(RoundStatusDTO(0, RoundStatus.STARTED, UUID.randomUUID())))
+        val record = ConsumerRecord(roundTopic, 1, 0, "", jacksonObjectMapper().writeValueAsString(RoundStatusDTO(0, RoundStatus.STARTED, UUID.randomUUID(), UUID.randomUUID())))
         // when
         gameRoundEventConsumer.gameRoundListener(record)
         // then
