@@ -127,7 +127,7 @@ class SuccessEventSender(
                 "Robot ${mindCommand.robot.id} mined successfully",
                 mindCommand.robot.energy,
                 mindCommand.robot.inventory.getStorageUsageForResource(mindCommand.resource),
-                objectMapper.writeValueAsString(mindCommand.resource)
+                mindCommand.resource.toString()
             ),
             EventType.MINING,
             mindCommand.transactionId

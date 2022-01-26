@@ -302,7 +302,7 @@ internal class EventSenderTest(
         )
 
         eventTestUtils.checkHeaders(miningCommand.transactionUUID, EventType.MINING, domainEvent)
-        eventTestUtils.checkMiningPayload(false, "Not enough energy", 20, 0, "COAL", domainEvent.payload)
+        eventTestUtils.checkMiningPayload(false, "Not enough energy", 20, 0, "coal", domainEvent.payload)
     }
 
     @Test
@@ -365,7 +365,7 @@ internal class EventSenderTest(
         )
 
         eventTestUtils.checkHeaders(miningCommand.transactionUUID, EventType.MINING, domainEvent)
-        eventTestUtils.checkMiningPayload(false, "Level too low", 20, 0, "PLATIN", domainEvent.payload)
+        eventTestUtils.checkMiningPayload(false, "Level too low", 20, 0, "platin", domainEvent.payload)
     }
 
     @Test
