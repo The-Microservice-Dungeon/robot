@@ -26,7 +26,7 @@ class SuccessEventSender(
 
     private val logger = KotlinLogging.logger {}
 
-    fun sendMovementItemEvents(robotPlanetPairs: MutableMap<MovementItemsUsageCommand, Pair<Robot, GameMapPlanetDto>>) {
+  /*  fun sendMovementItemEvents(robotPlanetPairs: MutableMap<MovementItemsUsageCommand, Pair<Robot, GameMapPlanetDto>>) {
         robotPlanetPairs.forEach { (command, pair) ->
             logger.info("[${command.transactionUUID}] Successfully executed MovementItemUsageCommand")
             val moveEventId = sendMovementEvents(pair.first, pair.second.movementDifficulty, command, pair.second)
@@ -41,7 +41,7 @@ class SuccessEventSender(
             )
         }
     }
-
+*/
     /**
      * Sends the events due after a successful movement command execution
      *
@@ -87,6 +87,7 @@ class SuccessEventSender(
     /**
      * Send all necessary events after the execution of an AttackItemUsageCommand.
      */
+    /*
     fun sendAttackItemEvents(
         targetRobots: List<Robot>,
         fightingItemUsageCommand: FightingItemUsageCommand,
@@ -118,7 +119,7 @@ class SuccessEventSender(
             fightingItemUsageCommand.transactionUUID
         )
     }
-
+*/
     fun sendMiningEvent(mindCommand: ValidMineCommand) {
         logger.debug("[${mindCommand.transactionId}] Sending event for successful mining")
         eventSender.sendEvent(
@@ -133,7 +134,7 @@ class SuccessEventSender(
             mindCommand.transactionId
         )
     }
-
+/*
     fun sendRepairItemEvent(
         command: RepairItemUsageCommand,
         robots: List<RepairEventRobotDTO>
@@ -149,7 +150,7 @@ class SuccessEventSender(
             command.transactionUUID
         )
     }
-
+*/
     fun sendFightingEvent(
         fightingCommand: FightingCommand,
         target: Robot,

@@ -8,7 +8,7 @@ import com.msd.core.FailureException
 import com.msd.domain.ResourceType
 import com.msd.event.application.EventSender
 import com.msd.event.application.SuccessEventSender
-import com.msd.item.domain.AttackItemType
+//import com.msd.item.domain.AttackItemType
 import com.msd.planet.domain.Planet
 import com.msd.robot.application.exception.TargetPlanetNotReachableException
 import com.msd.robot.application.exception.UnknownPlanetException
@@ -100,8 +100,8 @@ class RobotApplicationServiceTest {
         every { eventSender.sendEvent(any(), any(), any()) } returns randomUUID
         justRun { eventSender.handleRuntimeException(any(), any()) }
 
-        justRun { successEventSender.sendAttackItemEvents(any(), any(), any()) }
-        justRun { successEventSender.sendMovementItemEvents(any()) }
+   //     justRun { successEventSender.sendAttackItemEvents(any(), any(), any()) }
+  //      justRun { successEventSender.sendMovementItemEvents(any()) }
         every { successEventSender.sendMovementEvents(any(), any(), any(), any()) } returns UUID.randomUUID()
         justRun { eventSender.sendGenericEvent(any(), any()) }
         justRun { successEventSender.sendMiningEvent(any()) }
@@ -863,7 +863,7 @@ class RobotApplicationServiceTest {
 
         for (i in 1..5) robot1.upgrade(UpgradeType.HEALTH, i)
 
-        robot1.inventory.addItem(AttackItemType.ROCKET)
+    /*    robot1.inventory.addItem(AttackItemType.ROCKET)
         robot2.inventory.addItem(AttackItemType.NUKE)
         robot3.inventory.addItem(AttackItemType.ROCKET)
         robot4.inventory.addItem(AttackItemType.SELF_DESTRUCTION)
@@ -882,7 +882,7 @@ class RobotApplicationServiceTest {
 
         // when
         robotApplicationService.executeCommands(commands)
-
+*/
         // then
         verify(exactly = 0) { eventSender.handleFailureException(any(), any()) }
         assertAll(
@@ -911,7 +911,7 @@ class RobotApplicationServiceTest {
             }
         )
     }
-
+/*
     @Test
     fun `UseAttackitems distributes remaining resources`() {
         // given
@@ -969,7 +969,7 @@ class RobotApplicationServiceTest {
             }
         )
     }
-
+*/
     @Test
     fun `getResourcesOnPlanets has no entry for planets only present in invalid commands`() {
         // given

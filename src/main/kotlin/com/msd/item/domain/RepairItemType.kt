@@ -4,7 +4,7 @@ import com.msd.event.application.dto.RepairEventRobotDTO
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
 import java.util.*
-
+/*
 enum class RepairItemType(val use: (Robot, RobotRepository) -> List<RepairEventRobotDTO>) : ItemType {
     REPAIR_SWARM(::useRepairSwarm)
 }
@@ -25,3 +25,4 @@ private fun useRepairSwarm(robot: Robot, robotRepository: RobotRepository): List
     robotRepository.saveAll(robots)
     return robots.map { RepairEventRobotDTO(it.id, it.health) }
 }
+*/

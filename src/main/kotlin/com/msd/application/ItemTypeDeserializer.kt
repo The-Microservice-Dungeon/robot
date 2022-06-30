@@ -3,10 +3,11 @@ package com.msd.application
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
-import com.msd.item.domain.AttackItemType
+/*import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.ItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
+
 import mu.KotlinLogging
 import java.lang.RuntimeException
 
@@ -29,3 +30,4 @@ class ItemTypeDeserializer : StdDeserializer<ItemType>(ItemType::class.java) {
         throw RuntimeException("Unknown Item Type: $itemTypeString")
     }
 }
+*/

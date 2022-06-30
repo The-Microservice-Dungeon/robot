@@ -8,9 +8,10 @@ import com.msd.event.application.EventSender
 import com.msd.event.application.EventType
 import com.msd.event.application.ProducerTopicConfiguration
 import com.msd.event.application.dto.*
-import com.msd.item.domain.AttackItemType
+/*import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
+*/
 import com.msd.planet.domain.Planet
 import com.msd.planet.domain.PlanetRepository
 import com.msd.robot.application.exception.TargetPlanetNotReachableException
@@ -495,7 +496,7 @@ internal class EventSenderTest(
             domainEvent.payload
         )
     }
-
+/*
     @Test
     fun `when RobotNotFoundException is thrown while using fighting item, due to target being not found, an event is send to 'item-fighting' topic`() {
         // given
@@ -753,4 +754,6 @@ internal class EventSenderTest(
             domainEvent.payload
         )
     }
+
+ */
 }

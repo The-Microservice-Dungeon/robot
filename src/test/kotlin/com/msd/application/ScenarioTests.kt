@@ -10,7 +10,7 @@ import com.msd.application.dto.ResourceDto
 import com.msd.command.application.CommandDTO
 import com.msd.domain.ResourceType
 import com.msd.event.application.ProducerTopicConfiguration
-import com.msd.item.domain.AttackItemType
+//import com.msd.item.domain.AttackItemType
 import com.msd.planet.domain.MapDirection
 import com.msd.planet.domain.PlanetRepository
 import com.msd.robot.application.dtos.RobotDto
@@ -219,7 +219,7 @@ class ScenarioTests(
 
     @Test
     fun `Upgraded robots mining resources and fighting over them with items, resources get dropped`() {
-        startItemFightingContainer()
+    //    startItemFightingContainer()
         startFightingContainer()
         startResourceDistributionContainer()
         startMiningContainer()
@@ -418,11 +418,11 @@ class ScenarioTests(
         }"""
         }.andExpect { status { HttpStatus.OK } }.andReturn()
 
-        assertEquals(1, robotRepo.findByIdOrNull(robot1.id)!!.inventory.getItemAmountByType(AttackItemType.ROCKET))
+ /*       assertEquals(1, robotRepo.findByIdOrNull(robot1.id)!!.inventory.getItemAmountByType(AttackItemType.ROCKET))
         assertEquals(1, robotRepo.findByIdOrNull(robot2.id)!!.inventory.getItemAmountByType(AttackItemType.ROCKET))
         assertEquals(1, robotRepo.findByIdOrNull(robot3.id)!!.inventory.getItemAmountByType(AttackItemType.LONG_RANGE_BOMBARDMENT))
         assertEquals(1, robotRepo.findByIdOrNull(robot4.id)!!.inventory.getItemAmountByType(AttackItemType.ROCKET))
-
+*/
         // //////////////////////////////////////////  Item Fighting   /////////////////////////////////////////////
         val attackCommands = listOf(
             "use-item-fighting ${robot1.id} ROCKET ${robot4.id} ${UUID.randomUUID()}",
@@ -468,10 +468,10 @@ class ScenarioTests(
         startSpawnContainer()
         startFightingContainer()
         startPlanetBlockedContainer()
-        startItemMovementContainer()
+    //    startItemMovementContainer()
         startMovementContainer()
         startRegenerationContainer()
-        startItemRepairContainer()
+      //  startItemRepairContainer()
 
         consumerRecords.clear()
 

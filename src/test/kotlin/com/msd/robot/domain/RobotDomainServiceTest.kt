@@ -4,13 +4,14 @@ import com.msd.application.GameMapService
 import com.msd.application.dto.GameMapPlanetDto
 import com.msd.domain.ResourceType
 import com.msd.event.application.EventSender
-import com.msd.item.domain.AttackItemType
+/*import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
+*/
 import com.msd.planet.domain.Planet
 import com.msd.robot.application.RestorationType
 import com.msd.robot.domain.exception.NotEnoughEnergyException
-import com.msd.robot.domain.exception.NotEnoughItemsException
+//import com.msd.robot.domain.exception.NotEnoughItemsException
 import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.robot.domain.exception.TargetRobotOutOfReachException
 import io.mockk.every
@@ -195,7 +196,7 @@ internal class RobotDomainServiceTest {
         )
     }
 
-    @Test
+  /*  @Test
     fun `using repair swarm heals all robots of the player owning the robot`() {
         // given
         robot3.move(planet2, 0)
@@ -318,7 +319,7 @@ internal class RobotDomainServiceTest {
             },
         )
     }
-
+*/
     @Test
     fun `distributeResourcesEvenly correctly distributes resources`() {
         // given
@@ -437,7 +438,7 @@ internal class RobotDomainServiceTest {
         verify(exactly = 1) { robotRepository.delete(robot2) }
         verify(exactly = 1) { robotRepository.delete(robot4) }
     }
-
+/*
     @Test
     fun `using a wormhole moves a robot`() {
         // given
@@ -457,7 +458,7 @@ internal class RobotDomainServiceTest {
         assertEquals(planetDTO.id, robot1.planet.planetId)
         assertEquals(0, robot1.inventory.getItemAmountByType(MovementItemType.WORMHOLE))
     }
-
+*/
     @Test
     fun `takeAllResources empties the inventory of the robot of its resources and returns the correct amount`() {
         // given
@@ -496,7 +497,7 @@ internal class RobotDomainServiceTest {
         )
     }
 
-    @Test
+   /* @Test
     fun `Adding an item to a robot increases the corresponding item amount in its inventory`() {
         // given
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
@@ -532,7 +533,7 @@ internal class RobotDomainServiceTest {
             }
         )
     }
-
+*/
     @Test
     fun `passing HEALTH as RestorationType only restores Health to full`() {
 // given

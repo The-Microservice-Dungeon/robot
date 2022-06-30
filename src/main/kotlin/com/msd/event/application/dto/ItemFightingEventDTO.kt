@@ -1,5 +1,5 @@
 package com.msd.event.application.dto
-
+/*
 import java.util.*
 
 class ItemFightingEventDTO(
@@ -8,3 +8,4 @@ class ItemFightingEventDTO(
     val remainingItemCount: Int?,
     val associatedFights: List<UUID> = mutableListOf()
 ) : EventDTO(success, message)
+*/

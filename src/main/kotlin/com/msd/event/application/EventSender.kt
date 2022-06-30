@@ -104,10 +104,10 @@ class EventSender(
             is ResourceDistributionEventDTO -> topicConfig.ROBOT_RESOURCE_DISTRIBUTION to EventType.RESOURCE_DISTRIBUTION
             is RegenerationEventDTO -> topicConfig.ROBOT_REGENERATION to EventType.REGENERATION
             is FightingEventDTO -> topicConfig.ROBOT_FIGHTING to EventType.FIGHTING
-            is ItemFightingEventDTO -> topicConfig.ROBOT_ITEM_FIGHTING to EventType.ITEM_FIGHTING
+           // is ItemFightingEventDTO -> topicConfig.ROBOT_ITEM_FIGHTING to EventType.ITEM_FIGHTING
             is NeighboursEventDTO -> topicConfig.ROBOT_NEIGHBOURS to EventType.NEIGHBOURS
-            is ItemRepairEventDTO -> topicConfig.ROBOT_ITEM_REPAIR to EventType.ITEM_REPAIR
-            is ItemMovementEventDTO -> topicConfig.ROBOT_ITEM_MOVEMENT to EventType.ITEM_MOVEMENT
+           // is ItemRepairEventDTO -> topicConfig.ROBOT_ITEM_REPAIR to EventType.ITEM_REPAIR
+           // is ItemMovementEventDTO -> topicConfig.ROBOT_ITEM_MOVEMENT to EventType.ITEM_MOVEMENT
             is RobotDestroyedEventDTO -> topicConfig.ROBOT_DESTROYED to EventType.DESTROYED
             is SpawnEventDTO -> topicConfig.ROBOT_SPAWNED to EventType.ROBOT_SPAWNED
             else -> throw RuntimeException("Unknown GenericEventDTO")
@@ -153,7 +153,7 @@ class EventSender(
                     robot?.energy
                 )
             }
-            is FightingItemUsageCommand -> {
+        /*    is FightingItemUsageCommand -> {
                 ItemFightingEventDTO(
                     false,
                     e.message!!,
@@ -170,7 +170,7 @@ class EventSender(
                 false,
                 e.message!!,
                 null
-            )
+            )*/
             else -> throw IllegalArgumentException("Unknown Subclass of Command")
         }
     }

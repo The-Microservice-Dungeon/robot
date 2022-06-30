@@ -6,7 +6,8 @@ enum class CommandVerbs(val verb: String) {
     FIGHT("fight"),
     MINE("mine"),
     REGENERATE("regenerate"),
-    USE_ITEM_FIGHTING("use-item-fighting"),
+   /* USE_ITEM_FIGHTING("use-item-fighting"),
     USE_ITEM_MOVEMENT("use-item-movement"),
     USE_ITEM_REPAIR("use-item-repair")
+    */
 }

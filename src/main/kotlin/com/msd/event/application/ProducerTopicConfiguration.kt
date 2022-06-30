@@ -25,14 +25,14 @@ class ProducerTopicConfiguration {
     @Value("robot-regeneration")
     lateinit var ROBOT_REGENERATION: String
 
-    @Value("robot-item-fighting")
-    lateinit var ROBOT_ITEM_FIGHTING: String
+//    @Value("robot-item-fighting")
+//    lateinit var ROBOT_ITEM_FIGHTING: String
 
-    @Value("robot-item-repair")
-    lateinit var ROBOT_ITEM_REPAIR: String
+//    @Value("robot-item-repair")
+//   lateinit var ROBOT_ITEM_REPAIR: String
 
-    @Value("robot-item-movement")
-    lateinit var ROBOT_ITEM_MOVEMENT: String
+ //   @Value("robot-item-movement")
+  //  lateinit var ROBOT_ITEM_MOVEMENT: String
 
     @Value("robot-resource-distribution")
     lateinit var ROBOT_RESOURCE_DISTRIBUTION: String

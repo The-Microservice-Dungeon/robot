@@ -108,7 +108,7 @@ abstract class AbstractKafkaProducerTest(
         ContainerTestUtils.waitForAssignment(regenerationContainer, embeddedKafka.partitionsPerTopic)
     }
 
-    protected fun startItemFightingContainer() {
+  /*  protected fun startItemFightingContainer() {
         itemFightingContainer = eventTestUtils.createMessageListenerContainer(
             embeddedKafka,
             topicConfig.ROBOT_ITEM_FIGHTING,
@@ -137,7 +137,7 @@ abstract class AbstractKafkaProducerTest(
         runningContainers.add(itemMovementContainer)
         ContainerTestUtils.waitForAssignment(itemMovementContainer, embeddedKafka.partitionsPerTopic)
     }
-
+*/
     protected fun startRobotDestroyedContainer() {
         robotDestroyedContainer = eventTestUtils.createMessageListenerContainer(
             embeddedKafka,

@@ -6,10 +6,10 @@ enum class EventType(val eventString: String) {
     REGENERATION("regeneration"),
     FIGHTING("fighting"),
     MINING("mining"),
-    ITEM_REPAIR("item-repair"),
+  /*  ITEM_REPAIR("item-repair"),
     ITEM_MOVEMENT("item-movement"),
     ITEM_FIGHTING("item-fighting"),
-    RESOURCE_DISTRIBUTION("resource-distribution"),
+    */RESOURCE_DISTRIBUTION("resource-distribution"),
     NEIGHBOURS("neighbours"),
     DESTROYED("robot-destroyed"),
     ROBOT_SPAWNED("spawn-notification")

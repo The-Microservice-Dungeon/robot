@@ -80,14 +80,15 @@ class RobotController(
      * @see <a href="https://the-microservice-dungeon.github.io/docs/openapi/robot#tag/trading/paths/~1robots~1{robot-uuid}~1inventory~1items/post"></a>
      * @return success message
      */
-    @PostMapping("/{id}/inventory/items")
-    fun addItemToRobot(
+ /*   @PostMapping("/{id}/inventory/items")
+   fun addItemToRobot(
         @PathVariable("id") robotId: UUID,
         @RequestBody addItemDto: ItemAdditionDto
     ): ResponseEntity<String> {
         robotDomainService.addItem(robotId, addItemDto.itemType)
-        return ResponseEntity.ok("Item ${addItemDto.itemType} added to robot $robotId")
+       return ResponseEntity.ok("Item ${addItemDto.itemType} added to robot $robotId")
     }
+    */
 
     /**
      * Empty the inventory of the specified robot of all resources and return the removed amount.

@@ -1,10 +1,10 @@
 package com.msd.robot.domain
 
 import com.msd.domain.ResourceType
-import com.msd.item.domain.AttackItemType
+/*import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
-import com.msd.planet.domain.Planet
+*/import com.msd.planet.domain.Planet
 import com.msd.robot.domain.exception.InventoryFullException
 import com.msd.robot.domain.exception.NotEnoughResourcesException
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -135,7 +135,7 @@ class InventoryTest {
         // then
         assert(robot1.inventory.isFull())
     }
-
+/*
     @Test
     fun `adding an item correctly increases its count`() {
         // when
@@ -217,4 +217,5 @@ class InventoryTest {
             }
         )
     }
+    */
 }

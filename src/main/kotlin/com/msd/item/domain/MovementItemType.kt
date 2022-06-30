@@ -5,7 +5,7 @@ import com.msd.application.dto.GameMapPlanetDto
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotRepository
-
+/*
 enum class MovementItemType(val use: (Robot, RobotRepository, GameMapService) -> GameMapPlanetDto) : ItemType {
     WORMHOLE(::useWormhole),
 }
@@ -17,3 +17,4 @@ private fun useWormhole(robot: Robot, repository: RobotRepository, gameMapServic
     repository.save(robot)
     return planetDTO
 }
+*/

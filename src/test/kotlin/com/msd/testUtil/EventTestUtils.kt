@@ -149,7 +149,7 @@ class EventTestUtils {
         )
     }
 
-    fun checkItemRepairPayload(
+/*    fun checkItemRepairPayload(
         expectedSuccess: Boolean,
         expectedMessage: String,
         expectedRobots: List<RepairEventRobotDTO>,
@@ -189,7 +189,7 @@ class EventTestUtils {
             }
         )
     }
-
+*/
     fun checkFightingPayload(
         expectedSuccess: Boolean,
         expectedMessage: String,
@@ -249,7 +249,7 @@ class EventTestUtils {
             }
         )
     }
-
+/*
     fun checkItemFightingPayload(
         expectedSuccess: Boolean,
         expectedMessage: String,
@@ -274,7 +274,7 @@ class EventTestUtils {
             }
         )
     }
-
+*/
     fun checkSpawnPayload(
         expectedPlayer: UUID,
         expectedRobots: List<UUID>,

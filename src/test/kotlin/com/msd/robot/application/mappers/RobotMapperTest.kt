@@ -1,9 +1,9 @@
 package com.msd.robot.application.mappers
 
 import com.msd.domain.ResourceType
-import com.msd.item.domain.AttackItemType
-import com.msd.item.domain.MovementItemType
-import com.msd.item.domain.RepairItemType
+//import com.msd.item.domain.AttackItemType
+//import com.msd.item.domain.MovementItemType
+//import com.msd.item.domain.RepairItemType
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.Robot
 import org.junit.jupiter.api.Assertions.*
@@ -30,12 +30,13 @@ internal class RobotMapperTest(
         robot.inventory.addResource(ResourceType.GEM, 3)
         robot.inventory.addResource(ResourceType.GOLD, 4)
         robot.inventory.addResource(ResourceType.PLATIN, 5)
-        robot.inventory.addItem(MovementItemType.WORMHOLE)
+     /*   robot.inventory.addItem(MovementItemType.WORMHOLE)
         robot.inventory.addItem(RepairItemType.REPAIR_SWARM)
         robot.inventory.addItem(AttackItemType.NUKE)
         robot.inventory.addItem(AttackItemType.ROCKET)
         robot.inventory.addItem(AttackItemType.LONG_RANGE_BOMBARDMENT)
         robot.inventory.addItem(AttackItemType.SELF_DESTRUCTION)
+        */
     }
 
     @Test

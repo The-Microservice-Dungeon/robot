@@ -1,7 +1,8 @@
 package com.msd.command.application.command
 
-import com.msd.item.domain.MovementItemType
+//import com.msd.item.domain.MovementItemType
 import java.util.*
+/*  We dont use repair items anymore
 
 class MovementItemsUsageCommand(
     robotUUID: UUID,
@@ -9,3 +10,5 @@ class MovementItemsUsageCommand(
     transactionUUID: UUID
 ) :
     Command(robotUUID, transactionUUID)
+
+ */

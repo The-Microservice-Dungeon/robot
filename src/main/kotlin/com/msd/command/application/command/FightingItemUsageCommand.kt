@@ -1,8 +1,8 @@
 package com.msd.command.application.command
 
-import com.msd.item.domain.AttackItemType
+//import com.msd.item.domain.AttackItemType
 import java.util.*
-
+/*
 class FightingItemUsageCommand(
     robotUUID: UUID,
     val itemType: AttackItemType,
@@ -10,3 +10,4 @@ class FightingItemUsageCommand(
     transactionUUID: UUID
 ) :
     Command(robotUUID, transactionUUID)
+*/

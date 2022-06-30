@@ -1,10 +1,10 @@
 package com.msd.command.application
 
 import com.msd.command.application.command.*
-import com.msd.item.domain.AttackItemType
+/*import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
-import mu.KotlinLogging
+*/import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import java.lang.IllegalArgumentException
 import java.util.*
@@ -20,9 +20,10 @@ class CommandApplicationService {
         CommandVerbs.FIGHT.verb to 3,
         CommandVerbs.MINE.verb to 2,
         CommandVerbs.REGENERATE.verb to 2,
-        CommandVerbs.USE_ITEM_FIGHTING.verb to 4,
+     /*   CommandVerbs.USE_ITEM_FIGHTING.verb to 4,
         CommandVerbs.USE_ITEM_MOVEMENT.verb to 3,
         CommandVerbs.USE_ITEM_REPAIR.verb to 3
+        */
     )
 
     /**
@@ -70,10 +71,11 @@ class CommandApplicationService {
         commandString: String
     ): Command {
         try {
-            return if (verb.startsWith("use-item-"))
-                parseItemUsageCommand(verb, args)
+            /*return if (verb.startsWith("use-item-"))
+               // parseItemUsageCommand(verb, args)
             else
-                parseActionCommand(verb, args)
+            */
+           return     parseActionCommand(verb, args)
         } catch (iae: IllegalArgumentException) {
             if (iae.message?.contains("Invalid UUID") == true) {
                 logger.info("Rejected command batch because of malformed UUID: ${iae.message}")
@@ -108,7 +110,7 @@ class CommandApplicationService {
      * @param verb  The command verb, describing the type of command
      * @param args  The arguments for the command
      */
-    private fun parseItemUsageCommand(verb: String, args: List<String>): Command {
+  /*  private fun parseItemUsageCommand(verb: String, args: List<String>): Command {
         when (verb) {
             CommandVerbs.USE_ITEM_FIGHTING.verb -> return FightingItemUsageCommand(
                 UUID.fromString(args[0]),
@@ -129,7 +131,7 @@ class CommandApplicationService {
             else -> throw CommandParsingException("Unknown command verb $verb")
         }
     }
-
+*/
     /**
      * Parse all commands that are not an item usage
      *

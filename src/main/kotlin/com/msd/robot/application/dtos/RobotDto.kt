@@ -22,5 +22,5 @@ class RobotDto(
     val energyRegenLevel: Int,
     val storageLevel: Int,
     val inventory: InventoryDto,
-    val items: ItemsDto
+ //   val items: ItemsDto
 )

@@ -7,7 +7,7 @@ import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.robot.domain.exception.TargetRobotOutOfReachException
 import org.springframework.data.repository.findByIdOrNull
 import java.util.*
-
+/*
 enum class AttackItemType(val use: (Robot, UUID, RobotRepository) -> Pair<UUID, List<Robot>>) : ItemType {
     ROCKET(::useRocket),
     LONG_RANGE_BOMBARDMENT(::useBombardment),
@@ -94,3 +94,4 @@ private fun useNuke(user: Robot, target: UUID, robotRepo: RobotRepository): Pair
     robotRepo.saveAll(targetRobots)
     return target to targetRobots
 }
+*/

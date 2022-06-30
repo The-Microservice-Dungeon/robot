@@ -94,36 +94,36 @@ components:
             storedPlatin:
               type: integer
               example: 0
-        items:
-          type: object
-          properties:
-            rocket:
-              type: integer
-              example: 0
-            wormhole:
-              type: integer
-              example: 2
-            longRangeBombardement:
-              type: integer
-              example: 0
-            selfDestruction:
-              type: integer
-              example: 1
-            repairSwarm:
-              type: integer
-              example: 0
-            nuke:
-              type: integer
-              example: 3
+    #    items:
+     #     type: object
+     #     properties:
+     #       rocket:
+     #         type: integer
+     #         example: 0
+     #       wormhole:
+     #         type: integer
+     #         example: 2
+     #       longRangeBombardement:
+     #         type: integer
+     #         example: 0
+     #       selfDestruction:
+     #         type: integer
+     #         example: 1
+     #       repairSwarm:
+     #         type: integer
+     #         example: 0
+     #       nuke:
+     #         type: integer
+     #         example: 3
             
     commands:
       type: object
       properties:
         commands:
           type: array
-          items:
-            type: string
-            example: move [playerUUID] [robotUUID] [targetPlanetUUID] [transactionUUID]
+       #   items:
+       #     type: string
+       #     example: move [playerUUID] [robotUUID] [targetPlanetUUID] [transactionUUID]
 paths:
   "/robots":
     post:
@@ -174,8 +174,8 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
-                  "$ref": "#/components/schemas/robot"
+           #     items:
+           #       "$ref": "#/components/schemas/robot"
         '400':
           description: Bad Request
           content:
@@ -276,18 +276,18 @@ paths:
               - upgrade-type
               - target-lvl
 
-  #"/robots/{robot-uuid}/move":
-  "/robots/{robot-uuid}/inventory/items":
-    post:
-      summary: Add new item to robot
-      tags:
-      - trading
-      parameters:
-      - name: robot-uuid
-        in: path
-        required: true
-        schema:
-          type: string
+  "/robots/{robot-uuid}/move":
+ # "/robots/{robot-uuid}/inventory/items":
+ #   post:
+ #     summary: Add new item to robot
+ #     tags:
+ #     - trading
+ #     parameters:
+ #     - name: robot-uuid
+ #       in: path
+ #       required: true
+ #       schema:
+ #         type: string
       responses:
         '200':
           description: OK
@@ -303,7 +303,7 @@ paths:
               schema:
                 type: string
                 example: "Request could not be accepted"
-        '404': #robot existiert nicht
+       '404': #robot existiert nicht
           description: Not Found
           content:
             application/json:
@@ -319,11 +319,11 @@ paths:
                 transaction_id:
                   type: string
                   format: uuid
-                item-type: 
-                  type: string
-                  enum: [ROCKET, WORMHOLE, LONG_RANGE_BOMBARDEMENT, SELF_DESTRUCTION, REPAIR_SWARM, NUKE]
-              required:
-              - item-type
+          #      item-type:
+        #          type: string
+          #        enum: [ROCKET, WORMHOLE, LONG_RANGE_BOMBARDEMENT, SELF_DESTRUCTION, REPAIR_SWARM, NUKE]
+  #            required:
+  #            - item-type
   "/robots/{robot-uuid}/inventory/clearResources":
     post:
         summary: Sell all resources
@@ -367,12 +367,15 @@ paths:
         fight [playerUUID] [robotUUID] [targetRobotUUID] [transactionUUID] <br>
         mine [playerUUID] [robotUUID] [transactionUUID] <br>
         regenerate [playerUUID] [robotUUID] [transactionUUID] <br>
-        use-item-fighting [playerUUID] [robotUUID] [itemType] [targetUUID] [transactionUUID] <br>
-        use-item-repair [playerUUID] [robotUUID] [itemType] [targetUUID] [transactionUUID] <br>
-        use-item-movement [playerUUID] [robotUUID] [itemType] [transactionUUID] <br><br>
         
-        [targetUUID] is either a robot or a planet, depending on the item type <br>
-        [itemType] can be rocket, wormhole, bombardment, self_destruct, repair_swarm or nuke"
+        [targetUUID] is either a robot or a planet, depending on the item type <br>"
+
+      #  use-item-fighting [playerUUID] [robotUUID] [itemType] [targetUUID] [transactionUUID] <br>
+      #  use-item-repair [playerUUID] [robotUUID] [itemType] [targetUUID] [transactionUUID] <br>
+     #   use-item-movement [playerUUID] [robotUUID] [itemType] [transactionUUID] <br><br>
+        
+      #  [targetUUID] is either a robot or a planet, depending on the item type <br>
+     #   [itemType] can be rocket, wormhole, bombardment, self_destruct, repair_swarm or nuke"
       tags:
       - commands
       responses:

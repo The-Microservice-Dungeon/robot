@@ -12,9 +12,11 @@ import com.msd.domain.ResourceType
 import com.msd.event.application.EventType
 import com.msd.event.application.ProducerTopicConfiguration
 import com.msd.event.application.dto.*
-import com.msd.item.domain.AttackItemType
+/*import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
+*/
+
 import com.msd.planet.application.PlanetDTO
 import com.msd.planet.domain.MapDirection
 import com.msd.planet.domain.Planet
@@ -412,7 +414,7 @@ class CommandControllerTest(
         )
     }
 
-    @Test
+  /*  @Test
     fun `all robots correctly regenerate health when using repair swarm`() {
         // given
         startItemRepairContainer()
@@ -530,7 +532,7 @@ class CommandControllerTest(
             domainEventItem.payload,
         )
     }
-
+*/
     @Test
     fun `Sending EnergyRegen Command with invalid robot UUID returns 400`() {
         val command = "regenerate invalidRobotId ${UUID.randomUUID()}"
@@ -580,7 +582,7 @@ class CommandControllerTest(
         // then
         assertEquals(20, robotRepository.findByIdOrNull(robot1.id)!!.energy)
     }
-
+/*
     @Test
     fun `Robot cannot use RepairSwarm if it doesn't have the item`() {
         startItemRepairContainer()
@@ -625,7 +627,7 @@ class CommandControllerTest(
             domainEvent.payload
         )
     }
-
+*/
     @Test
     fun `Sending Any heterogeneous command lists causes 400`() {
         // given
@@ -654,7 +656,7 @@ class CommandControllerTest(
             "block ${robot2.id} ${UUID.randomUUID()}"
         )
 
-        val heterogeneousItemFightingCommand = listOf(
+      /*  val heterogeneousItemFightingCommand = listOf(
             "use-item-fighting ${robot1.id} ${AttackItemType.ROCKET} ${robot2.id} ${UUID.randomUUID()}",
             "block ${robot2.id} ${UUID.randomUUID()}"
         )
@@ -668,15 +670,15 @@ class CommandControllerTest(
             "use-item-repair ${robot1.id} ${RepairItemType.REPAIR_SWARM} ${UUID.randomUUID()}",
             "block ${robot2.id} ${UUID.randomUUID()}"
         )
-
+*/
         val commandBatches = listOf(
             heterogeneousMineCommand,
             heterogeneousFightCommand,
             heterogeneousBlockCommand,
-            heterogeneousItemMoveCommand,
+       //     heterogeneousItemMoveCommand,
             heterogeneousEnergyRegenCommand,
-            heterogeneousItemFightingCommand,
-            heterogeneousItemRepairCommand,
+        //    heterogeneousItemFightingCommand,
+        //    heterogeneousItemRepairCommand,
             heterogeneousMoveCommand
         )
 
@@ -899,7 +901,7 @@ class CommandControllerTest(
         )
     }
 
-    @Test
+  /*  @Test
     fun `Unreachable MapService causes event to be thrown during movement item usage`() {
         // given
         startItemMovementContainer()
@@ -928,7 +930,7 @@ class CommandControllerTest(
             domainEvent1.payload
         )
     }
-
+*/
     @Test
     fun `Unreachable MapService causes event to be thrown during movement`() {
         // given

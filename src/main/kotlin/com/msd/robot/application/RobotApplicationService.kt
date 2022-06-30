@@ -45,13 +45,13 @@ class RobotApplicationService(
         try {
             when (commands[0]) {
                 is FightingCommand -> executeAttacks(commands as List<FightingCommand>)
-                is FightingItemUsageCommand -> executeFightingItemUsageCommand(commands as List<FightingItemUsageCommand>)
+           //     is FightingItemUsageCommand -> executeFightingItemUsageCommand(commands as List<FightingItemUsageCommand>)
                 is MineCommand -> executeMining(commands as List<MineCommand>)
-                is MovementItemsUsageCommand -> useMovementItem(commands as List<MovementItemsUsageCommand>)
+            //   is MovementItemsUsageCommand -> useMovementItem(commands as List<MovementItemsUsageCommand>)
                 is MovementCommand -> executeMoveCommands(commands as List<MovementCommand>)
                 is BlockCommand -> executeBlockCommands(commands as List<BlockCommand>)
                 is EnergyRegenCommand -> executeEnergyRegenCommands(commands as List<EnergyRegenCommand>)
-                is RepairItemUsageCommand -> executeRepairItemUsageCommands(commands as List<RepairItemUsageCommand>)
+           //     is RepairItemUsageCommand -> executeRepairItemUsageCommands(commands as List<RepairItemUsageCommand>)
             }
         } catch (runtimeException: RuntimeException) {
             // If nothing else caught the Exception, it is a bad one, but we still want to throw an event in that case
@@ -65,7 +65,7 @@ class RobotApplicationService(
      *
      * @param command   the `MovementItemsUsageCommand` specifying which `Robot` should use which `item`
      */
-    private fun useMovementItem(commands: List<MovementItemsUsageCommand>) {
+ /*   private fun useMovementItem(commands: List<MovementItemsUsageCommand>) {
         logger.info("Starting execution of MovementItemUsageCommand-Batch")
 
         val robotPlanetPairs = mutableMapOf<MovementItemsUsageCommand, Pair<Robot, GameMapPlanetDto>>()
@@ -83,7 +83,7 @@ class RobotApplicationService(
 
         logger.info("Finished executing batch of ItemUsageCommands")
     }
-
+*/
     /**
      * Spawns a new [Robot]. The `Robot` belongs to the specified player and will spawn on the Specified [Planet]
      *
@@ -294,6 +294,7 @@ class RobotApplicationService(
      *
      * @param commands a list of [RepairItemUsageCommand]s which specify which `Robot` should use which item
      */
+    /*
     fun executeRepairItemUsageCommands(commands: List<RepairItemUsageCommand>) {
         logger.info("Starting execution of RepairItemUsageCommand-Batch")
 
@@ -344,7 +345,7 @@ class RobotApplicationService(
         }
         return battleFields
     }
-
+*/
     /**
      * Repairs the specified [Robot] to full health.
      *

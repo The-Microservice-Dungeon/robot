@@ -7,12 +7,13 @@ import com.msd.event.application.EventSender
 import com.msd.event.application.EventType
 import com.msd.event.application.dto.RepairEventRobotDTO
 import com.msd.event.application.dto.RobotDestroyedEventDTO
-import com.msd.item.domain.AttackItemType
+/*import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.ItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
+ */
 import com.msd.robot.application.RestorationType
-import com.msd.robot.domain.exception.NotEnoughItemsException
+//import com.msd.robot.domain.exception.NotEnoughItemsException
 import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.robot.domain.exception.TargetRobotOutOfReachException
@@ -254,6 +255,7 @@ class RobotDomainService(
      * @param item        the `RepairItemType` which should be used.
      * @throws NotEnoughItemsException when the specified `Robot` doesn't own the specified item.
      */
+    /*
     fun useRepairItem(robotId: UUID, item: RepairItemType): List<RepairEventRobotDTO> {
         val robot = this.getRobot(robotId)
         if (robot.inventory.getItemAmountByType(item) > 0) {
@@ -307,17 +309,19 @@ class RobotDomainService(
         robotRepository.save(robot)
         return Pair(robot, planetDTO)
     }
-
+*/
     /**
      * Returns all the robots belonging to the given player.
      *
      * @param playerId: The UUID of the player whose robots should be returned
      * @return a list of the robots belonging to the player
      */
+
     fun getRobotsByPlayer(playerId: UUID): List<Robot> {
         return robotRepository.findAllByPlayer(playerId)
     }
 
+    /*
     /**
      * Gives a robot a new item.
      * @param robotId: The UUID of the robot which the item should be given to
@@ -328,7 +332,7 @@ class RobotDomainService(
         robot.inventory.addItem(itemType)
         robotRepository.save(robot)
     }
-
+*/
     /**
      * Clear the given robots resources.
      *

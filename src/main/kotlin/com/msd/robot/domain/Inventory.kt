@@ -1,10 +1,12 @@
 package com.msd.robot.domain
 
 import com.msd.domain.ResourceType
+/*
 import com.msd.item.domain.AttackItemType
 import com.msd.item.domain.ItemType
 import com.msd.item.domain.MovementItemType
 import com.msd.item.domain.RepairItemType
+ */
 import com.msd.robot.domain.exception.InventoryFullException
 import com.msd.robot.domain.exception.NotEnoughResourcesException
 import com.msd.robot.domain.exception.UpgradeException
@@ -160,7 +162,7 @@ class Inventory {
      * @param item    the type of the item that should be added
      * @throws IllegalArgumentException    when the passed `ItemType` is invalid
      */
-    fun addItem(item: ItemType) {
+   /* fun addItem(item: ItemType) {
         when (item) {
             MovementItemType.WORMHOLE -> wormholeAmount++
             RepairItemType.REPAIR_SWARM -> repairSwarmAmount++
@@ -208,4 +210,6 @@ class Inventory {
             else -> throw IllegalArgumentException("$item is not a valid item")
         }
     }
+
+    */
 }
