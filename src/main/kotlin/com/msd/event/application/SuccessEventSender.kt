@@ -187,7 +187,7 @@ class SuccessEventSender(
         )
     }
 
-    fun sendBlockEvent(robot: Robot, blockCommand: BlockCommand) {
+  /*  fun sendBlockEvent(robot: Robot, blockCommand: BlockCommand) {
         logger.info("[${blockCommand.transactionUUID}] Successfully executed BlockCommand")
         eventSender.sendEvent(
             BlockEventDTO(
@@ -200,7 +200,7 @@ class SuccessEventSender(
             blockCommand.transactionUUID
         )
     }
-
+*/
     fun sendResourceDistributionEvent(robot: Robot) {
         logger.info("Distributed resources to robot ${robot.id}")
         eventSender.sendGenericEvent(

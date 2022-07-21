@@ -3,7 +3,7 @@ package com.msd.robot.domain
 import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.exception.NotEnoughEnergyException
-import com.msd.robot.domain.exception.PlanetBlockedException
+//import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.UpgradeException
 import org.hibernate.annotations.Type
 import java.lang.IllegalArgumentException
@@ -187,8 +187,8 @@ class Robot(
      */
     fun move(planet: Planet, cost: Int) {
         this.reduceEnergy(cost)
-        if (this.planet.blocked)
-            throw PlanetBlockedException("Can't move out of a blocked planet")
+     //   if (this.planet.blocked)
+     //       throw PlanetBlockedException("Can't move out of a blocked planet")
         this.planet = planet
     }
 
@@ -197,11 +197,11 @@ class Robot(
      *
      * @throws NotEnoughEnergyException if the robot has not enough energy to block
      */
-    fun block() {
+  /*  fun block() {
         this.reduceEnergy(round(2 + 0.1 * maxEnergy).toInt())
         this.planet.blocked = true
     }
-
+*/
     /**
      * This `Robot` receives a given amount of [damage].
      * If the damage reduces the health to (or below) 0, the robot is destroyed.

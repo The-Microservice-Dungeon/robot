@@ -15,7 +15,7 @@ class CommandApplicationService {
     private val logger = KotlinLogging.logger {}
 
     val commandTypeKeywordsAndNumArgs = mapOf(
-        CommandVerbs.BLOCK.verb to 2,
+     //   CommandVerbs.BLOCK.verb to 2,
         CommandVerbs.MOVE.verb to 3,
         CommandVerbs.FIGHT.verb to 3,
         CommandVerbs.MINE.verb to 2,
@@ -140,7 +140,7 @@ class CommandApplicationService {
      */
     private fun parseActionCommand(verb: String, args: List<String>): Command {
         return when (verb) {
-            CommandVerbs.BLOCK.verb,
+        //    CommandVerbs.BLOCK.verb,
             CommandVerbs.MINE.verb,
             CommandVerbs.REGENERATE.verb -> get2PartConstructorByVerb(verb)(
                 UUID.fromString(args[0]),
@@ -163,7 +163,7 @@ class CommandApplicationService {
      */
     fun get2PartConstructorByVerb(verb: String): (UUID, UUID) -> Command {
         return when (verb) {
-            CommandVerbs.BLOCK.verb -> ::BlockCommand
+       //     CommandVerbs.BLOCK.verb -> ::BlockCommand
             CommandVerbs.MINE.verb -> ::MineCommand
             CommandVerbs.REGENERATE.verb -> ::EnergyRegenCommand
             else -> throw CommandParsingException("Unknown Command verb $verb")

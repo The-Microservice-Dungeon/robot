@@ -19,7 +19,7 @@ class GameRoundEventConsumer(
         val payload = jacksonObjectMapper().readValue(record.value(), RoundStatusDTO::class.java)
         logger.info("Handling game round event(Round " + payload.roundNumber + "): " + payload.roundStatus)
         if (payload.roundStatus == RoundStatus.ENDED) {
-            planetDomainService.resetBlocks()
+      //      planetDomainService.resetBlocks()
             logger.info("Reset blocked planets")
         }
     }

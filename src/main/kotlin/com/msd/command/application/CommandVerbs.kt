@@ -1,7 +1,7 @@
 package com.msd.command.application
 
 enum class CommandVerbs(val verb: String) {
-    BLOCK("block"),
+    //BLOCK("block"),
     MOVE("move"),
     FIGHT("fight"),
     MINE("mine"),

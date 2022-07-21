@@ -14,7 +14,7 @@ import com.msd.item.domain.RepairItemType
  */
 import com.msd.robot.application.RestorationType
 //import com.msd.robot.domain.exception.NotEnoughItemsException
-import com.msd.robot.domain.exception.PlanetBlockedException
+//import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.robot.domain.exception.TargetRobotOutOfReachException
 import mu.KotlinLogging

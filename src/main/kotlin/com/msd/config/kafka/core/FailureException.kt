@@ -1,4 +1,4 @@
-package com.msd.core
+package com.msd.config.kafka.core
 
 /**
  * This class represents exceptions thrown due to domain logic.

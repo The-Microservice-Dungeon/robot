@@ -61,7 +61,7 @@ class KafkaMessageProducer(
      */
     private fun getDomainEventFromString(payloadString: String, eventType: EventType): DomainEvent<GenericEventDTO> {
         return when (eventType) {
-            EventType.PLANET_BLOCKED -> jacksonObjectMapper().readValue(payloadString, jacksonObjectMapper().typeFactory.constructParametricType(DomainEvent::class.java, BlockEventDTO::class.java))
+       //     EventType.PLANET_BLOCKED -> jacksonObjectMapper().readValue(payloadString, jacksonObjectMapper().typeFactory.constructParametricType(DomainEvent::class.java, BlockEventDTO::class.java))
             EventType.MOVEMENT -> jacksonObjectMapper().readValue(payloadString, jacksonObjectMapper().typeFactory.constructParametricType(DomainEvent::class.java, MovementEventDTO::class.java))
         //    EventType.ITEM_MOVEMENT -> jacksonObjectMapper().readValue(payloadString, jacksonObjectMapper().typeFactory.constructParametricType(DomainEvent::class.java, ItemMovementEventDTO::class.java))
         //    EventType.ITEM_REPAIR -> jacksonObjectMapper().readValue(payloadString, jacksonObjectMapper().typeFactory.constructParametricType(DomainEvent::class.java, ItemRepairEventDTO::class.java))

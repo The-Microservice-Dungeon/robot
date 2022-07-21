@@ -105,7 +105,7 @@ class EventTestUtils {
         )
     }
 
-    fun checkBlockPayload(
+  /*  fun checkBlockPayload(
         expectedSuccess: Boolean,
         expectedMessage: String,
         expectedPlanetId: UUID?,
@@ -128,7 +128,7 @@ class EventTestUtils {
             }
         )
     }
-
+*/
     fun checkRegenerationPayload(
         expectedSuccess: Boolean,
         expectedMessage: String,

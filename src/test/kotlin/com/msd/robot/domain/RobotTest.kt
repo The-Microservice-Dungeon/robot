@@ -3,7 +3,7 @@ package com.msd.robot.domain
 import com.msd.domain.ResourceType
 import com.msd.planet.domain.Planet
 import com.msd.robot.domain.exception.NotEnoughEnergyException
-import com.msd.robot.domain.exception.PlanetBlockedException
+//import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.UpgradeException
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -62,7 +62,7 @@ class RobotTest {
         )
     }
 
-    @Test
+  /*  @Test
     fun `Robot can't move if current planet is blocked`() {
         // given
         val planet = Planet(UUID.randomUUID())
@@ -75,7 +75,8 @@ class RobotTest {
         }
         assertEquals(planet, robot1.planet)
     }
-
+*/
+    /*
     @Test
     fun `Robot still uses energy when trying to escape blocked planet`() {
         // given
@@ -89,7 +90,8 @@ class RobotTest {
         }
         assertEquals(robot1.energy, robot1.maxEnergy - 1)
     }
-
+*/
+    /*
     @Test
     fun `Robot can enter blocked planet`() {
         // given
@@ -101,7 +103,7 @@ class RobotTest {
         // then
         assertEquals(planet, robot1.planet)
     }
-
+*/
     @Test
     fun `Robot is dead after health reaches 0 or less`() {
         // when

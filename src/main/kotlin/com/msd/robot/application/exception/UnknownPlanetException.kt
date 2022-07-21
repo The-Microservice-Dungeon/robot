@@ -1,6 +1,6 @@
 package com.msd.robot.application.exception
 
-import com.msd.core.FailureException
+import com.msd.config.kafka.core.FailureException
 import java.util.*
 
 class UnknownPlanetException(planetId: UUID) :

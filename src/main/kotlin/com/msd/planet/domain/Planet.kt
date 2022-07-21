@@ -14,5 +14,5 @@ data class Planet(
     var resourceType: ResourceType? = null
 ) {
 
-    var blocked: Boolean = false
+   // var blocked: Boolean = false
 }

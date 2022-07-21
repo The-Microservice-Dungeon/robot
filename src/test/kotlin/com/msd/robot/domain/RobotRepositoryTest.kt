@@ -59,7 +59,7 @@ class RobotRepositoryTest(
         assertEquals(robot1.id, robotRepository.findByIdOrNull(robot1.id)!!.id)
     }
 
-    @Test
+   /* @Test
     fun `The Blocked Status of a planet can be viewed from every robot`() {
         // given
         robot1.block()
@@ -72,7 +72,7 @@ class RobotRepositoryTest(
         // then
         assert(fetchedRobot3.planet.blocked)
     }
-
+*/
     @Test
     fun `Retrieves the dead robots on a planet`() {
         // given

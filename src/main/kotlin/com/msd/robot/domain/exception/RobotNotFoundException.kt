@@ -1,6 +1,6 @@
 package com.msd.robot.domain.exception
 
-import com.msd.core.FailureException
+import com.msd.config.kafka.core.FailureException
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.ResponseStatus
 

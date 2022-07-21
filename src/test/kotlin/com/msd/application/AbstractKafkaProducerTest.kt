@@ -60,14 +60,14 @@ abstract class AbstractKafkaProducerTest(
         ContainerTestUtils.waitForAssignment(neighboursContainer, embeddedKafka.partitionsPerTopic)
     }
 
-    protected fun startPlanetBlockedContainer() {
+ /*   protected fun startPlanetBlockedContainer() {
         blockedContainer =
             eventTestUtils.createMessageListenerContainer(embeddedKafka, topicConfig.ROBOT_BLOCKED, consumerRecords)
         blockedContainer.start()
         runningContainers.add(blockedContainer)
         ContainerTestUtils.waitForAssignment(blockedContainer, embeddedKafka.partitionsPerTopic)
     }
-
+*/
     protected fun startMiningContainer() {
         miningContainer =
             eventTestUtils.createMessageListenerContainer(embeddedKafka, topicConfig.ROBOT_MINING, consumerRecords)

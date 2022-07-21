@@ -57,7 +57,7 @@ internal class GameRoundEventConsumerTest(
         planets = listOf(planet1, planet2, planet3, planet4, planet5, planet6)
     }
 
-    @Test
+   /* @Test
     fun `Planets get unblocked when gameRoundListener Method is called`() {
         // given
         planets.forEach { it.blocked = true }
@@ -70,7 +70,8 @@ internal class GameRoundEventConsumerTest(
             planetRepository.findAll().map { { assertFalse(it.blocked) } }
         )
     }
-
+*/
+    /*
     @Test
     fun `planets don't get unblocked when value is not ended`() {
         // given
@@ -84,7 +85,7 @@ internal class GameRoundEventConsumerTest(
             planetRepository.findAll().map { { assertTrue(it.blocked) } }
         )
     }
-
+*/
 //    @Test
 //    fun `Planets get unblocked after round ended`() {
 //        // given

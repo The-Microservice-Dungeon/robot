@@ -5,5 +5,5 @@ import java.util.*
 
 interface PlanetRepository : CrudRepository<Planet, UUID> {
 
-    fun findAllByBlocked(blocked: Boolean): List<Planet>
+   // fun findAllByBlocked(blocked: Boolean): List<Planet>
 }

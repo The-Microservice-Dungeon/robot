@@ -6,7 +6,7 @@ import com.msd.application.dto.GameMapPlanetDto
 import com.msd.application.dto.MineRequestDto
 import com.msd.application.dto.MineResponseDto
 import com.msd.config.properties.MicroserviceMapConfig
-import com.msd.core.FailureException
+import com.msd.config.kafka.core.FailureException
 import com.msd.domain.ResourceType
 import com.msd.robot.application.exception.TargetPlanetNotReachableException
 import com.msd.robot.application.exception.UnknownPlanetException

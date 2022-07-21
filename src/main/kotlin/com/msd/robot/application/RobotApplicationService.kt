@@ -6,7 +6,7 @@ import com.msd.application.dto.GameMapPlanetDto
 import com.msd.command.*
 import com.msd.command.application.*
 import com.msd.command.application.command.*
-import com.msd.core.FailureException
+import com.msd.config.kafka.core.FailureException
 import com.msd.domain.ResourceType
 import com.msd.event.application.EventSender
 import com.msd.event.application.SuccessEventSender
@@ -17,7 +17,7 @@ import com.msd.robot.domain.Robot
 import com.msd.robot.domain.RobotDomainService
 import com.msd.robot.domain.UpgradeType
 import com.msd.robot.domain.exception.InventoryFullException
-import com.msd.robot.domain.exception.PlanetBlockedException
+//import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.RobotNotFoundException
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
@@ -49,7 +49,7 @@ class RobotApplicationService(
                 is MineCommand -> executeMining(commands as List<MineCommand>)
             //   is MovementItemsUsageCommand -> useMovementItem(commands as List<MovementItemsUsageCommand>)
                 is MovementCommand -> executeMoveCommands(commands as List<MovementCommand>)
-                is BlockCommand -> executeBlockCommands(commands as List<BlockCommand>)
+              //  is BlockCommand -> executeBlockCommands(commands as List<BlockCommand>)
                 is EnergyRegenCommand -> executeEnergyRegenCommands(commands as List<EnergyRegenCommand>)
            //     is RepairItemUsageCommand -> executeRepairItemUsageCommands(commands as List<RepairItemUsageCommand>)
             }
@@ -143,12 +143,12 @@ class RobotApplicationService(
             )
         val cost = planetDto.movementDifficulty
         val planet = planetDto.toPlanet()
-        try {
+  //      try {
             robot.move(planet, cost)
             robotDomainService.saveRobot(robot)
             logger.info("[${moveCommand.transactionUUID}] Successfully executed MoveCommand")
             return Triple(robot, cost, planetDto)
-        } catch (pbe: PlanetBlockedException) {
+   /*     } catch (pbe: PlanetBlockedException) {
             logger.info(
                 "[${moveCommand.transactionUUID}] " +
                     "Impeded robot ${robot.id} from moving because planet was blocked."
@@ -156,6 +156,7 @@ class RobotApplicationService(
             robotDomainService.saveRobot(robot)
             throw pbe
         }
+        */
     }
 
     /**
@@ -165,7 +166,7 @@ class RobotApplicationService(
      * @throws RobotNotFoundException  if no robot with the ID specified in the `BlockCommand` can be found
      * @throws InvalidPlayerException  if the PlayerIDs specified in the `BlockCommand` and `Robot` don't match
      */
-    fun executeBlockCommands(blockCommands: List<BlockCommand>) {
+   /* fun executeBlockCommands(blockCommands: List<BlockCommand>) {
         logger.info("Starting execution of BlockCommand-Batch")
 
         blockCommands.forEach { blockCommand ->
@@ -179,7 +180,7 @@ class RobotApplicationService(
             }
         }
     }
-
+*/
     /**
      * Regenerates the `energy` of a user specified in [energyRegenCommand]. If the specified [Robot] can not be found or the
      * players don't match an exception is thrown.

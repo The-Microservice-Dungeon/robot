@@ -1,7 +1,7 @@
 package com.msd.event.application
 
 import com.msd.command.application.command.*
-import com.msd.core.FailureException
+import com.msd.config.kafka.core.FailureException
 import com.msd.domain.DomainEvent
 import com.msd.event.application.dto.*
 import com.msd.planet.domain.PlanetRepository
@@ -99,7 +99,7 @@ class EventSender(
     private fun getTopicAndTypeByEvent(event: GenericEventDTO): Pair<String, EventType> {
         return when (event) {
             is MovementEventDTO -> topicConfig.ROBOT_MOVEMENT to EventType.MOVEMENT
-            is BlockEventDTO -> topicConfig.ROBOT_BLOCKED to EventType.PLANET_BLOCKED
+         //   is BlockEventDTO -> topicConfig.ROBOT_BLOCKED to EventType.PLANET_BLOCKED
             is MiningEventDTO -> topicConfig.ROBOT_MINING to EventType.MINING
             is ResourceDistributionEventDTO -> topicConfig.ROBOT_RESOURCE_DISTRIBUTION to EventType.RESOURCE_DISTRIBUTION
             is RegenerationEventDTO -> topicConfig.ROBOT_REGENERATION to EventType.REGENERATION
@@ -124,12 +124,13 @@ class EventSender(
                 null,
                 listOf()
             )
-            is BlockCommand -> BlockEventDTO(
+        /*    is BlockCommand -> BlockEventDTO(
                 false,
                 e.message!!,
                 null,
                 robot?.energy
             )
+                     */
             is EnergyRegenCommand -> RegenerationEventDTO(
                 false, e.message!!, robot?.energy
             )

@@ -4,7 +4,7 @@ import com.msd.application.*
 import com.msd.application.dto.GameMapPlanetDto
 import com.msd.application.dto.ResourceDto
 import com.msd.command.application.command.*
-import com.msd.core.FailureException
+import com.msd.config.kafka.core.FailureException
 import com.msd.domain.ResourceType
 import com.msd.event.application.EventSender
 import com.msd.event.application.SuccessEventSender
@@ -14,7 +14,7 @@ import com.msd.robot.application.exception.TargetPlanetNotReachableException
 import com.msd.robot.application.exception.UnknownPlanetException
 import com.msd.robot.domain.*
 import com.msd.robot.domain.exception.NotEnoughEnergyException
-import com.msd.robot.domain.exception.PlanetBlockedException
+//import com.msd.robot.domain.exception.PlanetBlockedException
 import com.msd.robot.domain.exception.RobotNotFoundException
 import com.msd.robot.domain.exception.UpgradeException
 import io.mockk.*
@@ -108,7 +108,7 @@ class RobotApplicationServiceTest {
         justRun { successEventSender.sendFightingEvent(any(), any(), any()) }
         justRun { successEventSender.sendResourceDistributionEvent(any()) }
         justRun { successEventSender.sendEnergyRegenEvent(any(), any()) }
-        justRun { successEventSender.sendBlockEvent(any(), any()) }
+       // justRun { successEventSender.sendBlockEvent(any(), any()) }
         justRun { successEventSender.sendSpawnEvents(any(), any(), any()) }
     }
 
@@ -167,8 +167,8 @@ class RobotApplicationServiceTest {
     fun `Robot can't move if it has not enough energy`() {
         // given
         while (robot1.energy >= 4) // blocking on Level 0 costs 4 energy
-            robot1.block()
-        planet1.blocked = false
+            robot1.repair()
+        //planet1.blocked = false
         val command = MovementCommand(robot1.id, planet2.planetId, UUID.randomUUID())
         val planetDto = GameMapPlanetDto(planet2.planetId, 3)
         every { robotRepository.findByIdOrNull(robot1.id) } returns robot1
@@ -184,7 +184,7 @@ class RobotApplicationServiceTest {
         assert(failureException.captured is NotEnoughEnergyException)
     }
 
-    @Test
+   /* @Test
     fun `Robot can't move out of a blocked planet`() {
         // given
         robot1.block()
@@ -203,7 +203,7 @@ class RobotApplicationServiceTest {
         assertEquals(planet1, robot3.planet)
         assert(failureException.captured is PlanetBlockedException)
     }
-
+*/
     @Test
     fun `Robot moves if there are no problems`() {
         // given
@@ -255,7 +255,7 @@ class RobotApplicationServiceTest {
         verify(exactly = 1) { robotRepository.save(robot1) }
     }
 
-    @Test
+   /* @Test
     fun `Robot blocks planet successfully`() {
         // given
         val command = BlockCommand(robot1.id, UUID.randomUUID())
@@ -269,7 +269,8 @@ class RobotApplicationServiceTest {
         assert(robot1.planet.blocked)
         assert(robot3.planet.blocked)
     }
-
+*/
+    /*
     @Test
     fun `Robot cannot block planet if it has not enough energy`() {
         val failureException = slot<FailureException>()
@@ -287,7 +288,7 @@ class RobotApplicationServiceTest {
         verify(exactly = 1) { eventSender.handleFailureException(any(), any()) }
         assert(failureException.captured is NotEnoughEnergyException)
     }
-
+*/
     @Test
     fun `Throws exception when upgrading Robot if robotId is unknown`() {
         // given

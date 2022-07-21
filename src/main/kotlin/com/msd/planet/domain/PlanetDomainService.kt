@@ -6,9 +6,10 @@ import org.springframework.stereotype.Service
 class PlanetDomainService(
     val planetRepository: PlanetRepository
 ) {
-    fun resetBlocks() {
+  /*  fun resetBlocks() {
         val planets = planetRepository.findAllByBlocked(true)
         planets.forEach { it.blocked = false }
         planetRepository.saveAll(planets)
     }
+    */
 }

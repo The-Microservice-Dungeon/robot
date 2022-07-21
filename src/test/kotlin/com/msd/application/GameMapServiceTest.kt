@@ -3,7 +3,7 @@ package com.msd.application
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.msd.application.dto.GameMapNeighbourDto
 import com.msd.application.dto.GameMapPlanetDto
-import com.msd.core.FailureException
+import com.msd.config.kafka.core.FailureException
 import com.msd.planet.domain.MapDirection
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
